@@ -70,4 +70,12 @@ include $(FRAGMENTS_PATH)/cudalite.mk
 ################################################################################
 
 clean:
-	rm -rf *.o *.riscv *.log
+	rm -rf *.o *.riscv *.log Y[0-9]*X[0-9]*
+
+################################################################################
+# Define the default goal
+################################################################################
+.DEFAULT_GOAL = kernel.riscv
+
+# There are three different compilation goals:
+all: kernel.riscv kernel.$(BSG_TILE_GROUP_ABRV).riscv $(BSG_TILE_GROUP_ABRV)/kernel.riscv 
