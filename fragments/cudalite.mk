@@ -36,9 +36,6 @@ NC=\033[0m
 _REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 
 include $(_REPO_ROOT)/environment.mk
-_BSG_MANYCORE_SPMD_PATH = $(BSG_MANYCORE_DIR)/software/spmd/
-_BSG_MANYCORE_CUDALITE_PATH = $(_BSG_MANYCORE_SPMD_PATH)/bsg_cuda_lite_runtime/
-_BSG_MANYCORE_CUDALITE_MAIN_PATH = $(_BSG_MANYCORE_CUDALITE_PATH)/main
 
 ################################################################################
 # Compilation Rules

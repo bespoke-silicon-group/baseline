@@ -30,17 +30,15 @@
 ################################################################################
 _REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 
-include $(_REPO_ROOT)/environment.mk
+-include $(_REPO_ROOT)/environment.mk
 
 
 ################################################################################
-# Define BSG_MACHINE_PATH, the location of the
-# Makefile.machine.include file that defines the Machine to compile
-# and simulate on
+# Define BSG_MACHINE_PATH, the location of the Makefile.machine.include file
+# that defines the machine to compile and simulate on
 ################################################################################
 
 BSG_MACHINE_PATH=$(BSG_F1_DIR)
-
 
 ################################################################################
 # Define the tile-group dimensions. 
@@ -49,28 +47,62 @@ BSG_MACHINE_PATH=$(BSG_F1_DIR)
 BSG_TILE_GROUP_DIM_X     ?= 1
 BSG_TILE_GROUP_DIM_Y     ?= 1
 
-
 ################################################################################
-# Define any objects that should be used during linking, including the
-# source file with the kernel itself
-################################################################################
-
-KERNEL_OBJS = example.o kernel.o
-
-
-################################################################################
-# Include the kernel build rules (This must be included after KERNEL_OBJS)
+# Define any sources that should be used compiled during kernel compilation,
+# including the source file with the kernel itself
 ################################################################################
 
-include $(FRAGMENTS_PATH)/cudalite.mk
+KERNEL_SSOURCES = # Assembly Sources
+KERNEL_CSOURCES = # C Sources
+KERNEL_CXXSOURCES = example.cpp kernel.cpp # C++ Sources
+KERNEL_TARGET = kernel
 
+################################################################################
+# Include the kernel build rules (This must be included after KERNEL_SOURCES)
+################################################################################
+
+-include $(FRAGMENTS_PATH)/cudalite.mk
+
+################################################################################
+# Define the host target
+################################################################################
+
+HOST_TARGET     := test_matrix_matrix_mul_tile
+HOST_CSOURCES   := 
+HOST_CXXSOURCES := $(HOST_TARGET).cpp
+
+################################################################################
+# Include the host build rules (This must be included after HOST_SOURCES)
+################################################################################
+
+-include $(FRAGMENTS_PATH)/cosim.mk
+
+################################################################################
+# Define the rule to run this test
+################################################################################
+
+# This runs the program
+.PHONY: $(HOST_TARGET).log
+$(HOST_TARGET).cosim.log: $(HOST_TARGET).cosim kernel.riscv
+	./$(@:.log=) +ntb_random_seed_automatic +vpdfile+$(@:cosim.log=.vpd) \
+		$(SIM_ARGS) +c_args="./kernel.riscv MM-Test" | tee $@
+
+.DEFAULT_GOAL = test_matrix_matrix_mul_tile
+
+################################################################################
+# Include the analysis rules
+################################################################################
+
+-include $(FRAGMENTS_PATH)/analysis.mk
 
 ################################################################################
 # Define the clean rule
 ################################################################################
-
 clean:
-	rm -rf *.o *.riscv *.log Y[0-9]*X[0-9]*
+	rm -rf *.rvo *.riscv Y[0-9]*X[0-9]* *.dis
+	rm -rf *.o $(HOST_TARGET) $(HOST_OBJECTS) $(HOST_TARGET).cosim
+	rm -rf $(HOST_TARGET).cosim.{daidir,tmp} 64 vc_hdrs.h *.vpd ucli.key *.log
+	rm -rf vanilla_stats.csv 
 
 ################################################################################
 # Define the default goal

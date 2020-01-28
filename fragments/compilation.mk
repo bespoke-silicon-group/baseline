@@ -37,8 +37,12 @@ _REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 
 include $(_REPO_ROOT)/environment.mk
 
+_BSG_MANYCORE_SPMD_PATH = $(BSG_MANYCORE_DIR)/software/spmd/
+_BSG_MANYCORE_CUDALITE_PATH = $(_BSG_MANYCORE_SPMD_PATH)/bsg_cuda_lite_runtime/
+_BSG_MANYCORE_CUDALITE_MAIN_PATH = $(_BSG_MANYCORE_CUDALITE_PATH)/main
+
 _BSG_MANYCORE_LIB_PATH    = $(BSG_MANYCORE_DIR)/software/bsg_manycore_lib
-_BSG_MANYCORE_COMMON_PATH = $(BSG_MANYCORE_DIR)/software/spmd/common
+_BSG_MANYCORE_COMMON_PATH = $(_BSG_MANYCORE_SPMD_PATH)/common/
 
 ################################################################################
 # BSG Manycore Machine Configuration
@@ -60,9 +64,10 @@ include $(FRAGMENTS_PATH)/tilegroup.mk
 ################################################################################
 OPT_LEVEL ?= -O2
 ARCH_OP   := rv32imaf
-
+DEBUG_FLAGS := -g
 # CCPPFLAGS are common between GCC and G++
 RISCV_CCPPFLAGS += $(OPT_LEVEL)
+RISCV_CCPPFLAGS += $(DEBUG_FLAGS)
 RISCV_CCPPFLAGS += -march=$(ARCH_OP)
 RISCV_CCPPFLAGS += -static
 RISCV_CCPPFLAGS += -ffast-math
@@ -83,29 +88,28 @@ RISCV_DEFINES += -Dbsg_group_size=$(BSG_TILE_GROUP_NUM_TILES)
 RISCV_DEFINES += -DPREALLOCATE=0 
 RISCV_DEFINES += -DHOST_DEBUG=0
 
-# We build and name a machine-specific crt.o because it's REALLY
+# We build and name a machine-specific crt.rvo because it's REALLY
 # difficult to figure out why your program/cosimulation is hanging
 # when the wrong crt file was used.
-$(MACHINE_CRT_OBJ): $(_BSG_MANYCORE_COMMON_PATH)/crt.S $(BSG_MACHINE_PATH)/Makefile.machine.include
+crt.rvo: $(_BSG_MANYCORE_COMMON_PATH)/crt.S $(BSG_MACHINE_PATH)/Makefile.machine.include
 	$(RISCV_GCC) $(RISCV_CFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -c $< -o $@ |& tee $*.comp.log
-
-%/$(MACHINE_CRT_OBJ): $(_BSG_MANYCORE_COMMON_PATH)/crt.S $(BSG_MACHINE_PATH)/Makefile.machine.include
-	$(RISCV_GCC) $(RISCV_CFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -c $< -o $@ |& tee $*/crt.comp.log
 
 # We compile these locally so that we don't interfere with the files
 # in $(_BSG_MANYCORE_LIB_PATH). They are not architecture specific,
 # and not tile-group specific.
-bsg_set_tile_x_y.o bsg_printf.o: %.o:$(_BSG_MANYCORE_LIB_PATH)/%.c
+bsg_set_tile_x_y.rvo bsg_printf.rvo: %.rvo:$(_BSG_MANYCORE_LIB_PATH)/%.c
 	$(RISCV_GCC) $(RISCV_CFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -c $< -o $@
 
+main.rvo: $(_BSG_MANYCORE_CUDALITE_MAIN_PATH)/main.c
+	$(RISCV_GCC) $(RISCV_CFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -c $< -o $@
 
-%.o: %.c
+%.rvo: %.c
 	$(RISCV_GCC) $(RISCV_CFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -c $< -o $@ |& tee $*.comp.log
 
-%.o: %.cpp
+%.rvo: %.cpp
 	$(RISCV_GXX) $(RISCV_CXXFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -c $< -o $@ |& tee $*.comp.log
 
-%.o: %.S
+%.rvo: %.S
 	$(RISCV_GCC) $(RISCV_GCC_OPTS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -D__ASSEMBLY__=1 -c $< -o $@ |& tee $*.comp.log
 
-.PRECIOUS: $(MACHINE_CRT_OBJ) %/$(MACHINE_CRT_OBJ)
+.PRECIOUS: main.rvo crt.rvo 

@@ -36,7 +36,6 @@ NC=\033[0m
 _REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 
 include $(_REPO_ROOT)/environment.mk
-BSG_MANYCORE_CUDALITE_MAIN_PATH = $(BSG_MANYCORE_DIR)/
 
 ################################################################################
 # BSG Manycore Machine Configuration
@@ -133,8 +132,8 @@ else
 endif
 
 # BSG Manycore Library Variables
-BSG_MANYCORE_LIB_OBJS  += bsg_set_tile_x_y.o
-BSG_MANYCORE_LIB_OBJS  += bsg_printf.o
+BSG_MANYCORE_LIB_OBJECTS  += bsg_set_tile_x_y.rvo
+BSG_MANYCORE_LIB_OBJECTS  += bsg_printf.rvo
 
 ################################################################################
 # Linker Flags
@@ -157,13 +156,23 @@ RISCV_LDFLAGS += -lgcc
 RISCV_LDFLAGS += -Wl,--no-check-sections 
 
 ################################################################################
+# Kernel Objects
+################################################################################
+# KERNEL_OBJECTS defines the object files that that are linked as part of
+# the kernel. It is derived from KERNEL_*SOURCES (see below) but other
+# objects can be added and linked as necessary.
+KERNEL_OBJECTS += $(KERNEL_SSOURCES:.s=.rvo)
+KERNEL_OBJECTS += $(KERNEL_CSOURCES:.c=.rvo)
+KERNEL_OBJECTS += $(KERNEL_CXXSOURCES:.cpp=.rvo)
+
+################################################################################
 # Linker Targets
 ################################################################################
 # This builds a kernel.riscv binary for the current machine type and
-# tile group size. KERNEL_OBJS can be used to include other object
+# tile group size. KERNEL_OBJECTS can be used to include other object
 # files in the linker.
-kernel.riscv kernel.$(BSG_TILE_GROUP_ABRV).riscv: $(MACHINE_CRT_OBJ) $(_BSG_MANYCORE_CUDALITE_MAIN_PATH)/main.o $(BSG_MANYCORE_LIB_OBJS) $(KERNEL_OBJS)
+kernel.riscv kernel.$(BSG_TILE_GROUP_ABRV).riscv: $(MACHINE_CRT_OBJ) main.rvo $(BSG_MANYCORE_LIB_OBJECTS) $(KERNEL_OBJECTS)
 	$(RISCV_LD) -T $(RISCV_LINK_SCRIPT) $^ $(RISCV_LDFLAGS) -o $@
 
-$(BSG_TILE_GROUP_ABRV)/kernel.riscv: $(MACHINE_CRT_OBJ) $(_BSG_MANYCORE_CUDALITE_MAIN_PATH)/main.o $(BSG_MANYCORE_LIB_OBJS) $(KERNEL_OBJS) | $(BSG_TILE_GROUP_ABRV)
+$(BSG_TILE_GROUP_ABRV)/kernel.riscv: $(MACHINE_CRT_OBJ) main.rvo $(BSG_MANYCORE_LIB_OBJECTS) $(KERNEL_OBJECTS) | $(BSG_TILE_GROUP_ABRV)
 	$(RISCV_LD) -T $(RISCV_LINK_SCRIPT) $^ $(RISCV_LDFLAGS) -o $@

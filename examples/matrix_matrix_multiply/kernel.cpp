@@ -12,9 +12,7 @@
 #include "bsg_tile_group_barrier.h"
 #include <cstdint>
 #include <cstring>
-#include <bsg_algebra.hpp>
 
-#ifndef BSG_ALGEBRA_HPP
 /*
  * This is a naive implementation of matrix multiplication that
  * multiplies the two matricies A and B and stores the result in C.
@@ -108,7 +106,7 @@ int __attribute__ ((noinline, aligned (2048))) kernel_matrix_multiply_transpose_
                 boff = 0;
                 for (uint32_t x = 0; x < B_WIDTH; x += F) {
                         uint32_t bofff = 0;
-                        TC sum[F] = {0};
+                        TC sum[F] = {{(volatile float) 0.0}};
                         for (uint32_t aoff = ayoff; aoff < ayoff + A_WIDTH; aoff++, ++boff) {
                                 bofff = boff;
 #pragma GCC unroll 4 // Does this unroll correctly when F < 4?
@@ -128,7 +126,6 @@ int __attribute__ ((noinline, aligned (2048))) kernel_matrix_multiply_transpose_
         return 0;
 }
 
-#endif //BSG_ALGERBA_HPP
 /*
  * These versions are hand-unrolled
  * 
