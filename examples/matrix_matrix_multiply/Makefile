@@ -49,7 +49,8 @@ BSG_TILE_GROUP_DIM_Y     ?= 1
 
 ################################################################################
 # Define any sources that should be used compiled during kernel compilation,
-# including the source file with the kernel itself
+# including the source file with the kernel itself. $(KERNEL_TARGET).riscv will
+# be the name of the compiled RISC-V Binary for the Manycore
 ################################################################################
 
 KERNEL_SSOURCES = # Assembly Sources
@@ -64,7 +65,8 @@ KERNEL_TARGET = kernel
 -include $(FRAGMENTS_PATH)/cudalite.mk
 
 ################################################################################
-# Define the host target
+# Define the $(HOST_TARGET), the name of the host executable. The cosimulation
+# host executable will be called $(HOST_TARGET).cosim
 ################################################################################
 
 HOST_TARGET     := test_matrix_matrix_mul_tile
@@ -72,22 +74,24 @@ HOST_CSOURCES   :=
 HOST_CXXSOURCES := $(HOST_TARGET).cpp
 
 ################################################################################
-# Include the host build rules (This must be included after HOST_SOURCES)
+# Include the Cosimulation host build rules (This must be included after
+# HOST_SOURCES)
 ################################################################################
 
 -include $(FRAGMENTS_PATH)/cosim.mk
 
 ################################################################################
-# Define the rule to run this test
+# Define the rule to run the cosimulation test
 ################################################################################
 
-# This runs the program
-.PHONY: $(HOST_TARGET).log
-$(HOST_TARGET).cosim.log: $(HOST_TARGET).cosim kernel.riscv
-	./$(@:.log=) +ntb_random_seed_automatic +vpdfile+$(@:cosim.log=.vpd) \
-		$(SIM_ARGS) +c_args="./kernel.riscv MM-Test" | tee $@
+# Always re-run, if asked.
+.PHONY: cosim
 
-.DEFAULT_GOAL = test_matrix_matrix_mul_tile
+cosim: $(HOST_TARGET).log
+
+vanilla_stats.csv $(HOST_TARGET).vpd $(HOST_TARGET).cosim.log: $(HOST_TARGET).cosim $(KERNEL_TARGET).riscv
+	./$(HOST_TARGET).cosim +ntb_random_seed_automatic +vpdfile+$(HOST_TARGET).vpd \
+		$(SIM_ARGS) +c_args="./kernel.riscv MM-Test" | tee $@
 
 ################################################################################
 # Include the analysis rules
@@ -102,12 +106,11 @@ clean:
 	rm -rf *.rvo *.riscv Y[0-9]*X[0-9]* *.dis
 	rm -rf *.o $(HOST_TARGET) $(HOST_OBJECTS) $(HOST_TARGET).cosim
 	rm -rf $(HOST_TARGET).cosim.{daidir,tmp} 64 vc_hdrs.h *.vpd ucli.key *.log
-	rm -rf vanilla_stats.csv 
+	rm -rf vanilla_stats.csv stats
 
 ################################################################################
 # Define the default goal
 ################################################################################
-.DEFAULT_GOAL = kernel.riscv
 
-# There are three different compilation goals:
-all: kernel.riscv kernel.$(BSG_TILE_GROUP_ABRV).riscv $(BSG_TILE_GROUP_ABRV)/kernel.riscv 
+.DEFAULT_GOAL = all
+all: kernel.riscv $(HOST_TARGET).cosim

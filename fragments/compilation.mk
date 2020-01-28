@@ -88,10 +88,12 @@ RISCV_DEFINES += -Dbsg_group_size=$(BSG_TILE_GROUP_NUM_TILES)
 RISCV_DEFINES += -DPREALLOCATE=0 
 RISCV_DEFINES += -DHOST_DEBUG=0
 
+
 # We build and name a machine-specific crt.rvo because it's REALLY
 # difficult to figure out why your program/cosimulation is hanging
-# when the wrong crt file was used.
-crt.rvo: $(_BSG_MANYCORE_COMMON_PATH)/crt.S $(BSG_MACHINE_PATH)/Makefile.machine.include
+# when the wrong link script was used during linking
+MACHINE_CRT_OBJ = $(BSG_MACHINE_NAME).rvo
+$(MACHINE_CRT_OBJ) crt.rvo: $(_BSG_MANYCORE_COMMON_PATH)/crt.S $(BSG_MACHINE_PATH)/Makefile.machine.include
 	$(RISCV_GCC) $(RISCV_CFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -c $< -o $@ |& tee $*.comp.log
 
 # We compile these locally so that we don't interfere with the files

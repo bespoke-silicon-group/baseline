@@ -288,7 +288,7 @@ int kernel_matrix_matrix_mul_tile (int argc, char **argv) {
         bin_path = args.path;
         test_name = args.name;
 
-        bsg_pr_test_info("Running CUDA Matrix-Matrix Multiplicati on"
+        bsg_pr_test_info("Running CUDA Matrix-Matrix Multiplication "
                          "on a single tile.\n");
 
         /**********************************************************************

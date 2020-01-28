@@ -1,0 +1,11 @@
+*.csv
+*.o
+*.log
+*.rvo
+*.cosim*
+*.vpd
+*.vcd
+ucli.key
+vc_hdrs.h
+*~
+*.riscv
