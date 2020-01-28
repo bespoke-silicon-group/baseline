@@ -87,11 +87,11 @@ HOST_CXXSOURCES := $(HOST_TARGET).cpp
 # Always re-run, if asked.
 .PHONY: cosim
 
-cosim: $(HOST_TARGET).log
+cosim: $(HOST_TARGET).cosim.log
 
 vanilla_stats.csv $(HOST_TARGET).vpd $(HOST_TARGET).cosim.log: $(HOST_TARGET).cosim $(KERNEL_TARGET).riscv
 	./$(HOST_TARGET).cosim +ntb_random_seed_automatic +vpdfile+$(HOST_TARGET).vpd \
-		$(SIM_ARGS) +c_args="./kernel.riscv MM-Test" | tee $@
+		$(SIM_ARGS) +c_args="./kernel.riscv MM-Test" | tee $(HOST_TARGET).cosim.log
 
 ################################################################################
 # Include the analysis rules
