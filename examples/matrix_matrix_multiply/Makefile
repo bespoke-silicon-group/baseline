@@ -32,7 +32,6 @@ _REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 
 -include $(_REPO_ROOT)/environment.mk
 
-
 ################################################################################
 # Define BSG_MACHINE_PATH, the location of the Makefile.machine.include file
 # that defines the machine to compile and simulate on
@@ -41,7 +40,7 @@ _REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 BSG_MACHINE_PATH=$(BSG_F1_DIR)
 
 ################################################################################
-# Define the tile-group dimensions. 
+# Define the tile-group dimensions.
 ################################################################################
 
 BSG_TILE_GROUP_DIM_X     ?= 1
@@ -56,6 +55,7 @@ BSG_TILE_GROUP_DIM_Y     ?= 1
 KERNEL_SSOURCES = # Assembly Sources
 KERNEL_CSOURCES = # C Sources
 KERNEL_CXXSOURCES = example.cpp kernel.cpp # C++ Sources
+KERNEL_INCLUDES = -I$(_REPO_ROOT)/examples/matrix_matrix_multiply
 KERNEL_TARGET = kernel
 
 ################################################################################
@@ -72,6 +72,7 @@ KERNEL_TARGET = kernel
 HOST_TARGET     := test_matrix_matrix_mul_tile
 HOST_CSOURCES   := 
 HOST_CXXSOURCES := $(HOST_TARGET).cpp
+HOST_INCLUDES   := -I$(_REPO_ROOT)/examples/matrix_matrix_multiply
 
 ################################################################################
 # Include the Cosimulation host build rules (This must be included after

@@ -105,6 +105,7 @@ bsg_set_tile_x_y.rvo bsg_printf.rvo: %.rvo:$(_BSG_MANYCORE_LIB_PATH)/%.c
 main.rvo: $(_BSG_MANYCORE_CUDALITE_MAIN_PATH)/main.c
 	$(RISCV_GCC) $(RISCV_CFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -c $< -o $@
 
+$(KERNEL_OBJECTS): RISCV_INCLUDES += $(KERNEL_INCLUDES)
 %.rvo: %.c
 	$(RISCV_GCC) $(RISCV_CFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -c $< -o $@ |& tee $*.comp.log
 
@@ -113,5 +114,3 @@ main.rvo: $(_BSG_MANYCORE_CUDALITE_MAIN_PATH)/main.c
 
 %.rvo: %.S
 	$(RISCV_GCC) $(RISCV_GCC_OPTS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -D__ASSEMBLY__=1 -c $< -o $@ |& tee $*.comp.log
-
-.PRECIOUS: main.rvo crt.rvo 

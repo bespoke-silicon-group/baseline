@@ -30,7 +30,7 @@
 ################################################################################
 _REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 
-include $(_REPO_ROOT)/environment.mk
+-include $(_REPO_ROOT)/environment.mk
 
 # These variables are used by simlibs.mk
 TESTBENCH_PATH := $(BSG_F1_DIR)/testbenches
@@ -42,7 +42,7 @@ CL_DIR         := $(BSG_F1_DIR)
 
 # The following makefile fragment verifies that the tools and CAD environment is
 # configured correctly.
-include $(BSG_F1_DIR)/cadenv.mk
+-include $(BSG_F1_DIR)/cadenv.mk
 
 ################################################################################
 # Simulation Libraries (C/C++ AND Verilog)
@@ -54,7 +54,7 @@ PROJECT        := baseline
 # that are necessary for running cosimulation. These are dependencies for
 # regression since running $(MAKE) recursively does not prevent parallel builds
 # of identical rules -- which causes errors.
-include $(TESTBENCH_PATH)/simlibs.mk
+-include $(TESTBENCH_PATH)/simlibs.mk
 
 # libbsg_manycore_runtime will be compiled in $(LIBRARIES_PATH)
 LDFLAGS        += -lbsg_manycore_runtime -lm

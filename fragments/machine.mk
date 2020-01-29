@@ -3,7 +3,7 @@
 ################################################################################
 
 # Import configuration from BSG_MACHINE_PATH.
-include $(BSG_MACHINE_PATH)/Makefile.machine.include
+-include $(BSG_MACHINE_PATH)/Makefile.machine.include
 
 # Set architecture variables (if not already set)
 bsg_global_X ?= $(BSG_MACHINE_GLOBAL_X)

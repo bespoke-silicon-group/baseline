@@ -35,7 +35,7 @@ NC=\033[0m
 ################################################################################
 _REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 
-include $(_REPO_ROOT)/environment.mk
+-include $(_REPO_ROOT)/environment.mk
 
 ################################################################################
 # BSG Manycore Machine Configuration
@@ -47,19 +47,19 @@ include $(_REPO_ROOT)/environment.mk
 # (BSG_MACHINE_VCACHE_BLOCK_SIZE_WORDS), Victim Cache Ways
 # (BSG_MACHINE_VCACHE_WAY), Victim Cache Number of Sets
 # (BSG_MACHINE_VCACHE_SET). 
-include $(FRAGMENTS_PATH)/machine.mk
+-include $(FRAGMENTS_PATH)/machine.mk
 
 ################################################################################
 # BSG Manycore Tools Configuration
 ################################################################################
 # Import tools configuration from tools.mk. This sets RISCV_GCC,
 # RISCV_GXX, RISCV_LINK and other RISCV toolchain variables
-include $(FRAGMENTS_PATH)/tools.mk
+-include $(FRAGMENTS_PATH)/tools.mk
 
 ################################################################################
 # BSG Manycore Make Functions
 ################################################################################
-include $(FRAGMENTS_PATH)/functions.mk
+-include $(FRAGMENTS_PATH)/functions.mk
 
 ################################################################################
 # ELF File Parameters
@@ -154,16 +154,6 @@ RISCV_LDFLAGS += -lgcc
 
 # TODO: temporary fix to solve this problem: https://stackoverflow.com/questions/56518056/risc-v-linker-throwing-sections-lma-overlap-error-despite-lmas-belonging-to-dif
 RISCV_LDFLAGS += -Wl,--no-check-sections 
-
-################################################################################
-# Kernel Objects
-################################################################################
-# KERNEL_OBJECTS defines the object files that that are linked as part of
-# the kernel. It is derived from KERNEL_*SOURCES (see below) but other
-# objects can be added and linked as necessary.
-KERNEL_OBJECTS += $(KERNEL_SSOURCES:.s=.rvo)
-KERNEL_OBJECTS += $(KERNEL_CSOURCES:.c=.rvo)
-KERNEL_OBJECTS += $(KERNEL_CXXSOURCES:.cpp=.rvo)
 
 ################################################################################
 # Linker Targets

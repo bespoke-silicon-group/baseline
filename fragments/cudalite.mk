@@ -35,16 +35,27 @@ NC=\033[0m
 ################################################################################
 _REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 
-include $(_REPO_ROOT)/environment.mk
+-include $(_REPO_ROOT)/environment.mk
+
+################################################################################
+# Kernel Objects
+################################################################################
+# KERNEL_OBJECTS defines the object files that that are linked as part of
+# the kernel. It is derived from KERNEL_*SOURCES (see below) but other
+# objects can be added and linked as necessary.
+KERNEL_OBJECTS += $(KERNEL_SSOURCES:.s=.rvo)
+KERNEL_OBJECTS += $(KERNEL_CSOURCES:.c=.rvo)
+KERNEL_OBJECTS += $(KERNEL_CXXSOURCES:.cpp=.rvo)
 
 ################################################################################
 # Compilation Rules
 ################################################################################
-include $(FRAGMENTS_PATH)/compilation.mk
+-include $(FRAGMENTS_PATH)/compilation.mk
 
 ################################################################################
 # Linker Rules
 ################################################################################
-include $(FRAGMENTS_PATH)/link.mk
+-include $(FRAGMENTS_PATH)/link.mk
+
 
 
