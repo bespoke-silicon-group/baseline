@@ -7,8 +7,7 @@ PASS_LIB         ?= build/manycore/libManycorePass.so
 RUNTIME_FNS      ?= $(BSG_MANYCORE_DIR)/software/bsg_manycore_lib/bsg_tilegroup.h
 
 $(LLVM_DIR):
-	@echo "LLVM is not installed! Follow build instructions in the TRM and \
-	set LLVM_DIR in Makefile.builddefs accordingly" && exit 1
+	$(error $(shell echo -e "$(RED)BSG MAKE ERROR: LLVM Has not been built! Please run the Setup instructions in README.md $(_REPO_ROOT)$(NC)")
 
 # Emit -O0 so that loads to consecutive memory locations aren't combined
 # Opt can run optimizations in any order, so it doesn't matter
@@ -27,7 +26,6 @@ $(LLVM_DIR):
 
 %.rvo: %.bc.s
 	$(RISCV_GCC) $(RISCV_GCC_OPTS) $(OPT_LEVEL) -c $< -o $@
-
 
 $(PASS_LIB): $(PASS_DIR)/manycore/Manycore.cpp $(LLVM_DIR)
 	mkdir -p build
