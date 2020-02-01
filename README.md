@@ -47,10 +47,10 @@ repository.
 
 Baseline is a reference to the film Bladerunner 2049. 
 
-_ The Baseline is designed to test the effects of a replicant's job on
+*The Baseline is designed to test the effects of a replicant's job on
 their brain and psyche, because of the nature of their job, they
 constantly need to be assessed as to whether their work is having some
-kind of moral impact on them. _
+kind of moral impact on them.*
 
 In a much less macabre way, these test programs should be used to
 measure performance of the HammerBlade Manycore as the architecture
