@@ -48,14 +48,15 @@ KERNEL_OBJECTS += $(KERNEL_CSOURCES:.c=.rvo)
 KERNEL_OBJECTS += $(KERNEL_CXXSOURCES:.cpp=.rvo)
 
 ################################################################################
-# Compilation Rules
+# Kernel Compilation Rules
 ################################################################################
--include $(FRAGMENTS_PATH)/compilation.mk
+_KERNEL_COMPILER ?= GCC
+-include $(FRAGMENTS_PATH)/kernel/compile.mk
 
 ################################################################################
 # Linker Rules
 ################################################################################
--include $(FRAGMENTS_PATH)/link.mk
+-include $(FRAGMENTS_PATH)/kernel/link.mk
 
 
 

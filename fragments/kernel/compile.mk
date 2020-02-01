@@ -35,7 +35,7 @@ NC=\033[0m
 ################################################################################
 _REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 
-include $(_REPO_ROOT)/environment.mk
+-include $(_REPO_ROOT)/environment.mk
 
 _BSG_MANYCORE_SPMD_PATH = $(BSG_MANYCORE_DIR)/software/spmd/
 _BSG_MANYCORE_CUDALITE_PATH = $(_BSG_MANYCORE_SPMD_PATH)/bsg_cuda_lite_runtime/
@@ -49,7 +49,7 @@ _BSG_MANYCORE_COMMON_PATH = $(_BSG_MANYCORE_SPMD_PATH)/common/
 ################################################################################
 # Import configuration from machine.mk. Defines Architecture
 # Dimensions (BSG_MACHINE_GLOBAL_Y, BSG_MACHINE_GLOBAL_X).
-include $(FRAGMENTS_PATH)/machine.mk
+-include $(FRAGMENTS_PATH)/machine.mk
 
 ################################################################################
 # BSG Manycore Tile-Group Configuration
@@ -57,7 +57,7 @@ include $(FRAGMENTS_PATH)/machine.mk
 # Import tile-group dimensions from tilegroup.mk. Tile group
 # dimensions (bsg_tiles_Y, bsg_tiles_X), and Number of Tiles in the
 # Tile Group (bsg_group_size)
-include $(FRAGMENTS_PATH)/tilegroup.mk
+-include $(FRAGMENTS_PATH)/kernel/tilegroup.mk
 
 ################################################################################
 # C/C++ Compilation Flags
@@ -88,7 +88,6 @@ RISCV_DEFINES += -Dbsg_group_size=$(BSG_TILE_GROUP_NUM_TILES)
 RISCV_DEFINES += -DPREALLOCATE=0 
 RISCV_DEFINES += -DHOST_DEBUG=0
 
-
 # We build and name a machine-specific crt.rvo because it's REALLY
 # difficult to figure out why your program/cosimulation is hanging
 # when the wrong link script was used during linking
@@ -106,11 +105,13 @@ main.rvo: $(_BSG_MANYCORE_CUDALITE_MAIN_PATH)/main.c
 	$(RISCV_GCC) $(RISCV_CFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -c $< -o $@
 
 $(KERNEL_OBJECTS): RISCV_INCLUDES += $(KERNEL_INCLUDES)
-%.rvo: %.c
-	$(RISCV_GCC) $(RISCV_CFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -c $< -o $@ |& tee $*.comp.log
 
-%.rvo: %.cpp
-	$(RISCV_GXX) $(RISCV_CXXFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -c $< -o $@ |& tee $*.comp.log
-
-%.rvo: %.S
-	$(RISCV_GCC) $(RISCV_GCC_OPTS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -D__ASSEMBLY__=1 -c $< -o $@ |& tee $*.comp.log
+ifeq ($(_KERNEL_COMPILER), GCC)
+  -include $(FRAGMENTS_PATH)/kernel/gcc/compile.mk
+else ifeq ($(_KERNEL_COMPILER), CLANG)
+  -include $(FRAGMENTS_PATH)/kernel/clang/compile.mk
+else ifndef _KERNEL_COMPILER
+  $(error $(shell echo -e "$(RED)BSG MAKE ERROR: Variable _KERNEL_COMPILER undefined. Must be GCC or CLANG$(NC)")
+else
+  $(error $(shell echo -e "$(RED)BSG MAKE ERROR: Invalid value for variable _KERNEL_COMPILER. Was $(_KERNEL_COMPILER). Must be GCC or CLANG$(NC)")
+endif

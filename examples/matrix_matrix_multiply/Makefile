@@ -62,7 +62,7 @@ KERNEL_TARGET = kernel
 # Include the kernel build rules (This must be included after KERNEL_SOURCES)
 ################################################################################
 
--include $(FRAGMENTS_PATH)/cudalite.mk
+-include $(FRAGMENTS_PATH)/kernel/cudalite.mk
 
 ################################################################################
 # Define the $(HOST_TARGET), the name of the host executable. The cosimulation
@@ -79,7 +79,7 @@ HOST_INCLUDES   := -I$(_REPO_ROOT)/examples/matrix_matrix_multiply
 # HOST_SOURCES)
 ################################################################################
 
--include $(FRAGMENTS_PATH)/cosim.mk
+-include $(FRAGMENTS_PATH)/host/cosim.mk
 
 ################################################################################
 # Define the rule to run the cosimulation test

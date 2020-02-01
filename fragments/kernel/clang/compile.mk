@@ -6,24 +6,18 @@ PASS_DIR         ?= $(BSG_MANYCORE_DIR)/software/manycore-llvm-pass
 PASS_LIB         ?= build/manycore/libManycorePass.so
 RUNTIME_FNS      ?= $(BSG_MANYCORE_DIR)/software/bsg_manycore_lib/bsg_tilegroup.h
 
-RISCV_GCC_OPTS += -mno-fdiv
-
 $(LLVM_DIR):
 	@echo "LLVM is not installed! Follow build instructions in the TRM and \
 	set LLVM_DIR in Makefile.builddefs accordingly" && exit 1
 
-# Remove default %.o: %.c rule
-%.o: %.c
-%.o: %.cpp
-
 # Emit -O0 so that loads to consecutive memory locations aren't combined
 # Opt can run optimizations in any order, so it doesn't matter
 %.bc: %.c $(PASS_LIB) $(LLVM_DIR) $(RUNTIME_FNS)
-	$(LLVM_CLANG) $(RISCV_GCC_OPTS) $(OPT_LEVEL) $(spmd_defs) -c -emit-llvm $(INCS) $< -o $@
+	$(LLVM_CLANG) $(RISCV_CFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -c -emit-llvm $< -o $@ |& tee $*.clang.log
 
 # do the same for C++ sources
 %.bc: %.cpp $(PASS_LIB) $(LLVM_DIR) $(RUNTIME_FNS)
-	$(LLVM_CLANG) $(RISCV_GXX_OPTS) $(OPT_LEVEL) $(spmd_defs) -c -emit-llvm $(INCS) $< -o $@
+	$(LLVM_CLANG) $(RISCV_CFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES)_defs) -c -emit-llvm  $< -o $@ |& tee $*.clang.log
 
 %.bc.pass: %.bc
 	$(LLVM_OPT) -load $(PASS_LIB) -manycore $(OPT_LEVEL) $< -o $@
@@ -31,7 +25,7 @@ $(LLVM_DIR):
 %.bc.s: %.bc.pass
 	$(LLVM_LLC) $< -o $@
 
-%.o: %.bc.s
+%.rvo: %.bc.s
 	$(RISCV_GCC) $(RISCV_GCC_OPTS) $(OPT_LEVEL) -c $< -o $@
 
 

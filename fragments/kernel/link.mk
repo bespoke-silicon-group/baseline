@@ -38,6 +38,11 @@ _REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 -include $(_REPO_ROOT)/environment.mk
 
 ################################################################################
+# BSG Manycore Make Functions
+################################################################################
+-include $(FRAGMENTS_PATH)/functions.mk
+
+################################################################################
 # BSG Manycore Machine Configuration
 ################################################################################
 # Import configuration from machine.mk. Defines Architectural
@@ -54,12 +59,7 @@ _REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 ################################################################################
 # Import tools configuration from tools.mk. This sets RISCV_GCC,
 # RISCV_GXX, RISCV_LINK and other RISCV toolchain variables
--include $(FRAGMENTS_PATH)/tools.mk
-
-################################################################################
-# BSG Manycore Make Functions
-################################################################################
--include $(FRAGMENTS_PATH)/functions.mk
+-include $(FRAGMENTS_PATH)/kernel/tools.mk
 
 ################################################################################
 # ELF File Parameters
@@ -73,7 +73,7 @@ BSG_ELF_OFF_CHIP_MEM := $(BSG_MACHINE_DRAM_INCLUDED)
 BSG_ELF_DRAM_WORDS := $(shell expr $(BSG_MACHINE_DRAM_BANK_SIZE_WORDS) \* $(BSG_MACHINE_GLOBAL_X))
 BSG_ELF_DRAM_SIZE := $(shell expr $(BSG_ELF_DRAM_WORDS) \* 4)
 
-# Victim Cache Set Size (in b32-bit WORDS and SIZE bytes)
+# Victim Cache Set Size (in 32-bit WORDS and SIZE bytes)
 _BSG_ELF_VCACHE_SET_WORDS := $(shell expr $(BSG_MACHINE_VCACHE_WAY) \* $(BSG_MACHINE_VCACHE_BLOCK_SIZE_WORDS))
 BSG_ELF_VCACHE_SET_SIZE := $(shell expr $(_BSG_ELF_VCACHE_SET_WORDS) \* 4)
 
@@ -96,15 +96,14 @@ ifeq ($(BSG_ELF_DEFAULT_DATA_LOC), LOCAL)
 BSG_ELF_STACK_PTR ?= 0x00001ffc
 else
   ifeq ($(BSG_ELF_OFF_CHIP_MEM), 1)
-  _BSG_ELF_DRAM_LIMIT = $(bsg-plus-fn $(BSG_ELF_DRAM_EVA_OFFSET),$(BSG_ELF_DRAM_SIZE))
+  _BSG_ELF_DRAM_LIMIT = $(shell expr $(BSG_ELF_DRAM_EVA_OFFSET) + $(BSG_ELF_DRAM_SIZE))
   else
-  _BSG_ELF_DRAM_LIMIT = $(bsg-plus-fn $(BSG_ELF_DRAM_EVA_OFFSET),$(BSG_ELF_VCACHE_MANYCORE_SIZE))
+  _BSG_ELF_DRAM_LIMIT = $(shell expr $(BSG_ELF_DRAM_EVA_OFFSET) + $(BSG_ELF_VCACHE_MANYCORE_SIZE))
   endif
 # Stack Pointer Address: Subtract 4 from the maximum memory space
 # address address
-BSG_ELF_STACK_PTR = $(bsg-minus-fn $(_BSG_ELF_DRAM_LIMIT),4)
+BSG_ELF_STACK_PTR = $(shell expr $(_BSG_ELF_DRAM_LIMIT) - 4)
 endif
-
 
 # Determine the correct linker script from machine parameters. The
 # presence of DRAM/Off-Chip memory, and the location of the .data
