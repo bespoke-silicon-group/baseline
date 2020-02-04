@@ -139,7 +139,7 @@ kernel/%/vanilla_operation_trace.csv kernel/%/vanilla_stats.csv kernel/%/$(HOST_
 # Define the clean rule
 ################################################################################
 custom.clean:
-	rm -rf kernel/*/*{.csv,.log,.rvo,.riscv,}
+	rm -rf kernel/*/*{.csv,.log,.rvo,.riscv}
 	rm -rf kernel/*/stats
 
 clean: cosim.clean analysis.clean cudalite.clean custom.clean
