@@ -37,15 +37,22 @@ _REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 
 -include $(_REPO_ROOT)/environment.mk
 
+
+################################################################################
+# Define the default kernel source file. If it is not defined, set it
+# to kernel.cpp
+################################################################################
+KERNEL_DEFAULT ?= kernel.cpp
+
 ################################################################################
 # Kernel Objects
 ################################################################################
 # KERNEL_OBJECTS defines the object files that that are linked as part of
-# the kernel. It is derived from KERNEL_*SOURCES (see below) but other
+# the kernel. It is derived from KERNEL_*LIBRARIES (see below) but other
 # objects can be added and linked as necessary.
-KERNEL_OBJECTS += $(KERNEL_SSOURCES:.s=.rvo)
-KERNEL_OBJECTS += $(KERNEL_CSOURCES:.c=.rvo)
-KERNEL_OBJECTS += $(KERNEL_CXXSOURCES:.cpp=.rvo)
+KERNEL_OBJECTS += $(KERNEL_SLIBRARIES:.s=.rvo)
+KERNEL_OBJECTS += $(KERNEL_CLIBRARIES:.c=.rvo)
+KERNEL_OBJECTS += $(KERNEL_CXXLIBRARIES:.cpp=.rvo)
 
 ################################################################################
 # Kernel Compilation Rules
@@ -58,5 +65,4 @@ _KERNEL_COMPILER ?= GCC
 ################################################################################
 -include $(FRAGMENTS_PATH)/kernel/link.mk
 
-
-
+cudalite.clean: kernel.link.clean kernel.compile.clean

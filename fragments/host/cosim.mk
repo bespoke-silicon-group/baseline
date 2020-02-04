@@ -99,3 +99,14 @@ $(HOST_TARGET).cosim: $(HOST_OBJECTS) $(SIMLIBS)
 	vcs tb glbl -j$(NPROCS) $(WRAPPER_NAME) $(filter %.o,$^) \
 		-Mdirectory=$@.tmp \
 		$(VCS_LDFLAGS) $(VCS_VFLAGS) -o $@ -l $@.vcs.log
+
+host.compile.clean: 
+	rm -rf $(HOST_OBJECTS)
+
+host.link.clean:
+	rm -rf $(HOST_TARGET)
+
+cosim.clean: host.link.clean host.compile.clean
+	rm -rf *.cosim{.daidir,.tmp,} 64
+	rm -rf vc_hdrs.h ucli.key
+	rm -rf *.vpd *.vcs.log

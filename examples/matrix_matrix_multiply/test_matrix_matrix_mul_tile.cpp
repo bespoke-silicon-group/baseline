@@ -311,31 +311,41 @@ int kernel_matrix_matrix_mul_tile (int argc, char **argv) {
          * Allocate random A & B on the host and initialize with random values.
          **********************************************************************/
         int32_t A_32[A_HEIGHT * A_WIDTH];
-        int32_t B_32[B_HEIGHT * B_WIDTH];
+        int32_t B_32[B_HEIGHT * B_WIDTH], *B_32p;
         int32_t BT_32[B_HEIGHT * B_WIDTH];
         int32_t C_32[C_HEIGHT * C_WIDTH];
         int32_t R_32[C_HEIGHT * C_WIDTH];
 
         int16_t A_16[A_HEIGHT * A_WIDTH];
-        int16_t B_16[B_HEIGHT * B_WIDTH];
+        int16_t B_16[B_HEIGHT * B_WIDTH], *B_16p;
         int16_t BT_16[B_HEIGHT * B_WIDTH];
         int16_t C_16[C_HEIGHT * C_WIDTH];
         int16_t R_16[C_HEIGHT * C_WIDTH];
 
         int8_t A_8[A_HEIGHT * A_WIDTH];
         int8_t B_8[B_HEIGHT * B_WIDTH];
-        int8_t BT_8[B_HEIGHT * B_WIDTH];
+        int8_t BT_8[B_HEIGHT * B_WIDTH], *B_8p;
         int8_t C_8[C_HEIGHT * C_WIDTH];
         int8_t R_8[C_HEIGHT * C_WIDTH];
 
         float A_f[A_HEIGHT * A_WIDTH];
         float B_f[B_HEIGHT * B_WIDTH];
-        float BT_f[B_HEIGHT * B_WIDTH];
+        float BT_f[B_HEIGHT * B_WIDTH], *B_fp;
         float C_f[C_HEIGHT * C_WIDTH];
         float R_f[C_HEIGHT * C_WIDTH];
         float R_fprime[C_HEIGHT * C_WIDTH] = {0.0};
 
+        void * B_actual;
 
+        if(strcmp("v1", test_name) || 
+           strcmp("v2", test_name)){
+                B_32p = B_32; B_16p = B_16; B_8p = B_8; B_fp = B_f;
+        } else {
+                B_32p = BT_32; B_16p = BT_16; B_8p = BT_8; B_fp = BT_f;
+        }
+
+                
+                
         auto res = distribution(generator);
 
         for (uint64_t i = 0; i < A_HEIGHT * A_WIDTH; i++) {
@@ -374,18 +384,6 @@ int kernel_matrix_matrix_mul_tile (int argc, char **argv) {
         matrix_transpose(B_8, BT_8, B_HEIGHT, B_WIDTH);
         matrix_transpose(B_f, BT_f, B_HEIGHT, B_WIDTH);
 
-        /*
-        matrix_mult_transpose_nomul(A_f, BT_f, R_fprime, A_HEIGHT, A_WIDTH, B_WIDTH);
-        matrix_print(A_f, A_HEIGHT, A_WIDTH);
-        bsg_pr_test_info("\n");
-        matrix_print(BT_f, B_WIDTH, B_HEIGHT);
-        bsg_pr_test_info("\n");
-        matrix_print(R_f, C_HEIGHT, C_WIDTH);
-        bsg_pr_test_info("\n");
-        matrix_print(R_fprime, C_HEIGHT, C_WIDTH);
-        bsg_pr_test_info("SSE: %f\n", matrix_sse(R_f, R_fprime, C_HEIGHT, C_WIDTH));
-        return HB_MC_SUCCESS;
-        */
         /**********************************************************************
          * Define path to binary.
          * Initialize device, load binary and unfreeze tiles.
@@ -437,206 +435,45 @@ int kernel_matrix_matrix_mul_tile (int argc, char **argv) {
                 bsg_pr_err("failed to allocate memory on device.\n");
                 return rc;
         }
-        /*
-        rc = run_test(device, "kernel_matrix_multiply_dram_int",
-                      A_32, B_32, C_32, R_32,
-                      A_device, B_device, C_device,
-                      tg_dim, grid_dim);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("int32_t (DRAM) test failed\n");
-                return rc;
-        }
-        bsg_pr_test_info("int32_t (DRAM) test passed!\n");
-
-        rc = run_test(device, "kernel_matrix_multiply_dram_int16",
-                      A_16, B_16, C_16, R_16,
-                      A_device, B_device, C_device,
-                      tg_dim, grid_dim);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("int16_t (DRAM) test failed\n");
-                return rc;
-        }
-        bsg_pr_test_info("int16_t (DRAM) test passed!\n");
-
-        rc = run_test(device, "kernel_matrix_multiply_dram_int8",
-                      A_8, B_8, C_8, R_8,
-                      A_device, B_device, C_device,
-                      tg_dim, grid_dim);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("int8_t (DRAM) test failed\n");
-                return rc;
-        }
-        bsg_pr_test_info("int8_t (DRAM) test passed!\n");
-        */
-        rc = run_test(device, "kernel_matrix_multiply_dram_float",
-                      A_f, B_f, C_f, R_f,
+        rc = run_test(device, "kernel_matrix_multiply_int",
+                      A_32, B_32p, C_32, R_32,
                       A_device, B_device, C_device,
                       tg_dim, grid_dim, 1);
         if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("float (DRAM) test failed\n");
+                bsg_pr_err("int32_t test failed\n");
                 return rc;
         }
-        bsg_pr_test_info("float (DRAM) test passed!\n");
-        /*
-        rc = run_test(device, "kernel_matrix_multiply_dmem_int",
-                      A_32, B_32, C_32, R_32,
-                      A_device, B_device, C_device,
-                      tg_dim, grid_dim);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("int32_t (DMEM) test failed\n");
-                return rc;
-        }
-        bsg_pr_test_info("int32_t (DMEM) test passed!\n");
+        bsg_pr_test_info("int32_t test passed!\n");
 
-        rc = run_test(device, "kernel_matrix_multiply_dmem_int16",
-                      A_16, B_16, C_16, R_16,
-                      A_device, B_device, C_device,
-                      tg_dim, grid_dim);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("int16_t (DMEM) test failed\n");
-                return rc;
-        }
-        bsg_pr_test_info("int16_t (DMEM) test passed!\n");
-
-        rc = run_test(device, "kernel_matrix_multiply_dmem_int8",
-                      A_8, B_8, C_8, R_8,
-                      A_device, B_device, C_device,
-                      tg_dim, grid_dim);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("int8_t (DMEM) test failed\n");
-                return rc;
-        }
-        bsg_pr_test_info("int8_t (DMEM) test passed!\n");
-        */
-        rc = run_test(device, "kernel_matrix_multiply_dmem_float",
-                      A_f, B_f, C_f, R_f,
+        rc = run_test(device, "kernel_matrix_multiply_int16",
+                      A_16, B_16p, C_16, R_16,
                       A_device, B_device, C_device,
                       tg_dim, grid_dim, 2);
         if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("float (DMEM) test failed\n");
+                bsg_pr_err("int16_t test failed\n");
                 return rc;
         }
-        bsg_pr_test_info("float (DMEM) test passed!\n");
-        /*
-        rc = run_test(device, "kernel_matrix_multiply_dmem_transpose_int",
-                      A_32, BT_32, C_32, R_32,
-                      A_device, B_device, C_device,
-                      tg_dim, grid_dim);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("int32_t (DMEM, Transpose) test failed\n");
-                return rc;
-        }
-        bsg_pr_test_info("int32_t (DMEM, Transpose) test passed!\n");
+        bsg_pr_test_info("int16_t test passed!\n");
 
-        rc = run_test(device, "kernel_matrix_multiply_dmem_transpose_int16",
-                      A_16, BT_16, C_16, R_16,
-                      A_device, B_device, C_device,
-                      tg_dim, grid_dim);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("int16_t (DMEM, Transpose) test failed\n");
-                return rc;
-        }
-        bsg_pr_test_info("int16_t (DMEM, Transpose) test passed!\n");
-
-        rc = run_test(device, "kernel_matrix_multiply_dmem_transpose_int8",
-                      A_8, BT_8, C_8, R_8,
-                      A_device, B_device, C_device,
-                      tg_dim, grid_dim);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("int8_t (DMEM, Transpose) test failed\n");
-                return rc;
-        }
-        bsg_pr_test_info("int8_t (DMEM, Transpose) test passed!\n");
-        */
-        rc = run_test(device, "kernel_matrix_multiply_dmem_transpose_float",
-                      A_f, BT_f, C_f, R_f,
+        rc = run_test(device, "kernel_matrix_multiply_int8",
+                      A_8, B_8p, C_8, R_8,
                       A_device, B_device, C_device,
                       tg_dim, grid_dim, 3);
         if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("float (DMEM, Transpose) test failed\n");
+                bsg_pr_err("int8_t test failed\n");
                 return rc;
         }
-        bsg_pr_test_info("float (DMEM, Transpose) test passed!\n");
-        /*
-        rc = run_test(device, "kernel_matrix_multiply_dmem_transpose_nomul_int",
-                      A_32, BT_32, C_32, R_32,
-                      A_device, B_device, C_device,
-                      tg_dim, grid_dim);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("int32_t (DMEM, Transpose, No-Mul) test failed\n");
-                return rc;
-        }
-        bsg_pr_test_info("int32_t (DMEM, Transpose, No-Mul) test passed!\n");
+        bsg_pr_test_info("int8_t test passed!\n");
 
-        rc = run_test(device, "kernel_matrix_multiply_dmem_transpose_nomul_int16",
-                      A_16, BT_16, C_16, R_16,
-                      A_device, B_device, C_device,
-                      tg_dim, grid_dim);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("int16_t (DMEM, Transpose, No-Mul) test failed\n");
-                return rc;
-        }
-        bsg_pr_test_info("int16_t (DMEM, Transpose, No-Mul) test passed!\n");
-
-        rc = run_test(device, "kernel_matrix_multiply_dmem_transpose_nomul_int8",
-                      A_8, BT_8, C_8, R_8,
-                      A_device, B_device, C_device,
-                      tg_dim, grid_dim);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("int8_t (DMEM, Transpose, No-Mul) test failed\n");
-                return rc;
-        }
-        bsg_pr_test_info("int8_t (DMEM, Transpose, No-Mul) test passed!\n");*/
-
-        rc = run_test(device, "kernel_matrix_multiply_dmem_transpose_nomul_float",
-                      A_f, BT_f, C_f, R_f,
+        rc = run_test(device, "kernel_matrix_multiply_float",
+                      A_f, B_fp, C_f, R_f,
                       A_device, B_device, C_device,
                       tg_dim, grid_dim, 4);
         if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("float (DMEM, Transpose, No-Mul) test failed\n");
+                bsg_pr_err("float test failed\n");
                 return rc;
         }
-        bsg_pr_test_info("float (DMEM, Transpose, No-Mul) test passed!\n");
-
-        rc = run_test(device, "kernel_matrix_multiply_dmem_transpose_nomul_unroll_hand_2_float",
-                      A_f, BT_f, C_f, R_f,
-                      A_device, B_device, C_device,
-                      tg_dim, grid_dim, 5);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("float (DMEM, Transpose, No-Mul, Unroll=2 (Hand)) test failed\n");
-                return rc;
-        }
-        bsg_pr_test_info("float (DMEM, Transpose, No-Mul, Unroll=2 (Hand)) test passed!\n");
-
-        rc = run_test(device, "kernel_matrix_multiply_dmem_transpose_nomul_unroll2_float",
-                      A_f, BT_f, C_f, R_f,
-                      A_device, B_device, C_device,
-                      tg_dim, grid_dim, 6);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("float (DMEM, Transpose, No-Mul, Unroll=2) test failed\n");
-                return rc;
-        }
-        bsg_pr_test_info("float (DMEM, Transpose, No-Mul, Unroll=2) test passed!\n");
-
-        rc = run_test(device, "kernel_matrix_multiply_dmem_transpose_nomul_unroll_hand_4_float",
-                      A_f, BT_f, C_f, R_f,
-                      A_device, B_device, C_device,
-                      tg_dim, grid_dim, 7);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("float (DMEM, Transpose, No-Mul, Unroll=4 (Hand)) test failed\n");
-                return rc;
-        }
-        bsg_pr_test_info("float (DMEM, Transpose, No-Mul, Unroll=4 (Hand)) test passed!\n");
-
-        rc = run_test(device, "kernel_matrix_multiply_dmem_transpose_nomul_unroll4_float",
-                      A_f, BT_f, C_f, R_f,
-                      A_device, B_device, C_device,
-                      tg_dim, grid_dim, 8);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("float (DMEM, Transpose, No-Mul, Unroll=4) test failed\n");
-                return rc;
-        }
-        bsg_pr_test_info("float (DMEM, Transpose, No-Mul, Unroll=4) test passed!\n");
+        bsg_pr_test_info("float test passed!\n");
 
         /**********************************************************************
          * Freeze the tiles and memory manager cleanup.

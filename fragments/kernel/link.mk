@@ -159,9 +159,15 @@ RISCV_LDFLAGS += -Wl,--no-check-sections
 ################################################################################
 # This builds a kernel.riscv binary for the current machine type and
 # tile group size. KERNEL_OBJECTS can be used to include other object
-# files in the linker.
-kernel.riscv kernel.$(BSG_TILE_GROUP_ABRV).riscv: $(MACHINE_CRT_OBJ) main.rvo $(BSG_MANYCORE_LIB_OBJECTS) $(KERNEL_OBJECTS)
+# files in the linker. KERNEL_DEFAULT can be overridden by the user,
+# but defaults to kernel.cpp
+kernel.riscv: $(basename $(KERNEL_DEFAULT)).rvo $(MACHINE_CRT_OBJ) main.rvo $(BSG_MANYCORE_LIB_OBJECTS) $(KERNEL_OBJECTS)
 	$(RISCV_LD) -T $(RISCV_LINK_SCRIPT) $^ $(RISCV_LDFLAGS) -o $@
 
-$(BSG_TILE_GROUP_ABRV)/kernel.riscv: $(MACHINE_CRT_OBJ) main.rvo $(BSG_MANYCORE_LIB_OBJECTS) $(KERNEL_OBJECTS) | $(BSG_TILE_GROUP_ABRV)
+%/kernel.riscv: %/kernel.rvo $(MACHINE_CRT_OBJ) main.rvo $(BSG_MANYCORE_LIB_OBJECTS) $(KERNEL_OBJECTS)
 	$(RISCV_LD) -T $(RISCV_LINK_SCRIPT) $^ $(RISCV_LDFLAGS) -o $@
+
+kernel.link.clean:
+	rm -rf *.riscv
+
+.PRECIOUS: %.riscv

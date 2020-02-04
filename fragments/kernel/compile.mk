@@ -104,8 +104,6 @@ bsg_set_tile_x_y.rvo bsg_printf.rvo: %.rvo:$(_BSG_MANYCORE_LIB_PATH)/%.c
 main.rvo: $(_BSG_MANYCORE_CUDALITE_MAIN_PATH)/main.c
 	$(RISCV_GCC) $(RISCV_CFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -c $< -o $@
 
-$(KERNEL_OBJECTS): RISCV_INCLUDES += $(KERNEL_INCLUDES)
-
 ifeq ($(_KERNEL_COMPILER), GCC)
   -include $(FRAGMENTS_PATH)/kernel/gcc/compile.mk
 else ifeq ($(_KERNEL_COMPILER), CLANG)
