@@ -170,4 +170,4 @@ kernel.riscv: $(MACHINE_CRT_OBJ) main.rvo $(BSG_MANYCORE_LIB_OBJECTS) $(KERNEL_O
 kernel.link.clean:
 	rm -rf *.riscv
 
-.PRECIOUS: %.riscv
+.PRECIOUS: kernel.riscv %/kernel.riscv

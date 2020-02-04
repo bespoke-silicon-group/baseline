@@ -113,3 +113,5 @@ else ifndef _KERNEL_COMPILER
 else
   $(error $(shell echo -e "$(RED)BSG MAKE ERROR: Invalid value for variable _KERNEL_COMPILER. Was $(_KERNEL_COMPILER). Must be GCC or CLANG$(NC)")
 endif
+
+.PRECIOUS: %.rvo

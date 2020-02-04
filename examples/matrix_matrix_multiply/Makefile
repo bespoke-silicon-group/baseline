@@ -171,23 +171,24 @@ kernel/%/$(HOST_TARGET).cosim.log: kernel/%/kernel.riscv $(HOST_TARGET).cosim
 # Define the clean rules. clean calls the makefile-specific cleans, whereas
 # users can add commands and dependencies to custom.clean.
 ################################################################################
-kernel.clean:
+version.clean:
 	rm -rf kernel/*/*{.csv,.log,.rvo,.riscv}
 	rm -rf kernel/*/stats
 
 host.clean:
 	rm -rf $(HOST_TARGET)
 
-custom.clean: kernel.clean host.clean
+custom.clean: version.clean host.clean
 
 clean: cosim.clean analysis.clean cudalite.clean custom.clean
 
 ################################################################################
-# Define overall-goals. all runs the default kernel
+# Define overall-goals. The all rule runs all kernel versions, and the default
+# kernel.
 ################################################################################
 
 .DEFAULT_GOAL = all
-all: analysis
+all: analysis default
 
 default: $(HOST_TARGET).cosim.log
 
@@ -199,3 +200,4 @@ analysis: $(foreach v,$(VERSIONS),kernel/$v/stats)
 
 # Always re-run, if asked.
 .PHONY: default analysis
+.PRECIOUS: $(KERNEL_ALIASES)

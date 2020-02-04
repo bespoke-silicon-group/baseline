@@ -337,7 +337,7 @@ int kernel_matrix_matrix_mul_tile (int argc, char **argv) {
 
         void * B_actual;
 
-        if(!strcmp("v1", test_name) || !strcmp("v2", test_name)){
+        if(!strcmp("v0", test_name) || !strcmp("v1", test_name) || !strcmp("v2", test_name)){
                 B_32p = B_32; B_16p = B_16; B_8p = B_8; B_fp = B_f;
         } else {
                 B_32p = BT_32; B_16p = BT_16; B_8p = BT_8; B_fp = BT_f;

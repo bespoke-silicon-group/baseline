@@ -107,6 +107,6 @@ host.link.clean:
 	rm -rf $(HOST_TARGET)
 
 cosim.clean: host.link.clean host.compile.clean
-	rm -rf *.cosim{.daidir,.tmp,} 64
+	rm -rf *.cosim{.daidir,.tmp,.log,} 64
 	rm -rf vc_hdrs.h ucli.key
 	rm -rf *.vpd *.vcs.log
