@@ -17,3 +17,5 @@ analysis.clean:
 	rm -rf *.dis
 	rm -rf vanilla_stats.csv vanilla_operation_trace.csv vanilla.log vcache_non_blocking_stats.log vcache_blocking_stats.log
 	rm -rf stats
+
+.PRECIOUS: %/vanilla_stats.csv vanilla_stats.csv

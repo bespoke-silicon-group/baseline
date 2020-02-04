@@ -161,10 +161,10 @@ RISCV_LDFLAGS += -Wl,--no-check-sections
 # tile group size. KERNEL_OBJECTS can be used to include other object
 # files in the linker. KERNEL_DEFAULT can be overridden by the user,
 # but defaults to kernel.cpp
-kernel.riscv: $(basename $(KERNEL_DEFAULT)).rvo $(MACHINE_CRT_OBJ) main.rvo $(BSG_MANYCORE_LIB_OBJECTS) $(KERNEL_OBJECTS)
+kernel.riscv: $(MACHINE_CRT_OBJ) main.rvo $(BSG_MANYCORE_LIB_OBJECTS) $(KERNEL_OBJECTS) $(basename $(KERNEL_DEFAULT)).rvo 
 	$(RISCV_LD) -T $(RISCV_LINK_SCRIPT) $^ $(RISCV_LDFLAGS) -o $@
 
-%/kernel.riscv: %/kernel.rvo $(MACHINE_CRT_OBJ) main.rvo $(BSG_MANYCORE_LIB_OBJECTS) $(KERNEL_OBJECTS)
+%/kernel.riscv: $(MACHINE_CRT_OBJ) main.rvo $(BSG_MANYCORE_LIB_OBJECTS) $(KERNEL_OBJECTS) %/kernel.rvo 
 	$(RISCV_LD) -T $(RISCV_LINK_SCRIPT) $^ $(RISCV_LDFLAGS) -o $@
 
 kernel.link.clean:
