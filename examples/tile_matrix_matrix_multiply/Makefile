@@ -91,7 +91,7 @@ KERNEL_DEFAULT      := kernel/$(DEFAULT_VERSION)/kernel.cpp
 # compiled and linked into the executable.
 ################################################################################
 
-HOST_TARGET         := test_matrix_matrix_mul_tile
+HOST_TARGET         := tile_matrix_matrix_multiply
 HOST_CSOURCES       := 
 HOST_CXXSOURCES     := $(HOST_TARGET).cpp
 HOST_INCLUDES       := -I$(CURRENT_PATH)

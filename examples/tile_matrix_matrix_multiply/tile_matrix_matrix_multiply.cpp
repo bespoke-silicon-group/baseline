@@ -34,7 +34,7 @@
 // NOTE: A_HEIGHT * A_WIDTH + B_HEIGHT * B_WIDTH + C_HEIGHT * C_WIDTH <= 4KB,
 // the size of DMEM on the tile.
 
-#include "test_matrix_matrix_mul_tile.hpp"
+#include "tile_matrix_matrix_multiply.hpp"
 
 // Matrix sizes:
 #define A_HEIGHT 8
@@ -186,7 +186,7 @@ int run_test(hb_mc_device_t &device, const char* kernel,
 }
 
 // Run a series of Matrix-Matrix multiply tsts on the Manycore device
-int kernel_matrix_matrix_mul_tile (int argc, char **argv) {
+int kernel_matrix_matrix_multiply (int argc, char **argv) {
         int rc;
         char *bin_path, *test_name;
         struct arguments_path args = {NULL, NULL};
@@ -397,16 +397,14 @@ void cosim_main(uint32_t *exit_code, char * args) {
         scope = svGetScopeFromName("tb");
         svSetScope(scope);
 
-        bsg_pr_test_info("test_matrix_mul_tile Regression Test (COSIMULATION)\n");
-        int rc = kernel_matrix_matrix_mul_tile(argc, argv);
+        int rc = kernel_matrix_matrix_multiply(argc, argv);
         *exit_code = rc;
         bsg_pr_test_pass_fail(rc == HB_MC_SUCCESS);
         return;
 }
 #else
 int main(int argc, char ** argv) {
-        bsg_pr_test_info("test_matrix_mul_tile Regression Test (F1)\n");
-        int rc = kernel_matrix_matrix_mul_tile(argc, argv);
+        int rc = kernel_matrix_matrix_multiply(argc, argv);
         bsg_pr_test_pass_fail(rc == HB_MC_SUCCESS);
         return rc;
 }

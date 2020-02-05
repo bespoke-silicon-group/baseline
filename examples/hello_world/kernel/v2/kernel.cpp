@@ -6,8 +6,8 @@
 // before bsg_manycore.h and bsg_tile_group_barrier.h are
 // included. bsg_tiles_X and bsg_tiles_Y must also be defined for
 // legacy reasons, but they are deprecated.
-#define BSG_TILE_GROUP_X_DIM 2
-#define BSG_TILE_GROUP_Y_DIM 2
+#define BSG_TILE_GROUP_X_DIM 4
+#define BSG_TILE_GROUP_Y_DIM 4
 #define bsg_tiles_X bsg_tiles_X
 #define bsg_tiles_Y bsg_tiles_Y
 #include <bsg_manycore.h>

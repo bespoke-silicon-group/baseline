@@ -25,34 +25,17 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "test_hello_world.hpp"
-
-#define ALLOC_NAME "default_allocator"
-
-
-/******************************************************************************/
-/* Runs the Hello World test on a single grid of 1x1 tile.                    */
-/******************************************************************************/
-
-
-
-
-/*!
- * Host code 
- */
-
+#include "hello_world.hpp"
 
 int run_test(hb_mc_device_t &device, const char* kernel,
              const hb_mc_dimension_t &tg_dim,
-             const hb_mc_dimension_t &grid_dim,
-             const unsigned int tag){
+             const hb_mc_dimension_t &grid_dim){
         int rc;
-
 
         /**********************************************************************
          * Prepare list of input arguments for kernel.
          **********************************************************************/
-        uint32_t cuda_argv[1] = {tag};
+        uint32_t cuda_argv[1] = {0};
                                 
         /**********************************************************************
          * Enquque grid of tile groups, pass in grid and tile group
@@ -61,7 +44,7 @@ int run_test(hb_mc_device_t &device, const char* kernel,
         rc = hb_mc_kernel_enqueue (&device, grid_dim, tg_dim,
                                    kernel, 1, cuda_argv);
         if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("failed to initialize grid.\n");
+                bsg_pr_test_err("failed to initialize grid.\n");
                 return rc;
         }
 
@@ -72,7 +55,7 @@ int run_test(hb_mc_device_t &device, const char* kernel,
          **********************************************************************/
         rc = hb_mc_device_tile_groups_execute(&device);
         if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("failed to execute tile groups.\n");
+                bsg_pr_test_err("failed to execute tile groups.\n");
                 return rc;
         }
         return rc;
@@ -88,16 +71,25 @@ int kernel_hello_world (int argc, char **argv) {
         bin_path = args.path;
         test_name = args.name;
 
-        bsg_pr_test_info("Running CUDA Hello World "
-                         "on a single tile.\n");
+        bsg_pr_test_info("Running CUDA Hello World. "
+                         "Version %s", args.name);
 
         /**********************************************************************
          * Define tg_dim_x/y: number of tiles in each tile group
          * Calculate grid_dim_x/y: number of tile groups needed
          **********************************************************************/
-        hb_mc_dimension_t tg_dim = { .x = 1, .y = 1 };
+        hb_mc_dimension_t tg_dim = { .x = 0, .y = 0 };
         hb_mc_dimension_t grid_dim = { .x = 1, .y = 1 };
-
+        if (!strcmp("v0", test_name)){
+                tg_dim = { .x = 1, .y = 1 };
+        } else if (!strcmp("v1", test_name)){
+                tg_dim = { .x = 2, .y = 2 };
+        } else if (!strcmp("v2", test_name)){
+                tg_dim = { .x = 4, .y = 4 };
+        } else {
+                bsg_pr_test_err("Invalid version provided!.\n");
+                return HB_MC_INVALID;
+        }
 
         /**********************************************************************
          * Define path to binary.
@@ -106,14 +98,14 @@ int kernel_hello_world (int argc, char **argv) {
         hb_mc_device_t device;
         rc = hb_mc_device_init(&device, test_name, 0);
         if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("failed to initialize device.\n");
+                bsg_pr_test_err("failed to initialize device.\n");
                 return rc;
         }
 
 
-        rc = hb_mc_device_program_init(&device, bin_path, ALLOC_NAME, 0);
+        rc = hb_mc_device_program_init(&device, bin_path, "default_allocator", 0);
         if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("failed to initialize program.\n");
+                bsg_pr_test_err("failed to initialize program.\n");
                 return rc;
         }
 
@@ -123,10 +115,9 @@ int kernel_hello_world (int argc, char **argv) {
          * sizeof(int8_t) we'll reuse the same buffers for each test
          **********************************************************************/
 
-        rc = run_test(device, "kernel_hello_world",
-                      tg_dim, grid_dim, 1);
+        rc = run_test(device, "kernel_hello_world", tg_dim, grid_dim);
         if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("test failed\n");
+                bsg_pr_test_err("test failed\n");
                 return rc;
         }
         bsg_pr_test_info("test passed!\n");
@@ -137,7 +128,7 @@ int kernel_hello_world (int argc, char **argv) {
          **********************************************************************/
         rc = hb_mc_device_finish(&device);
         if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("failed to de-initialize device.\n");
+                bsg_pr_test_err("failed to de-initialize device.\n");
                 return rc;
         }
 

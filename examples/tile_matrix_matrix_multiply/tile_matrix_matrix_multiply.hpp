@@ -1,4 +1,4 @@
-// Copyright (c) 2019, University of Washington All rights reserved.
+// Copyright (c) 2020, University of Washington All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification,
 // are permitted provided that the following conditions are met:
@@ -25,22 +25,17 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef TEST_HELLO_WORLD_HPP
-#define TEST_HELLO_WORLD_HPP
+#ifndef __TILE_MATRIX_MATRIX_MULTIPLY_HPP
+#define __TILE_MATRIX_MATRIX_MULTIPLY_HPP
 
-#include <cstdio>
 #include <cstring>
-#include <ctime>
 #include <cstdlib>
-#include <cfloat>
 #include <random>
 #include <limits>
 #include <iostream>
 #include <typeinfo>
-#include <bsg_manycore_tile.h>
-#include <bsg_manycore_loader.h>
 #include <bsg_manycore_errno.h>
 #include <bsg_manycore_cuda.h>
-#include "../common.h" // TODO: Er....
+#include "../common.h"
 
 #endif
