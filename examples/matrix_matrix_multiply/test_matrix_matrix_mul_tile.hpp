@@ -1,4 +1,4 @@
-// Copyright (c) 2019, University of Washington All rights reserved.
+// Copyright (c) 2020, University of Washington All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without modification,
 // are permitted provided that the following conditions are met:
@@ -28,19 +28,14 @@
 #ifndef TEST_MATRIX_MATRIX_MUL_TILE_DMEM_HPP
 #define TEST_MATRIX_MATRIX_MUL_TILE_DMEM_HPP
 
-#include <cstdio>
 #include <cstring>
-#include <ctime>
 #include <cstdlib>
-#include <cfloat>
 #include <random>
 #include <limits>
 #include <iostream>
 #include <typeinfo>
-#include <bsg_manycore_tile.h>
-#include <bsg_manycore_loader.h>
 #include <bsg_manycore_errno.h>
 #include <bsg_manycore_cuda.h>
-#include "../common.h" // TODO: Er....
+#include "../common.h"
 
 #endif
