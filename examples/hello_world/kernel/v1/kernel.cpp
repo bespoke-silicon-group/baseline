@@ -8,8 +8,8 @@
 // legacy reasons, but they are deprecated.
 #define BSG_TILE_GROUP_X_DIM 2
 #define BSG_TILE_GROUP_Y_DIM 2
-#define bsg_tiles_X bsg_tiles_X
-#define bsg_tiles_Y bsg_tiles_Y
+#define bsg_tiles_X BSG_TILE_GROUP_X_DIM
+#define bsg_tiles_Y BSG_TILE_GROUP_Y_DIM
 #include <bsg_manycore.h>
 #include <bsg_tile_group_barrier.h>
 
