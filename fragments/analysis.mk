@@ -13,14 +13,17 @@ stats: vanilla_stats.csv
 graphs: blood_abstract.png blood_detailed.png
 %/graphs: %/blood_abstract.png %/blood_detailed.png ;
 
-blood_abstract.png: ARGS += --abstract
-blood_detailed.png blood_abstract.png: vanilla_operation_trace.csv vanilla_stats.csv
+blood_detailed.png: vanilla_operation_trace.csv vanilla_stats.csv
+	python3 $(BSG_MANYCORE_DIR)/software/py/blood_graph.py --input vanilla_operation_trace.csv --timing-stats vanilla_stats.csv --generate-key
+
+blood_abstract.png: vanilla_operation_trace.csv vanilla_stats.csv
 	python3 $(BSG_MANYCORE_DIR)/software/py/blood_graph.py --input vanilla_operation_trace.csv --timing-stats vanilla_stats.csv --generate-key --abstract
 
-%/blood_abstract.png: ARGS += --abstract
-%/blood_detailed.png %/blood_abstract.png: %/vanilla_operation_trace.csv %/vanilla_stats.csv
-	cd $(dir $<) &&  python3 $(BSG_MANYCORE_DIR)/software/py/blood_graph.py --input vanilla_operation_trace.csv --timing-stats vanilla_stats.csv --generate-key $(ARGS)
+%/blood_detailed.png: %/vanilla_operation_trace.csv %/vanilla_stats.csv
+	cd $(dir $<) &&  python3 $(BSG_MANYCORE_DIR)/software/py/blood_graph.py --input vanilla_operation_trace.csv --timing-stats vanilla_stats.csv --generate-key
 
+%/blood_abstract.png: %/vanilla_operation_trace.csv %/vanilla_stats.csv
+	cd $(dir $<) &&  python3 $(BSG_MANYCORE_DIR)/software/py/blood_graph.py --input vanilla_operation_trace.csv --timing-stats vanilla_stats.csv --generate-key --abstract
 
 %/stats: %/vanilla_stats.csv
 	cd $(dir $<) && python3 $(BSG_MANYCORE_DIR)/software/py/vanilla_stats_parser.py --tile --tile_group
@@ -31,3 +34,5 @@ analysis.clean:
 	rm -rf stats
 	rm -rf blood_abstract.png blood_detailed.png
 	rm -rf key_abstract.png key_detailed.png
+
+.PRECIOUS: %.png %/blood_detailed.png %/blood_abstract.png
