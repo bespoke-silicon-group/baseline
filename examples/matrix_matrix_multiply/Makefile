@@ -53,7 +53,7 @@ BSG_TILE_GROUP_DIM_Y     ?= 1
 ################################################################################
 # Kernel versions. See kernel/README.md for more information.  Version names do
 # not need to use v* and can be any string
-VERSIONS = v0 v1 v2 v3 v4 v5 v6 v7 v8
+VERSIONS = v0 v1 v2 v3 v4 v5 v6 v7 v8 v9
 
 ################################################################################
 # Define any sources that should be used compiled during kernel compilation,
@@ -172,7 +172,7 @@ kernel/%/$(HOST_TARGET).cosim.log: kernel/%/kernel.riscv $(HOST_TARGET).cosim
 # users can add commands and dependencies to custom.clean.
 ################################################################################
 version.clean:
-	rm -rf kernel/*/*{.csv,.log,.rvo,.riscv,.vpd,.key}
+	rm -rf kernel/*/*{.csv,.log,.rvo,.riscv,.vpd,.key,.png}
 	rm -rf kernel/*/stats
 
 host.clean:
@@ -196,7 +196,7 @@ default: stats
 # versions in $(VERSIONS). When each execution finishes, it generates the
 # statistics for each kernel. All output products are in respective
 # kernel/<version name>/ directories
-analysis: $(foreach v,$(VERSIONS),kernel/$v/stats)
+analysis: $(foreach v,$(VERSIONS),kernel/$v/stats kernel/$v/graphs)
 
 # Always re-run, if asked.
 .PHONY: default analysis

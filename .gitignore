@@ -9,3 +9,5 @@ ucli.key
 vc_hdrs.h
 *~
 *.riscv
+*.png
+*.dis

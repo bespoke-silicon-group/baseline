@@ -32,7 +32,7 @@ extern "C" {
 
                 for(int i = 0; i <= iter; ++i){
                         bsg_cuda_print_stat_start(temp);
-                        rc = kernel_matrix_multiply_transpose_nomul_unroll_init<4>(A_local, B_local, C_local,
+                        rc = kernel_matrix_multiply_transpose_nomul_unroll_init_expect<4>(A_local, B_local, C_local,
                                                                                    A_HEIGHT, A_WIDTH, B_WIDTH);
                         bsg_cuda_print_stat_end(temp);
                         temp = tag;
@@ -58,7 +58,7 @@ extern "C" {
 
                 for(int i = 0; i <= iter; ++i){
                         bsg_cuda_print_stat_start(temp);
-                        rc = kernel_matrix_multiply_transpose_nomul_unroll_init<4>(A_local, B_local, C_local,
+                        rc = kernel_matrix_multiply_transpose_nomul_unroll_init_expect<4>(A_local, B_local, C_local,
                                                                               A_HEIGHT, A_WIDTH, B_WIDTH);
                         bsg_cuda_print_stat_end(temp);
                         temp = tag;
@@ -84,7 +84,7 @@ extern "C" {
 
                 for(int i = 0; i <= iter; ++i){
                         bsg_cuda_print_stat_start(temp);
-                        rc = kernel_matrix_multiply_transpose_nomul_unroll_init<4>(A_local, B_local, C_local,
+                        rc = kernel_matrix_multiply_transpose_nomul_unroll_init_expect<4>(A_local, B_local, C_local,
                                                                                    A_HEIGHT, A_WIDTH, B_WIDTH);
                         bsg_cuda_print_stat_end(temp);
                         temp = tag;
@@ -110,7 +110,7 @@ extern "C" {
 
                 for(int i = 0; i <= iter; ++i){
                         bsg_cuda_print_stat_start(temp);
-                        rc = kernel_matrix_multiply_transpose_nomul_unroll_init<4>(A_local, B_local, C_local,
+                        rc = kernel_matrix_multiply_transpose_nomul_unroll_init_expect<4>(A_local, B_local, C_local,
                                                                                    A_HEIGHT, A_WIDTH, B_WIDTH);
                         bsg_cuda_print_stat_end(temp);
                         temp = tag;

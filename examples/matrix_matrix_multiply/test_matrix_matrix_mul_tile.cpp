@@ -40,9 +40,9 @@
 #define A_HEIGHT 8
 #define A_WIDTH  8
 #define B_HEIGHT A_WIDTH
-#define B_WIDTH 8
+#define B_WIDTH  8
 #define C_HEIGHT A_HEIGHT
-#define C_WIDTH B_WIDTH
+#define C_WIDTH  B_WIDTH
 #define NUM_ITER 4
 
 // Host Matrix multiplication code (to compare results)
