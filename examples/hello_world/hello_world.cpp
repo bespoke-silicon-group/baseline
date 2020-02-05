@@ -72,7 +72,7 @@ int kernel_hello_world (int argc, char **argv) {
         test_name = args.name;
 
         bsg_pr_test_info("Running CUDA Hello World. "
-                         "Version %s", args.name);
+                         "Version %s\n", args.name);
 
         /**********************************************************************
          * Define tg_dim_x/y: number of tiles in each tile group
@@ -150,7 +150,6 @@ void cosim_main(uint32_t *exit_code, char * args) {
         scope = svGetScopeFromName("tb");
         svSetScope(scope);
 #endif
-        bsg_pr_test_info("test_hello_world Regression Test (COSIMULATION)\n");
         int rc = kernel_hello_world(argc, argv);
         *exit_code = rc;
         bsg_pr_test_pass_fail(rc == HB_MC_SUCCESS);
@@ -158,7 +157,6 @@ void cosim_main(uint32_t *exit_code, char * args) {
 }
 #else
 int main(int argc, char ** argv) {
-        bsg_pr_test_info("test_hello_world Regression Test (F1)\n");
         int rc = kernel_hello_world(argc, argv);
         bsg_pr_test_pass_fail(rc == HB_MC_SUCCESS);
         return rc;
