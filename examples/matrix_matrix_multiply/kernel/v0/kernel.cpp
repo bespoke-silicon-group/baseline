@@ -7,14 +7,15 @@
  * is used for every iteration). See v1 for comparison.
  */
 
-#include <bsg_manycore.h>
-#include <bsg_set_tile_x_y.h>
-
 // BSG_TILE_GROUP_X_DIM and BSG_TILE_GROUP_Y_DIM must be defined
-// before bsg_tile_group_barrier.h is included. bsg_tiles_X and
-// bsg_tiles_Y are defined by macros in the Makefile.
-#define BSG_TILE_GROUP_X_DIM bsg_tiles_X
-#define BSG_TILE_GROUP_Y_DIM bsg_tiles_Y
+// before bsg_manycore.h and bsg_tile_group_barrier.h are
+// included. bsg_tiles_X and bsg_tiles_Y must also be defined for
+// legacy reasons, but they are deprecated.
+#define BSG_TILE_GROUP_X_DIM 1
+#define BSG_TILE_GROUP_Y_DIM 1
+#define bsg_tiles_X bsg_tiles_X
+#define bsg_tiles_Y bsg_tiles_Y
+#include <bsg_manycore.h>
 #include <bsg_tile_group_barrier.h>
 
 #include <matrix_multiply.hpp>

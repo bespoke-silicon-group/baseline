@@ -80,8 +80,6 @@ RISCV_CXXFLAGS += -std=c++11 $(RISCV_CCPPFLAGS)
 RISCV_INCLUDES += -I$(_BSG_MANYCORE_COMMON_PATH)
 RISCV_INCLUDES += -I$(BSG_MANYCORE_DIR)/software/bsg_manycore_lib
 
-RISCV_DEFINES += -Dbsg_tiles_X=$(BSG_TILE_GROUP_DIM_X) 
-RISCV_DEFINES += -Dbsg_tiles_Y=$(BSG_TILE_GROUP_DIM_Y)
 RISCV_DEFINES += -Dbsg_global_X=$(BSG_MACHINE_GLOBAL_X)
 RISCV_DEFINES += -Dbsg_global_Y=$(BSG_MACHINE_GLOBAL_Y)
 RISCV_DEFINES += -Dbsg_group_size=$(BSG_TILE_GROUP_NUM_TILES)
@@ -95,9 +93,17 @@ MACHINE_CRT_OBJ = $(BSG_MACHINE_NAME).rvo
 $(MACHINE_CRT_OBJ) crt.rvo: $(_BSG_MANYCORE_COMMON_PATH)/crt.S $(BSG_MACHINE_PATH)/Makefile.machine.include
 	$(RISCV_GCC) $(RISCV_CFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -c $< -o $@ |& tee $*.comp.log
 
-# We compile these locally so that we don't interfere with the files
-# in $(_BSG_MANYCORE_LIB_PATH). They are not architecture specific,
-# and not tile-group specific.
+# We compile these locally so that we don't interfere with the files in
+# $(_BSG_MANYCORE_LIB_PATH). They are not architecture specific, and not
+# tile-group-size specific, but we do have to define them... soo...
+
+# The following two lines that define bsg_tiles_X and bsg_tiles_Y for
+# bsg_printf.rvo *** IS A HACK ***. They aren't used in any source file or
+# function that CUDA uses, but bsg_manycore.h will FAIL to compile if they
+# aren't defined because they are used in macros.
+bsg_set_tile_x_y.rvo bsg_printf.rvo main.rvo: RISCV_DEFINES += -Dbsg_tiles_X=$(BSG_MACHINE_GLOBAL_X) 
+bsg_set_tile_x_y.rvo bsg_printf.rvo main.rvo: RISCV_DEFINES += -Dbsg_tiles_Y=$(shell expr $(BSG_MACHINE_GLOBAL_Y) - 1)
+
 bsg_set_tile_x_y.rvo bsg_printf.rvo: %.rvo:$(_BSG_MANYCORE_LIB_PATH)/%.c
 	$(RISCV_GCC) $(RISCV_CFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -c $< -o $@
 

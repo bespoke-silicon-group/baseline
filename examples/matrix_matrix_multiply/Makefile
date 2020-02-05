@@ -42,13 +42,6 @@ CURRENT_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 BSG_MACHINE_PATH=$(BSG_F1_DIR)
 
 ################################################################################
-# Define the tile-group dimensions.
-################################################################################
-
-BSG_TILE_GROUP_DIM_X     ?= 1
-BSG_TILE_GROUP_DIM_Y     ?= 1
-
-################################################################################
 # Define the range of versions
 ################################################################################
 # Kernel versions. See kernel/README.md for more information.  Version names do
@@ -133,9 +126,11 @@ $(VERSIONS): %: kernel/%/$(HOST_TARGET).cosim.log
 ################################################################################
 
 # ALIASES defines the outputs that are also generated when cosimulation is
-# run. They are aliases for running $(HOST_TARGET).cosim.log
+# run. They are aliases for running $(HOST_TARGET).cosim.log. We use empty an
+# make recipe for aliases for reasons described here:
+# https://www.gnu.org/software/make/manual/html_node/Empty-Recipes.html
 ALIASES = vanilla_stats.csv $(HOST_TARGET).vpd vanilla_operation_trace.csv
-$(ALIASES): $(HOST_TARGET).cosim.log
+$(ALIASES): $(HOST_TARGET).cosim.log ;
 $(HOST_TARGET).cosim.log: kernel.riscv $(HOST_TARGET).cosim 
 	./$(HOST_TARGET).cosim +ntb_random_seed_automatic +trace  \
 		+c_args="kernel.riscv $(DEFAULT_VERSION)" \
@@ -155,7 +150,9 @@ $(HOST_TARGET).cosim.log: kernel.riscv $(HOST_TARGET).cosim
 
 # KERNEL_ALIASES defines the outputs that are also generated when cosimulation
 # is run. They are aliases for kernel/<version name>/$(HOST_TARGET).cosim.log
-# (This is simliar to ALIASES above)
+# (This is simliar to ALIASES above). We use empty an make recipe for aliases
+# for reasons described here:
+# https://www.gnu.org/software/make/manual/html_node/Empty-Recipes.html
 KERNEL_ALIASES = $(foreach a,$(ALIASES),kernel/%/$a)
 $(KERNEL_ALIASES): kernel/%/$(HOST_TARGET).cosim.log ;
 kernel/%/$(HOST_TARGET).cosim.log: kernel/%/kernel.riscv $(HOST_TARGET).cosim 
@@ -201,3 +198,6 @@ analysis: $(foreach v,$(VERSIONS),kernel/$v/stats kernel/$v/graphs)
 # Always re-run, if asked.
 .PHONY: default analysis
 .PRECIOUS: $(KERNEL_ALIASES)
+
+
+# NB: We use empty recipes for 
