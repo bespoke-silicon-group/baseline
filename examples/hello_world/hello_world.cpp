@@ -79,13 +79,19 @@ int kernel_hello_world (int argc, char **argv) {
          * Calculate grid_dim_x/y: number of tile groups needed
          **********************************************************************/
         hb_mc_dimension_t tg_dim = { .x = 0, .y = 0 };
-        hb_mc_dimension_t grid_dim = { .x = 1, .y = 1 };
+        hb_mc_dimension_t grid_dim = { .x = 0, .y = 0 };
         if (!strcmp("v0", test_name)){
                 tg_dim = { .x = 1, .y = 1 };
+                grid_dim = { .x = 1, .y = 1 };
         } else if (!strcmp("v1", test_name)){
                 tg_dim = { .x = 2, .y = 2 };
+                grid_dim = { .x = 1, .y = 1 };
         } else if (!strcmp("v2", test_name)){
                 tg_dim = { .x = 4, .y = 4 };
+                grid_dim = { .x = 1, .y = 1 };
+        } else if (!strcmp("v3", test_name)){
+                tg_dim = { .x = 2, .y = 2 };
+                grid_dim = { .x = 2, .y = 2 };
         } else {
                 bsg_pr_test_err("Invalid version provided!.\n");
                 return HB_MC_INVALID;
