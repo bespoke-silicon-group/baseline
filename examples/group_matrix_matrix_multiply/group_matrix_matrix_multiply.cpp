@@ -63,7 +63,9 @@ double matrix_sse (const T *A, const T *B, uint64_t M, uint64_t N) {
         for (uint64_t y = 0; y < M; y ++) {
                 for (uint64_t x = 0; x < N; x ++) {
                         T diff = A[y * N + x] - B[y * N + x];
-                        printf("%d %d %f %f %f\n",y, x, A[y * N + x], B[y * N + x], diff);
+                        if(std::isnan(diff)){
+                                return diff;
+                        }
                         sum += diff * diff;
                 }
         }
@@ -101,8 +103,8 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
         // Calculate grid_dim_x/y: number of tile groups needed based on block_size_x/y
         uint32_t block_size_x = 0;
         uint32_t block_size_y = 0;
-        hb_mc_dimension_t tg_dim = { .x = 2, .y = 2 };
-        if(!strcmp("v0", test_name)){
+        hb_mc_dimension_t tg_dim = { .x = 0, .y = 0 };
+        if(!strcmp("v0", test_name) || !strcmp("v1", test_name)){
                 block_size_x = 4;
                 block_size_y = 4;
                 tg_dim = { .x = 2, .y = 2 };
@@ -110,8 +112,8 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
                 bsg_pr_test_err("Invalid version provided!.\n");
                 return HB_MC_INVALID;
         }
-        hb_mc_dimension_t grid_dim = { .x = B_WIDTH / block_size_x,
-                                       .y = A_HEIGHT / block_size_y };
+        hb_mc_dimension_t grid_dim = { .x = (B_WIDTH + block_size_x - 1) / block_size_x,
+                                       .y = (A_HEIGHT + block_size_y - 1) / block_size_y };
 
         // Initialize the random number generators
         std::numeric_limits<int8_t> lim; // Used to get INT_MIN and INT_MAX in C++
@@ -222,7 +224,6 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
                                  A_HEIGHT, A_WIDTH, B_WIDTH,
                                  block_size_y, block_size_x};
 
-
         // Enquque grid of tile groups, pass in grid and tile group dimensions,
         // kernel name, number and list of input arguments
         rc = hb_mc_kernel_enqueue (&device, grid_dim, tg_dim, "kernel_matrix_multiply", 8, cuda_argv);
@@ -231,14 +232,12 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
                 return rc;
         }
 
-
         // Launch and execute all tile groups on device and wait for all to finish.
         rc = hb_mc_device_tile_groups_execute(&device);
         if (rc != HB_MC_SUCCESS) {
                 bsg_pr_test_err("failed to execute tile groups.\n");
                 return rc;
         }
-
 
         // Copy result matrix back from device DRAM into host memory.
         src = (void *) ((intptr_t) C_device);
@@ -262,7 +261,8 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
         float max = 0.1;
         double sse = matrix_sse(R, C, C_HEIGHT, C_WIDTH);
 
-        if (sse > max) {
+        if (std::isnan(sse) || sse > max) {
+                bsg_pr_test_info(BSG_RED("Matrix Mis-Match. SSE: %f\n"), sse);
                 return HB_MC_FAIL;
         }
 

@@ -1,10 +1,5 @@
 /*
  * This kernel performs matrix multiplication.
- *
- * This is the most basic version of single-tile Matrix-Matrix (MM)
- * Multiplication. Unlike later versions, the statistics of first
- * iteration of the MM computation is not discarded (i.e. the same tag
- * is used for every iteration). See v1 for comparison.
  */
 
 // BSG_TILE_GROUP_X_DIM and BSG_TILE_GROUP_Y_DIM must be defined
