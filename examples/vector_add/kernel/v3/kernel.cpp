@@ -1,8 +1,8 @@
 /*
  * This kernel performs vector addition. 
  * 
- * This is the most basic version of single-tile Vector-Vector Addition.
- * This version assumes only a single 1x1 tile group is called.
+ * This is the 1 dimensional grid of 2 dimensional tile groups version of vector addition
+ * This version assumes a 1-dimensional grid of 2-dimensional tile groups are called.
  */
 
 // BSG_TILE_GROUP_X_DIM and BSG_TILE_GROUP_Y_DIM must be defined
@@ -35,7 +35,8 @@ extern "C" {
                 int rc;
                 for(int i = 0; i <= iter; ++i){
                         bsg_cuda_print_stat_start(tag);
-                        rc = kernel_vector_add_single_tile(A, B, C, WIDTH);
+                        rc = kernel_vector_add_1D_grid_2D_tile_groups(A, B, C, WIDTH,
+                                                                      block_size_x);
                         bsg_cuda_print_stat_end(tag);
                 }
                 bsg_cuda_print_stat_kernel_end();
@@ -52,7 +53,8 @@ extern "C" {
                 int rc;
                 for(int i = 0; i <= iter; ++i){
                         bsg_cuda_print_stat_start(tag);
-                        rc = kernel_vector_add_single_tile(A, B, C, WIDTH);
+                        rc = kernel_vector_add_1D_grid_2D_tile_groups(A, B, C, WIDTH,
+                                                                      block_size_x);
                         bsg_cuda_print_stat_end(tag);
                 }
                 bsg_cuda_print_stat_kernel_end();
@@ -69,7 +71,8 @@ extern "C" {
                 int rc;
                 for(int i = 0; i <= iter; ++i){
                         bsg_cuda_print_stat_start(tag);
-                        rc = kernel_vector_add_single_tile(A, B, C, WIDTH);
+                        rc = kernel_vector_add_1D_grid_2D_tile_groups(A, B, C, WIDTH,
+                                                                      block_size_x);
                         bsg_cuda_print_stat_end(tag);
                 }
                 bsg_cuda_print_stat_kernel_end();
@@ -86,7 +89,8 @@ extern "C" {
                 int rc;
                 for(int i = 0; i <= iter; ++i){
                         bsg_cuda_print_stat_start(tag);
-                        rc = kernel_vector_add_single_tile(A, B, C, WIDTH);
+                        rc = kernel_vector_add_1D_grid_2D_tile_groups(A, B, C, WIDTH,
+                                                                      block_size_x);
                         bsg_cuda_print_stat_end(tag);
                 }
                 bsg_cuda_print_stat_kernel_end();
