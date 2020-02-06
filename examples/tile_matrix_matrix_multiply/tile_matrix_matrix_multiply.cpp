@@ -80,7 +80,10 @@ double matrix_sse (const T *A, const T *B, uint64_t M, uint64_t N) {
         double sum = 0;
         for (uint64_t y = 0; y < M; y ++) {
                 for (uint64_t x = 0; x < N; x ++) {
-                        T diff = A[y * M + x] - B[y * M + x];
+                        T diff = A[y * N + x] - B[y * N + x];
+                        if(std::isnan(diff)){
+                                return diff;
+                        }
                         sum += diff * diff;
                 }
         }
@@ -178,7 +181,7 @@ int run_test(hb_mc_device_t &device, const char* kernel,
         float max = 0.1;
         double sse = matrix_sse(gold, C, C_HEIGHT, C_WIDTH);
 
-        if (sse > max) {
+        if (std::isnan(sse) || sse > max) {
                 bsg_pr_test_err(BSG_RED("Matrix Mismatch. SSE: %f\n"), sse);
                 return HB_MC_FAIL;
         }
