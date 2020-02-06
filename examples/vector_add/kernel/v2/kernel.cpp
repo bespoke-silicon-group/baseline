@@ -1,8 +1,8 @@
 /*
  * This kernel performs vector addition. 
  * 
- * This is the single 1-dimensional tile-group Vector-Vector Addition.
- * This version assumes only a single one-dimensional tile group is called.
+ * This is the single 2-dimensional tile-group Vector-Vector Addition.
+ * This version assumes only a single tile group is called.
  */
 
 // BSG_TILE_GROUP_X_DIM and BSG_TILE_GROUP_Y_DIM must be defined
@@ -34,7 +34,7 @@ extern "C" {
                 int rc;
                 for(int i = 0; i <= iter; ++i){
                         bsg_cuda_print_stat_start(tag);
-                        rc = kernel_vector_add_single_1D_tile_group(A, B, C, WIDTH);
+                        rc = kernel_vector_add_single_2D_tile_group(A, B, C, WIDTH);
                         bsg_cuda_print_stat_end(tag);
                 }
 
@@ -48,7 +48,7 @@ extern "C" {
                 int rc;
                 for(int i = 0; i <= iter; ++i){
                         bsg_cuda_print_stat_start(tag);
-                        rc = kernel_vector_add_single_1D_tile_group(A, B, C, WIDTH);
+                        rc = kernel_vector_add_single_2D_tile_group(A, B, C, WIDTH);
                         bsg_cuda_print_stat_end(tag);
                 }
 
@@ -62,7 +62,7 @@ extern "C" {
                 int rc;
                 for(int i = 0; i <= iter; ++i){
                         bsg_cuda_print_stat_start(tag);
-                        rc = kernel_vector_add_single_1D_tile_group(A, B, C, WIDTH);
+                        rc = kernel_vector_add_single_2D_tile_group(A, B, C, WIDTH);
                         bsg_cuda_print_stat_end(tag);
                 }
 
@@ -76,7 +76,7 @@ extern "C" {
                 int rc;
                 for(int i = 0; i <= iter; ++i){
                         bsg_cuda_print_stat_start(tag);
-                        rc = kernel_vector_add_single_1D_tile_group(A, B, C, WIDTH);
+                        rc = kernel_vector_add_single_2D_tile_group(A, B, C, WIDTH);
                         bsg_cuda_print_stat_end(tag);
                 }
 

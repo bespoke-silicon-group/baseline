@@ -160,8 +160,10 @@ int kernel_vector_add (int argc, char **argv) {
         bsg_pr_test_info("Running CUDA Vector Addition.\n");
 
         // Define tg_dim_x/y: number of tiles in each tile group
-        // Calculate grid_dim_x/y: number of tile groups needed
         // Define block_size_x/y: the amount of work each tile group is responsible for
+        // Calculate grid_dim_x/y: number of tile groups needed as:
+        // Entire work (WIDTH) / amount of work each tile does (block_size)
+
         hb_mc_dimension_t tg_dim = { .x = 0, .y = 0 };
         hb_mc_dimension_t grid_dim = { .x = 0, .y = 0 };
         hb_mc_dimension_t block_size = { .x = 0, .y = 0 };
@@ -169,10 +171,11 @@ int kernel_vector_add (int argc, char **argv) {
                 tg_dim = { .x = 1, .y = 1 };
                 grid_dim = { .x = 1, .y = 1};
         } else if (!strcmp("v1", test_name)){
+                tg_dim = { .x = 2, .y = 1 };
+                grid_dim = {.x = 1, .y = 1};
+        } else if (!strcmp("v2", test_name)){
                 tg_dim = { .x = 2, .y = 2 };
                 grid_dim = {.x = 1, .y = 1};
-//        } else if (!strcmp("v2", test_name)){
-//                tg_dim = { .x = 4, .y = 4 };
         } else {
                 bsg_pr_test_err("Invalid version provided!.\n");
                 return HB_MC_INVALID;
