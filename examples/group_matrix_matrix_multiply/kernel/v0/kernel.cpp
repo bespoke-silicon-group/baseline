@@ -27,7 +27,7 @@ extern "C" {
                       uint32_t A_HEIGHT, uint32_t A_WIDTH, uint32_t B_WIDTH,
                       uint32_t block_size_y, uint32_t block_size_x) {
                 int rc;
-
+                bsg_cuda_print_stat_kernel_start();
                 bsg_cuda_print_stat_start(0);
                 rc = matrix_multiply_group(A, B, C,
                                            A_HEIGHT, A_WIDTH, B_WIDTH,
@@ -36,6 +36,7 @@ extern "C" {
 
                 bsg_tile_group_barrier(&r_barrier, &c_barrier);
 
+                bsg_cuda_print_stat_kernel_end();
                 return rc;
         }
 }
