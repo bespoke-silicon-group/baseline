@@ -262,7 +262,7 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
         double sse = matrix_sse(R, C, C_HEIGHT, C_WIDTH);
 
         if (std::isnan(sse) || sse > max) {
-                bsg_pr_test_info(BSG_RED("Matrix Mis-Match. SSE: %f\n"), sse);
+                bsg_pr_test_info(BSG_RED("Matrix Mismatch. SSE: %f\n"), sse);
                 return HB_MC_FAIL;
         }
 
