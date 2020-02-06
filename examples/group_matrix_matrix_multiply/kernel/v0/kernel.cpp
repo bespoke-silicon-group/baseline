@@ -34,7 +34,7 @@ extern "C" {
                 int rc;
 
                 bsg_cuda_print_stat_start(0);
-                rc = matrix_multiply_group(A, B, C, 
+                rc = matrix_multiply_group(A, B, C,
                                            A_HEIGHT, A_WIDTH, B_WIDTH,
                                            block_size_y, block_size_x);
                 bsg_cuda_print_stat_end(0);

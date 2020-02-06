@@ -32,6 +32,15 @@
  * Grid dimensions are determined by how much of a load we want for each tile group (block_size_y/x)
  */
 
+// Matrix sizes:
+#define A_HEIGHT 32
+#define A_WIDTH  64
+#define B_HEIGHT A_WIDTH
+#define B_WIDTH  16
+#define C_HEIGHT A_HEIGHT
+#define C_WIDTH  B_WIDTH
+#define NUM_ITER 4
+
 // Host Matrix multiplication code (to compare results)
 template <typename TA, typename TB, typename TC>
 void matrix_mult (TA *A, TB *B, TC *C, uint64_t M, uint64_t N, uint64_t P) {
@@ -53,7 +62,8 @@ double matrix_sse (const T *A, const T *B, uint64_t M, uint64_t N) {
         double sum = 0;
         for (uint64_t y = 0; y < M; y ++) {
                 for (uint64_t x = 0; x < N; x ++) {
-                        T diff = A[y * M + x] - B[y * M + x];
+                        T diff = A[y * N + x] - B[y * N + x];
+                        printf("%d %d %f %f %f\n",y, x, A[y * N + x], B[y * N + x], diff);
                         sum += diff * diff;
                 }
         }
@@ -72,15 +82,6 @@ void matrix_print(T *A, uint64_t M, uint64_t N) {
 
         }
 }
-
-// Matrix sizes:
-#define A_HEIGHT 32
-#define A_WIDTH  64
-#define B_HEIGHT A_WIDTH
-#define B_WIDTH  16
-#define C_HEIGHT A_HEIGHT
-#define C_WIDTH  B_WIDTH
-#define NUM_ITER 4
 
 int kernel_matrix_matrix_multiply (int argc, char **argv) {
 
@@ -124,9 +125,6 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
         float C[C_HEIGHT * C_WIDTH];
         float R[C_HEIGHT * C_WIDTH];
 
-        // Generate the known-correct results on the host
-        matrix_mult (A, B, R, A_HEIGHT, A_WIDTH, B_WIDTH);
-
         // Generate random numbers. Since the Manycore can't handle infinities,
         // subnormal numbers, or NANs, filter those out.
         auto res = distribution(generator);
@@ -151,6 +149,8 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
                 B[i] = static_cast<float>(res);
         }
 
+        // Generate the known-correct results on the host
+        matrix_mult (A, B, R, A_HEIGHT, A_WIDTH, B_WIDTH);
 
         // Initialize device, load binary and unfreeze tiles.
         hb_mc_device_t device;
@@ -258,15 +258,13 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
                 return rc;
         }
 
-        // Compare the known-correct matrix (gold) and the result matrix (C)
+        // Compare the known-correct matrix (R) and the result matrix (C)
         float max = 0.1;
         double sse = matrix_sse(R, C, C_HEIGHT, C_WIDTH);
 
         if (sse > max) {
-                bsg_pr_test_err(BSG_RED("Matrix Mismatch. SSE: %f\n"), sse);
                 return HB_MC_FAIL;
         }
-        bsg_pr_test_info(BSG_GREEN("Matrix Match.\n"));
 
         bsg_pr_test_info(BSG_GREEN("Matrix Match.\n"));
         return HB_MC_SUCCESS;

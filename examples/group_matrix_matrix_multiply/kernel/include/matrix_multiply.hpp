@@ -15,12 +15,12 @@ int  __attribute__ ((noinline)) matrix_multiply_group(TA *A, TB *B, TC *C,
         
         // Double check matrix output dimensions. Only write where
         // valid data is.
-	end_y = A_HEIGHT < (start_y + block_size_y) ? A_HEIGHT : (start_y + block_size_y);
-	end_x = B_WIDTH < (start_x + block_size_x) ? B_WIDTH : (start_x + block_size_x);
+	//end_y = A_HEIGHT < (start_y + block_size_y) ? A_HEIGHT : (start_y + block_size_y);
+	//end_x = B_WIDTH < (start_x + block_size_x) ? B_WIDTH : (start_x + block_size_x);
 
         for (uint32_t iter_y = start_y + __bsg_y; iter_y < end_y; iter_y += BSG_TILE_GROUP_Y_DIM) {
                 for (uint32_t iter_x = start_x + __bsg_x; iter_x < end_x; iter_x += BSG_TILE_GROUP_X_DIM) {
-                        uint32_t sum = static_cast<TC>(0);
+                        TC sum = static_cast<TC>(0);
                         for (uint32_t k = 0; k < A_WIDTH; k ++) {
                                 sum += A[iter_y * A_WIDTH + k] * B[k * B_WIDTH + iter_x];
                         }

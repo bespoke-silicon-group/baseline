@@ -80,7 +80,7 @@ double matrix_sse (const T *A, const T *B, uint64_t M, uint64_t N) {
         double sum = 0;
         for (uint64_t y = 0; y < M; y ++) {
                 for (uint64_t x = 0; x < N; x ++) {
-                        T diff = A[y * M + x] - B[y * M + x];
+                        T diff = A[y * N + x] - B[y * N + x];
                         sum += diff * diff;
                 }
         }
