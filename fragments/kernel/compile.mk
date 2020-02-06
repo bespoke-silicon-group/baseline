@@ -1,19 +1,19 @@
 # Copyright (c) 2019, University of Washington All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
-# 
+#
 # Redistributions of source code must retain the above copyright notice, this list
 # of conditions and the following disclaimer.
-# 
+#
 # Redistributions in binary form must reproduce the above copyright notice, this
 # list of conditions and the following disclaimer in the documentation and/or
 # other materials provided with the distribution.
-# 
+#
 # Neither the name of the copyright holder nor the names of its contributors may
 # be used to endorse or promote products derived from this software without
 # specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 # ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 # WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -45,21 +45,6 @@ _BSG_MANYCORE_LIB_PATH    = $(BSG_MANYCORE_DIR)/software/bsg_manycore_lib
 _BSG_MANYCORE_COMMON_PATH = $(_BSG_MANYCORE_SPMD_PATH)/common/
 
 ################################################################################
-# BSG Manycore Machine Configuration
-################################################################################
-# Import configuration from machine.mk. Defines Architecture
-# Dimensions (BSG_MACHINE_GLOBAL_Y, BSG_MACHINE_GLOBAL_X).
--include $(FRAGMENTS_PATH)/machine.mk
-
-################################################################################
-# BSG Manycore Tile-Group Configuration
-################################################################################
-# Import tile-group dimensions from tilegroup.mk. Tile group
-# dimensions (bsg_tiles_Y, bsg_tiles_X), and Number of Tiles in the
-# Tile Group (bsg_group_size)
--include $(FRAGMENTS_PATH)/kernel/tilegroup.mk
-
-################################################################################
 # C/C++ Compilation Flags
 ################################################################################
 OPT_LEVEL ?= -O2
@@ -82,8 +67,8 @@ RISCV_INCLUDES += -I$(BSG_MANYCORE_DIR)/software/bsg_manycore_lib
 
 RISCV_DEFINES += -Dbsg_global_X=$(BSG_MACHINE_GLOBAL_X)
 RISCV_DEFINES += -Dbsg_global_Y=$(BSG_MACHINE_GLOBAL_Y)
-RISCV_DEFINES += -Dbsg_group_size=$(BSG_TILE_GROUP_NUM_TILES)
-RISCV_DEFINES += -DPREALLOCATE=0 
+RISCV_DEFINES += -Dbsg_group_size=$(_BSG_MACHINE_TILES)
+RISCV_DEFINES += -DPREALLOCATE=0
 RISCV_DEFINES += -DHOST_DEBUG=0
 
 # We build and name a machine-specific crt.rvo because it's REALLY
@@ -101,8 +86,8 @@ $(MACHINE_CRT_OBJ) crt.rvo: $(_BSG_MANYCORE_COMMON_PATH)/crt.S $(BSG_MACHINE_PAT
 # bsg_printf.rvo *** IS A HACK ***. They aren't used in any source file or
 # function that CUDA uses, but bsg_manycore.h will FAIL to compile if they
 # aren't defined because they are used in macros.
-bsg_set_tile_x_y.rvo bsg_printf.rvo main.rvo: RISCV_DEFINES += -Dbsg_tiles_X=$(BSG_MACHINE_GLOBAL_X) 
-bsg_set_tile_x_y.rvo bsg_printf.rvo main.rvo: RISCV_DEFINES += -Dbsg_tiles_Y=$(shell expr $(BSG_MACHINE_GLOBAL_Y) - 1)
+bsg_set_tile_x_y.rvo bsg_printf.rvo main.rvo: RISCV_DEFINES += -Dbsg_tiles_X=$(_BSG_MACHINE_TILES_X)
+bsg_set_tile_x_y.rvo bsg_printf.rvo main.rvo: RISCV_DEFINES += -Dbsg_tiles_Y=$(_BSG_MACHINE_TILES_Y)
 
 bsg_set_tile_x_y.rvo bsg_printf.rvo: %.rvo:$(_BSG_MANYCORE_LIB_PATH)/%.c
 	$(RISCV_GCC) $(RISCV_CFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -c $< -o $@

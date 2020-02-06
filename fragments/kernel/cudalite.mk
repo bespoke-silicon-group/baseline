@@ -37,6 +37,24 @@ _REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 
 -include $(_REPO_ROOT)/environment.mk
 
+################################################################################
+# BSG Manycore Machine Configuration
+################################################################################
+# Import configuration from machine.mk. Defines Architecture
+# Dimensions (BSG_MACHINE_GLOBAL_Y, BSG_MACHINE_GLOBAL_X).
+-include $(FRAGMENTS_PATH)/machine.mk
+
+################################################################################
+# BSG Manycore Configuration Variables
+################################################################################
+# Define the size of the Manycore RISC-V Tiles for compiling and linking to
+# satisfy the bsg_manycore.h header during main, bsg_printf, and
+# bsg_set_tile_x_y. Since these aren't used in those files we set them to
+# useful, but bogus, values. The most useful value seems to be the dimensions of
+# the manycore array.
+_BSG_MACHINE_TILES_X := $(BSG_MACHINE_GLOBAL_X)
+_BSG_MACHINE_TILES_Y := $(shell expr $(BSG_MACHINE_GLOBAL_Y) - 1)
+_BSG_MACHINE_TILES   := $(shell expr $(_BSG_MACHINE_TILES_X) \* $(_BSG_MACHINE_TILES_Y))
 
 ################################################################################
 # Define the default kernel source file. If it is not defined, set it

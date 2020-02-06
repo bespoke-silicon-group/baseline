@@ -138,7 +138,7 @@ BSG_MANYCORE_LIB_OBJECTS  += bsg_printf.rvo
 # Linker Flags
 ################################################################################
 
-RISCV_LDFLAGS += -Wl,--defsym,bsg_group_size=$(BSG_TILE_GROUP_NUM_TILES)
+RISCV_LDFLAGS += -Wl,--defsym,bsg_group_size=$(_BSG_MACHINE_TILES)
 RISCV_LDFLAGS += -Wl,--defsym,_bsg_elf_dram_size=$(BSG_ELF_DRAM_SIZE)
 RISCV_LDFLAGS += -Wl,--defsym,_bsg_elf_vcache_size=$(BSG_ELF_VCACHE_MANYCORE_SIZE)
 RISCV_LDFLAGS += -Wl,--defsym,_bsg_elf_stack_ptr=$(BSG_ELF_STACK_PTR)
