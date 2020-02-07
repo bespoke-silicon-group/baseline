@@ -91,7 +91,7 @@ KERNEL_DEFAULT      := kernel/$(DEFAULT_VERSION)/kernel.cpp
 # compiled and linked into the executable.
 ################################################################################
 
-HOST_TARGET         := reduction_shared_mem
+HOST_TARGET         := reduction
 HOST_CSOURCES       := 
 HOST_CXXSOURCES     := $(HOST_TARGET).cpp
 HOST_INCLUDES       := -I$(CURRENT_PATH)
