@@ -224,16 +224,15 @@ int kernel_conv1d(int argc, char **argv)
         conv1d(A_host, N, filter_host, F, P, S, B_expected);
 
         float sse;
-        bsg_pr_test_info("(N, F, P, S, M) = (%d, %d, %d, %d, %d)\n", N, F, P, S, M);
         sse = matrix_sse(B_expected, B_result, 1, M);
 
         if(std::isnan(sse) || sse > .01)
         {
-                bsg_pr_test_err(BSG_RED("Vectors don't match! SSE: %f\n"), sse);
+                bsg_pr_test_err(BSG_RED("Result mismatch! SSE: %f\n"), sse);
                 return HB_MC_FAIL;
         }
+        bsg_pr_test_info(BSG_GREEN("Result match! (SSE: %f)\n"), sse);
         return HB_MC_SUCCESS;
-        bsg_pr_test_info(BSG_GREEN("Vectors match! (SSE: %f)\n"), sse);
 }
 
 #ifdef COSIM

@@ -42,7 +42,10 @@ double matrix_sse (const T *A, const T *B, uint64_t M, uint64_t N) {
         double sum = 0;
         for (uint64_t y = 0; y < M; y ++) {
                 for (uint64_t x = 0; x < N; x ++) {
-                        T diff = A[y * M + x] - B[y * M + x];
+                        T diff = A[y * N + x] - B[y * N + x];
+                        if(std::isnan(diff)){
+                                return diff;
+                        }
                         sum += diff * diff;
                 }
         }
@@ -262,13 +265,13 @@ int kernel_conv2d(int argc, char **argv)
         float sse;
         sse = matrix_sse(B_expected.data(), B_result.data(), By, Bx);
 
-        if(sse < .01)
+        if(std::isnan(sse) || sse > .01)
         {
-                bsg_pr_test_info(BSG_GREEN("Vectors match! (SSE: %f)\n"), sse);
-                return HB_MC_SUCCESS;
+                bsg_pr_test_err(BSG_RED("Result mismatch! SSE: %f\n"), sse);
+                return HB_MC_FAIL;
         }
-        bsg_pr_test_err(BSG_RED("Vectors don't match! (SSE: %f)\n\n"), sse);
-        return HB_MC_FAIL;
+        bsg_pr_test_info(BSG_GREEN("Result match! (SSE: %f)\n"), sse);
+        return HB_MC_SUCCESS;
 }
 
 #ifdef COSIM
