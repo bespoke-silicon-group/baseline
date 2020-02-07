@@ -32,7 +32,8 @@
  */
 
 // Vector sizes:
-#define WIDTH 16
+#define WIDTH_V0 16
+#define WIDTH_V1 64
 #define NUM_ITER 1
 
 // Host Vector Reduction (to compare results)
@@ -74,18 +75,20 @@ int kernel_reduction_shared_mem (int argc, char **argv) {
         bsg_pr_test_info("Running the CUDA Tile-Group Shared Memory "
                          "Reduction Kernel.\n\n");
 
-        // Define block_size_x/y: amount of work for each tile group
         // Define tg_dim_x/y: number of tiles in each tile group
-        // Calculate grid_dim_x/y: number of tile groups needed based on block_size_x/y
+        // Grid dimension is fixed to 1x1
+        // Remember, reduction is only possible inside one tile group 
         hb_mc_dimension_t tg_dim = { .x = 0, .y = 0 };
         hb_mc_dimension_t grid_dim = { .x = 0, .y = 0 };
-        hb_mc_dimension_t block_size = { .x = 0, .y = 0 };
         uint32_t N;
-        if(!strcmp("v0", test_name) || !strcmp("v1", test_name)){
-                N = 16;
+        if(!strcmp("v0", test_name)){
+                N = WIDTH_V0;
                 tg_dim = { .x = 4, .y = 4 };
                 grid_dim = {.x = 1, .y = 1};
-                block_size = {.x = 4, .y = 4};
+        } else if(!strcmp("v1", test_name)){
+                N = WIDTH_V1;
+                tg_dim = { .x = 4, .y = 4 };
+                grid_dim = {.x = 1, .y = 1};
         } else {
                 bsg_pr_test_err("Invalid version provided!.\n");
                 return HB_MC_INVALID;

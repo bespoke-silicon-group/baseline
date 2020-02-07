@@ -24,7 +24,7 @@ extern "C" {
                 int rc;
                 bsg_cuda_print_stat_kernel_start();
                 bsg_cuda_print_stat_start(0);
-                rc = kernel_reduction_shared_mem_single_thread(A, N);
+                rc = kernel_reduction_shared_mem_multi_thread(A, N);
                 bsg_cuda_print_stat_end(0);
 
                 bsg_tile_group_barrier(&r_barrier, &c_barrier);
