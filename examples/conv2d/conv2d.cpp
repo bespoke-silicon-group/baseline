@@ -25,12 +25,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "conv1d.hpp"
+#include "conv2d.hpp"
+#include <array>
 
-#define C_F_LENGTH 4
-#define C_A_LENGTH 128
-#define C_PAD_LENGTH 8
-#define C_STEP_LENGTH 2
+#define C_F_ROWS 4
+#define C_F_COLS 4
+#define C_A_ROWS 16
+#define C_A_COLS 16
+#define C_PAD 8
+#define C_STEP_X 2
+#define C_STEP_Y 2
 
 // Compute the sum of squared error between matricies A and B (M x N)
 template <typename T>
@@ -48,39 +52,56 @@ double matrix_sse (const T *A, const T *B, uint64_t M, uint64_t N) {
         return sum;
 }
 
-uint32_t compute_M(uint32_t N, uint32_t F, uint32_t P, uint32_t S)
+constexpr uint32_t output_dim(uint32_t N, uint32_t F, uint32_t P, uint32_t S)
 {
         return 1 + (N - F + 2 * P) / S;
 }
 
+// Takes an MxN matrix A and a FyxFx filter, a padding P,
+// a vertical stride Sy and a horizontal Sx, and outputs
+// the result of a 2D convolution into B. B must be of size
+// output_dim(M, Fy, P, Sy) x output_dim(N, W, P, Sx)
 template <typename TA, typename TF, typename TB>
-void conv1d(const TA *A, const uint32_t A_LENGTH,
-            const TF *F, const uint32_t F_LENGTH,
-            const uint32_t PAD_LENGTH, 
-            const uint32_t S_LENGTH, 
-            TB *B){
-
-        uint32_t M = compute_M(A_LENGTH, F_LENGTH, PAD_LENGTH, S_LENGTH);
-        for(uint32_t i = 0; i < M; i++)
-        {
-                uint32_t window_idx = i * S_LENGTH;
-                TB res = 0;
-                for(uint32_t j = 0; j < F_LENGTH; j++)
+void conv2d(const TA *A,
+            const int M,
+            const int N,
+            const TF *filter,
+            const int Fy,
+            const int Fx,
+            const int P,
+            TB *B,
+            const int Sy,
+            const int Sx)
+{
+        int result_h = output_dim(M, Fy, P, Sy);
+        int result_w = output_dim(N, Fx, P, Sx);
+        for(int by = 0; by < result_h; by++)
+                for(int bx = 0; bx < result_w; bx++)
                 {
-                        uint32_t a_idx = window_idx - PAD_LENGTH + j;
-                        float a = 0;
-                        if(0 <= a_idx && a_idx < A_LENGTH)
-                                a = A[a_idx];
-
-                        res += F[j] * a;
+                        int window_y = by * Sy;
+                        int window_x = bx * Sx;
+                        
+                        TB res = 0;
+                        for(int fy = 0; fy < Fy; fy++)
+                                for(int fx = 0; fx < Fx; fx++)
+                                {
+                                        int ay = window_y - P + fy;
+                                        int ax = window_x - P + fx;
+                                        TB a = 0;
+                                        
+                                        if((0 <= ay && ay < M) &&
+                                           (0 <= ax && ax < N))
+                                                a = A[ay * N + ax];
+                                        res += static_cast<TB>(filter[fy * Fx + fx]) * static_cast<TB>(a);
+                                 }
+                        B[by * result_w + bx] = res;
                 }
-                B[i] = res;
-        }
 }
 
-int kernel_conv1d(int argc, char **argv)
+
+int kernel_conv2d(int argc, char **argv)
 {       
-        bsg_pr_test_info("Running CUDA Conv1D Kernel on a 2x2 tile group.\n\n");
+        bsg_pr_test_info("Running CUDA Conv2D Kernel on a 2x2 tile group.\n\n");
         char *elf, *test_name;
         struct arguments_path args = { NULL, NULL };
         argp_parse(&argp_path, argc, argv, 0, 0, &args);
@@ -111,54 +132,60 @@ int kernel_conv1d(int argc, char **argv)
         std::uniform_real_distribution<float> data_distribution(lim_int8.min(),lim_int8.max());
         std::uniform_real_distribution<float> filter_distribution(lim_int8.min(),lim_int8.max());
         
-        // N: Number of elements in the 1-D input vector, A
-        uint32_t N = C_A_LENGTH;
-        // F: Number of filter coefficients in 1-D filter, F
-        uint32_t F = C_F_LENGTH;
+        // N: Number of rows in the 2-D input matrix, A
+        constexpr uint32_t N = C_A_ROWS;
+        // M: Number of columns in the 2-D input matrix, A
+        constexpr uint32_t M = C_A_COLS;
+        // Fy: Number of rows in 2-D filter, F
+        constexpr uint32_t Fy = C_F_ROWS;
+        // Fx: Number of columns in 2-D filter, F
+        constexpr uint32_t Fx = C_F_COLS;
         // P: Padding (symmetric, number of elements on both side of the input)
-        uint32_t P = C_PAD_LENGTH;
-        // S: Step size of convolution
-        uint32_t S = C_STEP_LENGTH;
-        uint32_t M = compute_M(N, F, P, S);
-        
-        size_t A_size = sizeof(float) * N;
-        size_t F_size = sizeof(float) * F;
-        size_t B_size = sizeof(float) * M;
-        
-        float A_host[N];
-        float filter_host[F];
-        float B_expected[M], B_result[M];
+        constexpr uint32_t P = C_PAD;
+        // Sx: Step size of convolution in horizontal direction
+        constexpr uint32_t Sx = C_STEP_X;
+        // Sy: Step size of convolution in vertical direction
+        constexpr uint32_t Sy = C_STEP_Y;
+        // By: Rows in output matrix B
+        constexpr uint32_t By = output_dim(M, Fy, P, Sy);
+        // Bx: Columns in output matrix B
+        constexpr uint32_t Bx = output_dim(N, Fx, P, Sx);
+
+
+        std::array<float, M * N> A_host;
+        std::array<float, Fy * Fx> filter_host;
+        std::array<float, By * Bx> B_expected, B_result;
 
         eva_t A_device, B_device, filter_device;
-        rc = hb_mc_device_malloc(mc, A_size, &A_device);
+        rc = hb_mc_device_malloc(mc, sizeof(A_host), &A_device);
         if(rc != HB_MC_SUCCESS)
         {
                 bsg_pr_test_err("Failed to allocate A on the manycore.\n");
                 return rc;
         }
 
-        rc = hb_mc_device_malloc(mc, F_size, &filter_device);
+        rc = hb_mc_device_malloc(mc, sizeof(filter_host), &filter_device);
         if(rc != HB_MC_SUCCESS)
         {
                 bsg_pr_test_err("Failed to allocate F on the manycore.\n");
                 return rc;
         }
         
-        rc = hb_mc_device_malloc(mc, B_size, &B_device);
+        rc = hb_mc_device_malloc(mc, sizeof(B_expected), &B_device);
         if(rc != HB_MC_SUCCESS)
         {
                 bsg_pr_test_err("Failed to allocate B on the manycore.\n");
                 return rc;
         }
 
-        for(int i = 0; i < sizeof(A_host) / sizeof(A_host[0]); i++)
+        for(int i = 0; i < A_host.size(); i++)
         {
                 A_host[i] = data_distribution(generator);
                 bsg_pr_test_info("A_host[%d] = %.9f \n",
                                  i, A_host[i]);
         }
 
-        for(int i = 0; i < sizeof(filter_host) / sizeof(filter_host[0]); i++)
+        for(int i = 0; i < filter_host.size(); i++)
         {
                 filter_host[i] = filter_distribution(generator);
                 bsg_pr_test_info("filter_host[%d] = %.9f \n",
@@ -166,32 +193,40 @@ int kernel_conv1d(int argc, char **argv)
         }
         
         rc = hb_mc_device_memcpy(mc, 
-                                 (void *) ((intptr_t) A_device),
-                                 (void *) &A_host[0],
-                                 A_size, HB_MC_MEMCPY_TO_DEVICE);
+                                 reinterpret_cast<void *>(static_cast<intptr_t>(A_device)),
+                                 reinterpret_cast<void *>(A_host.data()),
+                                 sizeof(A_host), HB_MC_MEMCPY_TO_DEVICE);
         if(rc != HB_MC_SUCCESS)
         {
                 bsg_pr_test_err("Failed to copy A to the manycore.\n");
                 return rc;
         }
         
-        rc = hb_mc_device_memcpy(mc, (void *) ((intptr_t) filter_device), 
-                                 (void *) &filter_host[0], 
-                                 F_size, HB_MC_MEMCPY_TO_DEVICE);
+        rc = hb_mc_device_memcpy(mc, reinterpret_cast<void *>(static_cast<intptr_t>(filter_device)),
+                                 reinterpret_cast<void *>(filter_host.data()),
+                                 sizeof(filter_host), HB_MC_MEMCPY_TO_DEVICE);
         if(rc != HB_MC_SUCCESS)
         {
                 bsg_pr_test_err("Failed to copy F to the manycore.\n");
                 return rc;
         }
 
-        uint32_t block_size = M;
+        uint32_t block_size_y = By;
+        uint32_t block_size_x = Bx;
 
         hb_mc_dimension_t tilegroup_dim = { .x = 2, .y = 2 };
         hb_mc_dimension_t grid_dim = { .x = 1, .y = 1 };
 
-        uint32_t cuda_argv[] = { A_device, N, filter_device, F, P, B_device, S, block_size };
+        uint32_t cuda_argv[] = {
+                A_device, M, N,
+                filter_device, Fy, Fx,
+                P,
+                B_device,
+                Sy, Sx,
+                block_size_y, block_size_x
+        };
         size_t cuda_argc = sizeof(cuda_argv) / sizeof(cuda_argv[0]);
-        rc = hb_mc_kernel_enqueue(mc, grid_dim, tilegroup_dim, "kernel_conv1d", cuda_argc, cuda_argv);
+        rc = hb_mc_kernel_enqueue(mc, grid_dim, tilegroup_dim, "kernel_conv2d", cuda_argc, cuda_argv);
         if(rc != HB_MC_SUCCESS)
         {
                 bsg_pr_test_err("Failed to initialize grid.\n");
@@ -205,9 +240,9 @@ int kernel_conv1d(int argc, char **argv)
                 return rc;
         }
 
-        rc = hb_mc_device_memcpy(mc, (void *) B_result, 
-                                 (void *) ((intptr_t) B_device), 
-                                 B_size, HB_MC_MEMCPY_TO_HOST);
+        rc = hb_mc_device_memcpy(mc, reinterpret_cast<void *>(B_result.data()),
+                                 reinterpret_cast<void *>(static_cast<intptr_t>(B_device)),
+                                 sizeof(B_result), HB_MC_MEMCPY_TO_HOST);
         if(rc != HB_MC_SUCCESS)
         {
                 bsg_pr_test_err("Failed to copy result to host.\n");
@@ -221,10 +256,14 @@ int kernel_conv1d(int argc, char **argv)
                 return rc;
         }
 
-        conv1d(A_host, N, filter_host, F, P, S, B_expected);
+        conv2d(A_host.data(), M, N,
+               filter_host.data(), Fy, Fx,
+               P,
+               B_expected.data(),
+               Sy, Sx);
 
         float sse;
-        sse = matrix_sse(B_expected, B_result, 1, M);
+        sse = matrix_sse(B_expected.data(), B_result.data(), By, Bx);
 
         if(std::isnan(sse) || sse > .01)
         {
@@ -251,7 +290,7 @@ void cosim_main(uint32_t *exit_code, char *args)
         scope = svGetScopeFromName("tb");
         svSetScope(scope);
 #endif
-        int rc = kernel_conv1d(argc, argv);
+        int rc = kernel_conv2d(argc, argv);
         *exit_code = rc;
         bsg_pr_test_pass_fail(rc == HB_MC_SUCCESS);
         return;
@@ -259,7 +298,7 @@ void cosim_main(uint32_t *exit_code, char *args)
 #else
 int main(int argc, char **argv)
 {
-        int rc = kernel_conv1d(argc, argv);
+        int rc = kernel_conv2d(argc, argv);
         bsg_pr_test_pass_fail(rc == HB_MC_SUCCESS);
         return rc;
 }
