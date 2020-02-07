@@ -1,12 +1,12 @@
-#ifndef __REDUCTION_SHARED_MEM_HPP
-#define __REDUCTION_SHARED_MEM_HPP
+#ifndef __REDUCTION_HPP
+#define __REDUCTION_HPP
 #include <cstdint>
 
 template <typename TA>
-int  __attribute__ ((noinline)) kernel_reduction_shared_mem_single_thread(TA *A, uint32_t N) {
+int  __attribute__ ((noinline)) kernel_reduction_single_thread(TA *A, uint32_t N) {
 
         // Define tile group shared memory with size of N
-        bsg_tile_group_shared_mem(float, sh_A, N);
+        bsg_tile_group(float, sh_A, N);
 
         // Each tile loads one element from DRAM based on its flat ID 
         // inside tile group (bsg_id) into tile group shared memory
@@ -75,10 +75,10 @@ int  __attribute__ ((noinline)) kernel_reduction_shared_mem_single_thread(TA *A,
 
 
 template <typename TA>
-int  __attribute__ ((noinline)) kernel_reduction_shared_mem_multi_thread(TA *A, uint32_t N) {
+int  __attribute__ ((noinline)) kernel_reduction_multi_thread(TA *A, uint32_t N) {
 
         // Define tile group shared memory with size of N
-        bsg_tile_group_shared_mem(float, sh_A, N);
+        bsg_tile_group(float, sh_A, N);
 
         // Work is divided evenly among tiles in the tile group
         // Each tile's share: N / (bsg_tiles_X * bsg_tiles_Y)
@@ -161,4 +161,4 @@ int  __attribute__ ((noinline)) kernel_reduction_shared_mem_multi_thread(TA *A, 
 
 
 
-#endif //__REDUCTION_SHARED_MEM_HPP
+#endif //__REDUCTION_HPP

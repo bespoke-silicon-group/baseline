@@ -1,4 +1,4 @@
-# Single-Tile Matrix Matrix Multiply
+# Reduction
 
 This example runs tile group shared memory reduction on a 1x1 grid 
 of tile groups. All elements in shared memory are added together in 

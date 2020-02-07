@@ -25,7 +25,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "reduction_shared_mem.hpp"
+#include "reduction.hpp"
 
 /*
  * Runs the tile-group shared memory reduction on a grid of tile groups. A[0] <-- sum (A[i])
@@ -62,7 +62,7 @@ double single_sse (const T *A, const T *B) {
 
 
 
-int kernel_reduction_shared_mem (int argc, char **argv) {
+int kernel_reduction (int argc, char **argv) {
 
         int rc;
         char *bin_path, *test_name;
@@ -170,7 +170,7 @@ int kernel_reduction_shared_mem (int argc, char **argv) {
 
         // Enquque grid of tile groups, pass in grid and tile group dimensions,
         // kernel name, number and list of input arguments
-        rc = hb_mc_kernel_enqueue (&device, grid_dim, tg_dim, "kernel_reduction_shared_mem", 2, cuda_argv);
+        rc = hb_mc_kernel_enqueue (&device, grid_dim, tg_dim, "kernel_reduction", 2, cuda_argv);
         if (rc != HB_MC_SUCCESS) {
                 bsg_pr_test_err("failed to initialize grid.\n");
                 return rc;
@@ -231,14 +231,14 @@ void cosim_main(uint32_t *exit_code, char * args) {
         scope = svGetScopeFromName("tb");
         svSetScope(scope);
 #endif
-        int rc = kernel_reduction_shared_mem(argc, argv);
+        int rc = kernel_reduction(argc, argv);
         *exit_code = rc;
         bsg_pr_test_pass_fail(rc == HB_MC_SUCCESS);
         return;
 }
 #else
 int main(int argc, char ** argv) {
-        int rc = kernel_reduction_shared_mem(argc, argv);
+        int rc = kernel_reduction(argc, argv);
         bsg_pr_test_pass_fail(rc == HB_MC_SUCCESS);
         return rc;
 }
