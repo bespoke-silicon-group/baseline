@@ -10,7 +10,7 @@ then perform reduction by cutting the array in half at each iteration,
 thus performing the sum of N elements in O(logN).
 
 An example reduction on an array of 8 is shown below:
-![alt text](https://github.com/drichmond/baseline/blob/reduction_shared_mem/examples/reduction_shared_mem/images/reduction.PNG "Reduction Example")
+![alt text](https://github.com/drichmond/baseline/blob/master/examples/reduction/images/reduction.PNG "Reduction Example")
 
 Reduction is performed in a loop, starting from an offset of 1 and a multiplicand of 2:
 - For every element with index multiplicand of 2: A[i] <-- A[i] + A[i+1]
