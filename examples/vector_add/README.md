@@ -17,13 +17,7 @@ vector-vector additioncode is in the header file
 
 # Makefile Targets
 
-- `analysis`: Runs all kernel versions produces profiler results. Results are
-  placed in each kernel's version directory
-
-- `default`: Run the default kernel version and produce profiling results
-  (defined in [Makefile](Makefile)
-
-- `all`: Run both of the rules listed above.
+For a list of all Makefile targets, run `make help`.
 
 ## Versions
 

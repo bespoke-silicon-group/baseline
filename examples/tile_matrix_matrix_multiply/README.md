@@ -8,16 +8,9 @@ The kernel code is located in the subdirectories of [kernel](kernel). The actual
 matrix-multiplication code is in the header file
 [kernel/include/matrix_multiply.hpp](kernel/include/matrix_multiply.hpp). 
 
-
 # Makefile Targets
 
-- `analysis`: Runs all kernel versions produces profiler results. Results are
-  placed in each kernel's version directory
-
-- `default`: Run the default kernel version and produce profiling results
-  (defined in [Makefile](Makefile)
-
-- `all`: Run both of the rules listed above.
+For a list of all Makefile targets, run `make help`.
 
 ## Versions
 

@@ -41,7 +41,7 @@ repository.
 
 2. Follow the [Setup](https://github.com/bespoke-silicon-group/bsg_bladerunner/#setup) instructions in BSG Bladerunner
 
-3. Run `make cosim` from inside of one of the applications inside of the `examples` directory.
+3. Run `make default` from inside of one of the applications inside of the `examples` directory.
 
 ## Post-Script
 
