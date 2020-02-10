@@ -2,7 +2,6 @@
 #define __MATRIX_MULTIPLY_HPP
 #include <cstdint>
 
-
 /*
  * This is the most basic single tile version of vector addition
  * that adds two vectors A and B and stores the result in C.
