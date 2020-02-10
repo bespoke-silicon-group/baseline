@@ -26,20 +26,33 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ################################################################################
-# Paths
+# Paths / Environment Configuration
 ################################################################################
 _REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
+
 -include $(_REPO_ROOT)/environment.mk
 
-################################################################################
-# Tools
-################################################################################
 
-RISCV_GCC     ?= $(RISCV_BIN_DIR)/riscv32-unknown-elf-dramfs-gcc
-RISCV_GXX     ?= $(RISCV_BIN_DIR)/riscv32-unknown-elf-dramfs-g++
-RISCV_ELF2HEX ?= LD_LIBRARY_PATH=$(RISCV_BIN_DIR)/../lib $(RISCV_BIN_DIR)/elf2hex
-RISCV_OBJCOPY ?= $(RISCV_BIN_DIR)/riscv32-unknown-elf-dramfs-objcopy
-RISCV_AR      ?= $(RISCV_BIN_DIR)/riscv32-unknown-elf-dramfs-ar
-RISCV_LD      ?= $(RISCV_GCC)
-RISCV_LINK    ?= $(RISCV_GCC) -t -T $(LINK_SCRIPT) $(RISCV_LDFLAGS)
-RISCV_OBJDUMP ?= $(RISCV_BIN_DIR)/riscv32-unknown-elf-dramfs-objdump
+# We use the default C/C++ Compiler for building the object files for
+# host code. Therefore, we just need to define the standard make
+# variables.
+
+INCLUDES       += -I$(LIBRARIES_PATH) -I$(VCS_HOME)/linux64/lib/
+
+CCPPDEFINES    += -DCOSIM -DVCS
+CXXDEFINES     += $(CCPPDEFINES)
+CDEFINES       += $(CCPPDEFINES)
+
+CFLAGS         += -std=c99 $(CDEFINES) $(INCLUDES)
+CXXFLAGS       += -std=c++11 -lstdc++ $(CXXDEFINES) $(INCLUDES)
+
+# HOST_OBJECTS defines the object files that that are linked as part of
+# the kernel. It is derived from HOST_*SOURCES (see below) but other
+# objects can be added and linked as necessary.
+HOST_OBJECTS   += $(HOST_SSOURCES:.s=.o)
+HOST_OBJECTS   += $(HOST_CSOURCES:.c=.o)
+HOST_OBJECTS   += $(HOST_CXXSOURCES:.cpp=.o)
+
+host.compile.clean: 
+	rm -rf $(HOST_OBJECTS)
+

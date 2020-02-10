@@ -34,8 +34,12 @@ NC=\033[0m
 # Paths
 ################################################################################
 _REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
-
 -include $(_REPO_ROOT)/environment.mk
+
+################################################################################
+# Include RISC-V Tool Configuration
+################################################################################
+-include $(FRAGMENTS_PATH)/kernel/tools.mk
 
 _BSG_MANYCORE_SPMD_PATH = $(BSG_MANYCORE_DIR)/software/spmd/
 _BSG_MANYCORE_CUDALITE_PATH = $(_BSG_MANYCORE_SPMD_PATH)/bsg_cuda_lite_runtime/

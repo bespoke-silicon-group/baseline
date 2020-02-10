@@ -30,11 +30,12 @@ ORANGE=\033[0;33m
 RED=\033[0;31m
 NC=\033[0m
 
+_LINK_HELP_STRING := "Rules included from kernel/link.mk\n"
+
 ################################################################################
-# Paths
+# Paths / Environment Configuration
 ################################################################################
 _REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
-
 -include $(_REPO_ROOT)/environment.mk
 
 ################################################################################
@@ -161,9 +162,13 @@ RISCV_LDFLAGS += -Wl,--no-check-sections
 # tile group size. KERNEL_OBJECTS can be used to include other object
 # files in the linker. KERNEL_DEFAULT can be overridden by the user,
 # but defaults to kernel.cpp
+
+_LINK_HELP_STRING += "    kernel.riscv | kernel/<version>/kernel.riscv :\n"
+_LINK_HELP_STRING += "        - Compile the RISC-V Manycore Kernel from the [default | <version>] \n"
+_LINK_HELP_STRING += "          source file named $(notdir $(KERNEL_DEFAULT)). The default source \n"
+_LINK_HELP_STRING += "          file is $(KERNEL_DEFAULT)\n"
 kernel.riscv: $(MACHINE_CRT_OBJ) main.rvo $(BSG_MANYCORE_LIB_OBJECTS) $(KERNEL_OBJECTS) $(basename $(KERNEL_DEFAULT)).rvo 
 	$(RISCV_LD) -T $(RISCV_LINK_SCRIPT) $^ $(RISCV_LDFLAGS) -o $@
-
 %/kernel.riscv: $(MACHINE_CRT_OBJ) main.rvo $(BSG_MANYCORE_LIB_OBJECTS) $(KERNEL_OBJECTS) %/kernel.rvo 
 	$(RISCV_LD) -T $(RISCV_LINK_SCRIPT) $^ $(RISCV_LDFLAGS) -o $@
 
@@ -171,3 +176,8 @@ kernel.link.clean:
 	rm -rf *.riscv
 
 .PRECIOUS: kernel.riscv %/kernel.riscv
+
+_LINK_HELP_STRING += "\n"
+_LINK_HELP_STRING += $(HELP_STRING)
+
+HELP_STRING := $(_LINK_HELP_STRING)

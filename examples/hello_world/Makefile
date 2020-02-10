@@ -104,67 +104,6 @@ HOST_INCLUDES       := -I$(CURRENT_PATH)
 -include $(FRAGMENTS_PATH)/host/cosim.mk
 
 ################################################################################
-# Include the analysis rules. These define how to generate analysis products
-# like vanilla_operation_trace, etc.
-################################################################################
-
--include $(FRAGMENTS_PATH)/analysis.mk
-
-################################################################################
-# The following rules define how to RUN cosimulation tests:
-################################################################################
-
-# This rule defines the `make <version name>` rule (e.g. `make v2`). For all
-# kernel versions defined in $(VERSIONS) you can run `make <version name` and
-# the cosimulation results ($(HOST_TARGET).cosim.log, $(HOST_TARGET).vpd,
-# vanilla_operation_trace.csv, vanila_stats.csv, etc) will be put in the
-# kernel/<version name>/ directory.
-$(VERSIONS): %: kernel/%/$(HOST_TARGET).cosim.log
-
-################################################################################
-# Define rules for the default cosimulation execution.
-################################################################################
-
-# ALIASES defines the outputs that are also generated when cosimulation is
-# run. They are aliases for running $(HOST_TARGET).cosim.log. We use empty an
-# make recipe for aliases for reasons described here:
-# https://www.gnu.org/software/make/manual/html_node/Empty-Recipes.html
-ALIASES = vanilla_stats.csv $(HOST_TARGET).vpd vanilla_operation_trace.csv
-$(ALIASES): $(HOST_TARGET).cosim.log ;
-$(HOST_TARGET).cosim.log: kernel.riscv $(HOST_TARGET).cosim 
-	./$(HOST_TARGET).cosim +ntb_random_seed_automatic +trace  \
-		+c_args="kernel.riscv $(DEFAULT_VERSION)" \
-		+vpdfile+$(HOST_TARGET).vpd | tee $@
-
-################################################################################
-# Define rules for version-specific cosimulation execution. EXEC_PATH and
-# _VERSION are defined inside of the rule so that the executable can be run from
-# inside of the kernel/<version name> directory and produce outputs
-# there. KERNEL_PATH is the path to the version-specific kernel.riscv binary
-#
-# (NB, since `cd $(EXEC_PATH)` is called before running the executable it is
-# possible to specify kernel.riscv as the path to the kernel file to +c_args
-# since it is resident in $(EXEC_PATH), but I provided the full path to be more
-# explicit and clear)
-################################################################################
-
-# KERNEL_ALIASES defines the outputs that are also generated when cosimulation
-# is run. They are aliases for kernel/<version name>/$(HOST_TARGET).cosim.log
-# (This is simliar to ALIASES above). We use empty an make recipe for aliases
-# for reasons described here:
-# https://www.gnu.org/software/make/manual/html_node/Empty-Recipes.html
-KERNEL_ALIASES = $(foreach a,$(ALIASES),kernel/%/$a)
-$(KERNEL_ALIASES): kernel/%/$(HOST_TARGET).cosim.log ;
-kernel/%/$(HOST_TARGET).cosim.log: kernel/%/kernel.riscv $(HOST_TARGET).cosim 
-	$(eval EXEC_PATH   := $(patsubst %/,%,$(dir $@)))
-	$(eval KERNEL_PATH := $(CURRENT_PATH)/$(EXEC_PATH))
-	$(eval _VERSION    := $(notdir $(EXEC_PATH)))
-	cd $(EXEC_PATH) && \
-	$(CURRENT_PATH)/$(HOST_TARGET).cosim +ntb_random_seed_automatic +trace \
-		+vpdfile+$(HOST_TARGET).vpd \
-		+c_args="$(KERNEL_PATH)/kernel.riscv $(_VERSION)" | tee $(notdir $@)
-
-################################################################################
 # Define the clean rules. clean calls the makefile-specific cleans, whereas
 # users can add commands and dependencies to custom.clean.
 ################################################################################
@@ -172,10 +111,7 @@ version.clean:
 	rm -rf kernel/*/*{.csv,.log,.rvo,.riscv,.vpd,.key,.png}
 	rm -rf kernel/*/stats
 
-host.clean:
-	rm -rf $(HOST_TARGET)
-
-custom.clean: version.clean host.clean
+custom.clean: version.clean
 
 clean: cosim.clean analysis.clean cudalite.clean custom.clean
 
@@ -184,17 +120,34 @@ clean: cosim.clean analysis.clean cudalite.clean custom.clean
 # kernel.
 ################################################################################
 
-.DEFAULT_GOAL = all
-all: analysis default
+_HELP_STRING := "Makefile Rules:\n"
 
+_HELP_STRING += "    default: \n"
+_HELP_STRING += "        - Run the default kernel ($KERNEL_DEFAULT) and generate all of the\n"
+_HELP_STRING += "          analysis products\n"
 default: stats graphs pc_stats
 
-# analysis launches independent cosimulation executions for each of kernel
-# versions in $(VERSIONS). When each execution finishes, it generates the
-# statistics for each kernel. All output products are in respective
-# kernel/<version name>/ directories
+_HELP_STRING += "    analysis: \n"
+_HELP_STRING += "        - Launch indpendent cosimulation executions of each kernel version.\n"
+_HELP_STRING += "          When execution finishes, it generates the analysis products for \n"
+_HELP_STRING += "          each kernel in each respective kernel/version_name/ directory\n"
 analysis: $(foreach v,$(VERSIONS),kernel/$v/stats kernel/$v/graphs kernel/$v/pc_stats)
 
+_HELP_STRING += "    all: \n"
+_HELP_STRING += "        - Launch both the default and analysis target\n"
+all: analysis default
+
+.DEFAULT_GOAL = help
+_HELP_STRING += "    help: \n"
+_HELP_STRING += "        - Output a friendly help message.\n"
+help:
+	@echo -e $(HELP_STRING)
+
 # Always re-run, if asked.
-.PHONY: default analysis
-.PRECIOUS: $(KERNEL_ALIASES)
+.PHONY: default analysis help
+
+# These last three lines ensure that _HELP_STRING is appended to the top of
+# whatever else comes before it.
+_HELP_STRING += "\n"
+_HELP_STRING += $(HELP_STRING)
+HELP_STRING := $(_HELP_STRING)

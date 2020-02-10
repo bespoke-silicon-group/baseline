@@ -29,84 +29,90 @@
 # Paths / Environment Configuration
 ################################################################################
 _REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
-
 -include $(_REPO_ROOT)/environment.mk
 
-# These variables are used by simlibs.mk
-TESTBENCH_PATH := $(BSG_F1_DIR)/testbenches
-LIBRARIES_PATH := $(BSG_F1_DIR)/libraries
-HARDWARE_PATH  := $(BSG_F1_DIR)/hardware
-# CL_DIR Means "Custom Logic" Directory, and is an AWS-FPGA holdover. cadenv.mk
-# checks that it is set
-CL_DIR         := $(BSG_F1_DIR)
-
-# The following makefile fragment verifies that the tools and CAD environment is
-# configured correctly.
--include $(BSG_F1_DIR)/cadenv.mk
+################################################################################
+# Include the host compilation rules. These define how to generate host object
+# files
+################################################################################
+-include $(FRAGMENTS_PATH)/host/compile.mk
 
 ################################################################################
-# Simulation Libraries (C/C++ AND Verilog)
+# Include the linker rules. These define how to generate the cosimulation binary
 ################################################################################
-# PROJECT defines the Verilog Simulation Library Target
-PROJECT        := baseline
+-include $(FRAGMENTS_PATH)/host/link.mk
 
-# simlibs.mk defines build rules for hardware and software simulation libraries
-# that are necessary for running cosimulation. These are dependencies for
-# regression since running $(MAKE) recursively does not prevent parallel builds
-# of identical rules -- which causes errors.
--include $(TESTBENCH_PATH)/simlibs.mk
+################################################################################
+# Include the analysis rules. These define how to generate analysis products
+# like vanilla_operation_trace, etc.
+################################################################################
+-include $(FRAGMENTS_PATH)/analysis.mk
 
-# libbsg_manycore_runtime will be compiled in $(LIBRARIES_PATH)
-LDFLAGS        += -lbsg_manycore_runtime -lm
-LDFLAGS        += -L$(LIBRARIES_PATH) -Wl,-rpath=$(LIBRARIES_PATH)
+################################################################################
+# The following rules define how to RUN cosimulation tests:
+################################################################################
 
-VCS_LDFLAGS    += $(foreach def,$(LDFLAGS),-LDFLAGS "$(def)")
+# This rule defines the `make <version name>` rule (e.g. `make v2`). For all
+# kernel versions defined in $(VERSIONS) you can run `make <version name` and
+# the cosimulation results ($(HOST_TARGET).cosim.log, $(HOST_TARGET).vpd,
+# vanilla_operation_trace.csv, vanila_stats.csv, etc) will be put in the
+# kernel/<version name>/ directory.
+$(VERSIONS): %: kernel/%/$(HOST_TARGET).cosim.log
 
-VCS_VFLAGS     += -M +lint=TFIPC-L -ntb_opts tb_timescale=1ps/1ps -lca -v2005
-VCS_VFLAGS     += -timescale=1ps/1ps -sverilog -full64 -licqueue
-VCS_VFLAGS     += -debug_pp
-VCS_VFLAGS     += +memcbk
+################################################################################
+# Define rules for the default cosimulation execution.
+################################################################################
 
-INCLUDES       += -I$(LIBRARIES_PATH) -I$(VCS_HOME)/linux64/lib/
+# ALIASES defines the outputs that are also generated when cosimulation is
+# run. They are aliases for running $(HOST_TARGET).cosim.log. We use empty an
+# make recipe for aliases for reasons described here:
+# https://www.gnu.org/software/make/manual/html_node/Empty-Recipes.html
+ALIASES = vanilla_stats.csv $(HOST_TARGET).vpd vanilla_operation_trace.csv
+$(ALIASES): $(HOST_TARGET).cosim.log ;
+$(HOST_TARGET).cosim.log: kernel.riscv $(HOST_TARGET).cosim 
+	./$(HOST_TARGET).cosim +ntb_random_seed_automatic +trace  \
+		+c_args="kernel.riscv $(DEFAULT_VERSION)" \
+		+vpdfile+$(HOST_TARGET).vpd | tee $@
 
-CCPPDEFINES    += -DCOSIM -DVCS
-CXXDEFINES     += $(CCPPDEFINES)
-CDEFINES       += $(CCPPDEFINES)
+################################################################################
+# Define rules for version-specific cosimulation execution. EXEC_PATH and
+# _VERSION are defined inside of the rule so that the executable can be run from
+# inside of the kernel/<version name> directory and produce outputs
+# there. KERNEL_PATH is the path to the version-specific kernel.riscv binary
+#
+# (NB, since `cd $(EXEC_PATH)` is called before running the executable it is
+# possible to specify kernel.riscv as the path to the kernel file to +c_args
+# since it is resident in $(EXEC_PATH), but I provided the full path to be more
+# explicit and clear)
+################################################################################
 
-CFLAGS         += -std=c99 $(CDEFINES) $(INCLUDES)
-CXXFLAGS       += -std=c++11 -lstdc++ $(CXXDEFINES) $(INCLUDES)
-
-# HOST_OBJECTS defines the object files that that are linked as part of
-# the kernel. It is derived from HOST_*SOURCES (see below) but other
-# objects can be added and linked as necessary.
-HOST_OBJECTS   += $(HOST_SSOURCES:.s=.o)
-HOST_OBJECTS   += $(HOST_CSOURCES:.c=.o)
-HOST_OBJECTS   += $(HOST_CXXSOURCES:.cpp=.o)
-
-$(HOST_TARGET):
-	$(error $(shell echo -e "$(RED)Native host compilation not \
-				implemented. Run \`make $(HOST_TARGET).cosim\`\
-				to build the cosimulation binary$(NC)"))
-
-# VCS Generates an executable file by linking against the .o files in
-# $(HOST_OBJECTS). WRAPPER_NAME is the top-level simulation wrapper
-# defined in simlibs.mk
-
-# We parallelize VCS compilation, but we leave a few cores on the table.
-$(HOST_TARGET).cosim: NPROCS := $(shell echo "(`nproc`/4 + 1)" | bc)
-$(HOST_TARGET).cosim: $(HOST_OBJECTS) $(SIMLIBS)
-	SYNOPSYS_SIM_SETUP=$(TESTBENCH_PATH)/synopsys_sim.setup \
-	vcs tb glbl -j$(NPROCS) $(WRAPPER_NAME) $(filter %.o,$^) \
-		-Mdirectory=$@.tmp \
-		$(VCS_LDFLAGS) $(VCS_VFLAGS) -o $@ -l $@.vcs.log
-
-host.compile.clean: 
-	rm -rf $(HOST_OBJECTS)
-
-host.link.clean:
-	rm -rf $(HOST_TARGET)
+# KERNEL_ALIASES defines the outputs that are also generated when cosimulation
+# is run. They are aliases for kernel/<version name>/$(HOST_TARGET).cosim.log
+# (This is simliar to ALIASES above). We use empty an make recipe for aliases
+# for reasons described here:
+# https://www.gnu.org/software/make/manual/html_node/Empty-Recipes.html
+KERNEL_ALIASES = $(foreach a,$(ALIASES),kernel/%/$a)
+.PRECIOUS: $(KERNEL_ALIASES)
+$(KERNEL_ALIASES): kernel/%/$(HOST_TARGET).cosim.log ;
+kernel/%/$(HOST_TARGET).cosim.log: kernel/%/kernel.riscv $(HOST_TARGET).cosim 
+	$(eval EXEC_PATH   := $(patsubst %/,%,$(dir $@)))
+	$(eval KERNEL_PATH := $(CURRENT_PATH)/$(EXEC_PATH))
+	$(eval _VERSION    := $(notdir $(EXEC_PATH)))
+	cd $(EXEC_PATH) && \
+	$(CURRENT_PATH)/$(HOST_TARGET).cosim +ntb_random_seed_automatic +trace \
+		+vpdfile+$(HOST_TARGET).vpd \
+		+c_args="$(KERNEL_PATH)/kernel.riscv $(_VERSION)" | tee $(notdir $@)
 
 cosim.clean: host.link.clean host.compile.clean
 	rm -rf *.cosim{.daidir,.tmp,.log,} 64
 	rm -rf vc_hdrs.h ucli.key
 	rm -rf *.vpd *.vcs.log
+	rm -rf $(HOST_TARGET)
+
+_HELP_STRING := "Rules from host/cosim.mk:\n"
+_HELP_STRING += "    $(HOST_TARGET).cosim.log | kernel/<version>/$(HOST_TARGET).cosim.log : \n"
+_HELP_STRING += "        - Run $(HOST_TARGET) on the [default | <version>] kernel\n"
+_HELP_STRING += "\n"
+_HELP_STRING += $(HELP_STRING)
+
+HELP_STRING := $(_HELP_STRING)
