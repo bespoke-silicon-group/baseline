@@ -33,25 +33,25 @@ _REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 ################################################################################
 # Analysis rules 
 ################################################################################
-_ANALYSIS_HELP_STRING := "Rules from host/analysis.mk :\n"
-_ANALYSIS_HELP_STRING += "    kernel.dis | kernel/<version>/kernel.dis\n"
-_ANALYSIS_HELP_STRING += "        - Disassemble RISC-V binary of the [default | <version>] kernel\n"
+_HELP_STRING := "Rules from analysis.mk\n"
+_HELP_STRING += "    kernel.dis | kernel/<version>/kernel.dis :\n"
+_HELP_STRING += "        - Disassemble RISC-V binary of the [default | <version>] kernel\n"
 %.dis: %.riscv
 	$(RISCV_OBJDUMP) -M numeric --disassemble-all -S $< > $@
 
-_ANALYSIS_HELP_STRING += "    stats | kernel/<version>/stats :\n"
-_ANALYSIS_HELP_STRING += "        - Run the Vanilla Stats Parser on the output of $(HOST_TARGET).cosim\n"
-_ANALYSIS_HELP_STRING += "          run on the [default | <version>] kernel to generate statistics\n"
+_HELP_STRING += "    stats | kernel/<version>/stats :\n"
+_HELP_STRING += "        - Run the Vanilla Stats Parser on the output of $(HOST_TARGET).cosim\n"
+_HELP_STRING += "          run on the [default | <version>] kernel to generate statistics\n"
 stats: vanilla_stats.csv
 	python3 $(BSG_MANYCORE_DIR)/software/py/vanilla_stats_parser.py --tile --tile_group
 
 %/stats: %/vanilla_stats.csv
 	cd $(dir $<) && python3 $(BSG_MANYCORE_DIR)/software/py/vanilla_stats_parser.py --tile --tile_group
 
-_ANALYSIS_HELP_STRING += "    graph | kernel/<version>/graph :\n"
-_ANALYSIS_HELP_STRING += "        - Run the Operation Trace Parser on the output of $(HOST_TARGET).cosim\n"
-_ANALYSIS_HELP_STRING += "          run on the [default | <version>] kernel to generate the\n"
-_ANALYSIS_HELP_STRING += "          abstract and detailed profiling graphs\n"
+_HELP_STRING += "    graph | kernel/<version>/graph :\n"
+_HELP_STRING += "        - Run the Operation Trace Parser on the output of $(HOST_TARGET).cosim\n"
+_HELP_STRING += "          run on the [default | <version>] kernel to generate the\n"
+_HELP_STRING += "          abstract and detailed profiling graphs\n"
 graphs: blood_abstract.png blood_detailed.png
 %/graphs: %/blood_abstract.png %/blood_detailed.png ;
 
@@ -67,10 +67,10 @@ blood_abstract.png: vanilla_operation_trace.csv vanilla_stats.csv
 %/blood_abstract.png: %/vanilla_operation_trace.csv %/vanilla_stats.csv
 	cd $(dir $<) &&  python3 $(BSG_MANYCORE_DIR)/software/py/blood_graph.py --input vanilla_operation_trace.csv --timing-stats vanilla_stats.csv --generate-key --abstract
 
-_ANALYSIS_HELP_STRING += "    pc_stats | kernel/<version>/pc_stats :\n"
-_ANALYSIS_HELP_STRING += "        - Run the Program Counter Histogram utility on the output of\n"
-_ANALYSIS_HELP_STRING += "          $(HOST_TARGET).cosim run on the [default | <version>] kernel to \n"
-_ANALYSIS_HELP_STRING += "          generate the Program Counter Histogram\n"
+_HELP_STRING += "    pc_stats | kernel/<version>/pc_stats :\n"
+_HELP_STRING += "        - Run the Program Counter Histogram utility on the output of\n"
+_HELP_STRING += "          $(HOST_TARGET).cosim run on the [default | <version>] kernel to \n"
+_HELP_STRING += "          generate the Program Counter Histogram\n"
 pc_stats: vanilla_operation_trace.csv
 	python3 $(BSG_MANYCORE_DIR)/software/py/vanilla_pc_histogram.py --dim-x $(_BSG_MACHINE_TILES_X) --dim-y $(_BSG_MACHINE_TILES_Y) --tile --input $<
 
@@ -87,8 +87,8 @@ analysis.clean:
 .PRECIOUS: %.png %/blood_detailed.png %/blood_abstract.png
 
 
-_ANALYSIS_HELP_STRING += "\n"
-_ANALYSIS_HELP_STRING += $(HELP_STRING)
+_HELP_STRING += "\n"
+_HELP_STRING += $(HELP_STRING)
 
-HELP_STRING := $(_ANALYSIS_HELP_STRING)
+HELP_STRING := $(_HELP_STRING)
 

@@ -109,7 +109,7 @@ cosim.clean: host.link.clean host.compile.clean
 	rm -rf *.vpd *.vcs.log
 	rm -rf $(HOST_TARGET)
 
-_HELP_STRING := "Rules from host/cosim.mk:\n"
+_HELP_STRING := "Rules from host/cosim.mk\n"
 _HELP_STRING += "    $(HOST_TARGET).cosim.log | kernel/<version>/$(HOST_TARGET).cosim.log : \n"
 _HELP_STRING += "        - Run $(HOST_TARGET) on the [default | <version>] kernel\n"
 _HELP_STRING += "\n"

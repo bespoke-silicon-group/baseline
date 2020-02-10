@@ -109,7 +109,7 @@ HOST_INCLUDES       := -I$(CURRENT_PATH)
 ################################################################################
 version.clean:
 	rm -rf kernel/*/*{.csv,.log,.rvo,.riscv,.vpd,.key,.png}
-	rm -rf kernel/*/stats
+	rm -rf kernel/*/{stats,pc_stats}
 
 custom.clean: version.clean
 
@@ -120,7 +120,7 @@ clean: cosim.clean analysis.clean cudalite.clean custom.clean
 # kernel.
 ################################################################################
 
-_HELP_STRING := "Makefile Rules:\n"
+_HELP_STRING := "Makefile Rules\n"
 
 _HELP_STRING += "    default: \n"
 _HELP_STRING += "        - Run the default kernel ($KERNEL_DEFAULT) and generate all of the\n"

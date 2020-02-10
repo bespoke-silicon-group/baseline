@@ -67,7 +67,7 @@ $(HOST_TARGET):
 ################################################################################
 # Cosimulation Linker Rules
 ################################################################################
-_HELP_STRING := "Rules from host/link.mk:\n"
+_HELP_STRING := "Rules from host/link.mk\n"
 
 # libbsg_manycore_runtime will be compiled in $(LIBRARIES_PATH)
 LDFLAGS        += -lbsg_manycore_runtime -lm
