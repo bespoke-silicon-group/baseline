@@ -25,53 +25,6 @@ extern int bsg_printf(const char*, ...);
  * prevent name mangling 
  */
 extern "C" {
-        int  __attribute__ ((noinline)) kernel_vector_add_int(
-                      int *A, int *B, int *C,
-                      uint32_t nels,
-                      uint32_t block_size_y, uint32_t block_size_x,
-                      uint32_t tag) {
-                int rc;
-
-                bsg_cuda_print_stat_kernel_start();
-                bsg_cuda_print_stat_start(tag);
-                rc = kernel_tile_vector_add(A, B, C, nels);
-                bsg_cuda_print_stat_end(tag);
-                bsg_cuda_print_stat_kernel_end();
-
-                return rc;
-        }
-
-        int  __attribute__ ((noinline)) kernel_vector_add_int16(
-                      int16_t *A, int16_t *B, int16_t *C,
-                      uint32_t nels,
-                      uint32_t block_size_y, uint32_t block_size_x,
-                      uint32_t tag) {
-                int rc;
-
-                bsg_cuda_print_stat_kernel_start();
-                bsg_cuda_print_stat_start(tag);
-                rc = kernel_tile_vector_add(A, B, C, nels);
-                bsg_cuda_print_stat_end(tag);
-                bsg_cuda_print_stat_kernel_end();
-
-                return rc;
-        }
-
-        int  __attribute__ ((noinline)) kernel_vector_add_int8(
-                      int8_t *A, int8_t *B, int8_t *C,
-                      uint32_t nels,
-                      uint32_t block_size_y, uint32_t block_size_x,
-                      uint32_t tag) {
-                int rc;
-
-                bsg_cuda_print_stat_kernel_start();
-                bsg_cuda_print_stat_start(tag);
-                rc = kernel_tile_vector_add(A, B, C, nels);
-                bsg_cuda_print_stat_end(tag);
-                bsg_cuda_print_stat_kernel_end();
-
-                return rc;
-        }
 
         int  __attribute__ ((noinline)) kernel_vector_add_float(
                       float *A, float *B, float *C,

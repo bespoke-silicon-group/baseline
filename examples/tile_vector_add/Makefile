@@ -69,7 +69,7 @@ KERNEL_INCLUDES     += -I$(CURRENT_PATH)/kernel/include
 
 # Define the default kernel.cpp file. If KERNEL_DEFAULT is not defined it will
 # be set to kernel.cpp in the same directory as this Makefile.
-DEFAULT_VERSION     := v3
+DEFAULT_VERSION     := v0
 KERNEL_DEFAULT      := kernel/$(DEFAULT_VERSION)/kernel.cpp
 
 ################################################################################
