@@ -187,17 +187,14 @@ clean: cosim.clean analysis.clean cudalite.clean custom.clean
 .DEFAULT_GOAL = all
 all: analysis default
 
-default: stats
+default: stats graphs pc_stats
 
 # analysis launches independent cosimulation executions for each of kernel
 # versions in $(VERSIONS). When each execution finishes, it generates the
 # statistics for each kernel. All output products are in respective
 # kernel/<version name>/ directories
-analysis: $(foreach v,$(VERSIONS),kernel/$v/stats kernel/$v/graphs)
+analysis: $(foreach v,$(VERSIONS),kernel/$v/stats kernel/$v/graphs kernel/$v/pc_stats)
 
 # Always re-run, if asked.
 .PHONY: default analysis
 .PRECIOUS: $(KERNEL_ALIASES)
-
-
-# NB: We use empty recipes for 

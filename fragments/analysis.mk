@@ -32,7 +32,7 @@ pc_stats: vanilla_operation_trace.csv
 	python3 $(BSG_MANYCORE_DIR)/software/py/vanilla_pc_histogram.py --dim-x $(_BSG_MACHINE_TILES_X) --dim-y $(_BSG_MACHINE_TILES_Y) --tile --input $<
 
 %/pc_stats: %/vanilla_operation_trace.csv
-	cd $(dir $<) && python3 $(BSG_MANYCORE_DIR)/software/py/vanilla_pc_histogram.py --dim-x $(_BSG_MACHINE_TILES_X) --dim-y $(_BSG_MACHINE_TILES_Y) --tile --input $<
+	cd $(dir $<) && python3 $(BSG_MANYCORE_DIR)/software/py/vanilla_pc_histogram.py --dim-x $(_BSG_MACHINE_TILES_X) --dim-y $(_BSG_MACHINE_TILES_Y) --tile --input $(notdir $<)
 
 analysis.clean:
 	rm -rf *.dis
