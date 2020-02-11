@@ -133,7 +133,9 @@ endif
 
 # BSG Manycore Library Variables
 BSG_MANYCORE_LIB_OBJECTS  += bsg_set_tile_x_y.rvo
-BSG_MANYCORE_LIB_OBJECTS  += bsg_printf.rvo
+# We don't include bsg_printf.rvo in all files so that we can reduce the
+# elf file sizes
+# BSG_MANYCORE_LIB_OBJECTS  += bsg_printf.rvo
 
 ################################################################################
 # Linker Flags

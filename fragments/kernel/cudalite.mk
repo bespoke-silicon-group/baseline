@@ -71,6 +71,8 @@ KERNEL_DEFAULT ?= kernel.cpp
 KERNEL_OBJECTS += $(KERNEL_SLIBRARIES:.s=.rvo)
 KERNEL_OBJECTS += $(KERNEL_CLIBRARIES:.c=.rvo)
 KERNEL_OBJECTS += $(KERNEL_CXXLIBRARIES:.cpp=.rvo)
+# If someone includes bsg_manycore's bsg_printf.rvo, replace it to trigger our specific rule
+KERNEL_OBJECTS := $(patsubst $(BSG_MANYCORE_DIR)/software/bsg_manycore_lib/bsg_printf.rvo,bsg_printf.rvo,$(KERNEL_OBJECTS))
 
 ################################################################################
 # Kernel Compilation Rules

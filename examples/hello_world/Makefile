@@ -58,10 +58,12 @@ VERSIONS = v0 v1 v2 v3
 # come up with your own solution.
 # 
 # Use KERNEL_INCLUDES to specify the path to directories that contain headers.
+#
+# If you want to use bsg_printf.c, you MUST include it in KERNEL_CLIBRARIES
 ################################################################################
 
 # C Libraries
-KERNEL_CLIBRARIES   +=
+KERNEL_CLIBRARIES   += $(BSG_MANYCORE_DIR)/software/bsg_manycore_lib/bsg_printf.c
 # C++ Libraries
 KERNEL_CXXLIBRARIES +=
 
