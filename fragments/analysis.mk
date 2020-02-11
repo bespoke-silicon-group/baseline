@@ -48,7 +48,7 @@ stats: vanilla_stats.csv
 %/stats: %/vanilla_stats.csv
 	cd $(dir $<) && python3 $(BSG_MANYCORE_DIR)/software/py/vanilla_stats_parser.py --tile --tile_group
 
-_HELP_STRING += "    graph | kernel/<version>/graph :\n"
+_HELP_STRING += "    graphs | kernel/<version>/graphs :\n"
 _HELP_STRING += "        - Run the Operation Trace Parser on the output of $(HOST_TARGET).cosim\n"
 _HELP_STRING += "          run on the [default | <version>] kernel to generate the\n"
 _HELP_STRING += "          abstract and detailed profiling graphs\n"
