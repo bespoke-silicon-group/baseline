@@ -37,7 +37,7 @@ _REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 # host code. Therefore, we just need to define the standard make
 # variables.
 
-INCLUDES       += -I$(LIBRARIES_PATH) -I$(VCS_HOME)/linux64/lib/
+INCLUDES       += -I$(LIBRARIES_PATH) -I$(VCS_HOME)/linux64/lib/ $(HOST_INCLUDES)
 
 CCPPDEFINES    += -DCOSIM -DVCS
 CXXDEFINES     += $(CCPPDEFINES)
