@@ -104,13 +104,6 @@ HOST_INCLUDES       := -I$(CURRENT_PATH)
 -include $(FRAGMENTS_PATH)/host/cosim.mk
 
 ################################################################################
-# Include the Cosimulation host build rules (This must be included after
-# HOST_*SOURCES, HOST_TARGET, HOST_INCLUDES, etc)
-################################################################################
-
--include $(FRAGMENTS_PATH)/host/cosim.mk
-
-################################################################################
 # Define the clean rules. clean calls the makefile-specific cleans, whereas
 # users can add commands and dependencies to custom.clean.
 ################################################################################
