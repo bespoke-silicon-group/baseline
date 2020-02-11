@@ -1,6 +1,11 @@
 
 _REPO_ROOT           := $(shell git rev-parse --show-toplevel)
 
+# Check if we are running the gloablly installed COSIM ob brg-vip
+ifdef BRG_BSG_BLADERUNNER_DIR
+-include $(BRG_BSG_BLADERUNNER_DIR)/project.mk
+endif
+
 # Check if we are running inside of the BSG Bladerunner repository by searching
 # for project.mk. If project.mk is found, then we are and we should use
 # that to define BASEJUMP_STL_DIR, and BSG_MANYCORE_DIR and
