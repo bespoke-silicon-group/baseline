@@ -27,6 +27,7 @@
 
 #include "conv2d.hpp"
 #include <array>
+#include <vector>
 
 #define C_F_ROWS 4
 #define C_F_COLS 4
@@ -93,7 +94,7 @@ void conv2d(const TA *A,
                                            (0 <= ax && ax < N))
                                                 a = A[ay * N + ax];
                                         res += static_cast<TB>(filter[fy * Fx + fx]) * static_cast<TB>(a);
-                                 }
+                                }
                         B[by * result_w + bx] = res;
                 }
 }
@@ -101,7 +102,7 @@ void conv2d(const TA *A,
 
 int kernel_conv2d(int argc, char **argv)
 {       
-        bsg_pr_test_info("Running CUDA Conv2D Kernel on a 2x2 tile group.\n\n");
+        bsg_pr_test_info("Running CUDA Conv2D Kernel on a full tile group.\n\n");
         char *elf, *test_name;
         struct arguments_path args = { NULL, NULL };
         argp_parse(&argp_path, argc, argv, 0, 0, &args);
@@ -214,19 +215,20 @@ int kernel_conv2d(int argc, char **argv)
         uint32_t block_size_y = By;
         uint32_t block_size_x = Bx;
 
-        hb_mc_dimension_t tilegroup_dim = { .x = 2, .y = 2 };
+        hb_mc_dimension_t tilegroup_dim = { .x = mc->mesh->dim.x, .y = mc->mesh->dim.y };
         hb_mc_dimension_t grid_dim = { .x = 1, .y = 1 };
-
-        uint32_t cuda_argv[] = {
-                A_device, M, N,
-                filter_device, Fy, Fx,
-                P,
-                B_device,
-                Sy, Sx,
-                block_size_y, block_size_x
-        };
-        size_t cuda_argc = sizeof(cuda_argv) / sizeof(cuda_argv[0]);
-        rc = hb_mc_kernel_enqueue(mc, grid_dim, tilegroup_dim, "kernel_conv2d", cuda_argc, cuda_argv);
+        bsg_pr_test_info("Tilegroup dimensions set at : %d, %d\n", tilegroup_dim.x, tilegroup_dim.y);
+        std::vector<uint32_t> cuda_argv =
+                {
+                        A_device, M, N,
+                        filter_device, Fy, Fx,
+                        P,
+                        B_device,
+                        Sy, Sx,
+                        tilegroup_dim.y, tilegroup_dim.x,
+                        block_size_y, block_size_x
+                };
+        rc = hb_mc_kernel_enqueue(mc, grid_dim, tilegroup_dim, "kernel_conv2d", cuda_argv.size(), cuda_argv.data());
         if(rc != HB_MC_SUCCESS)
         {
                 bsg_pr_test_err("Failed to initialize grid.\n");
