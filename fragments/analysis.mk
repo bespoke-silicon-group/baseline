@@ -78,8 +78,9 @@ pc_stats: vanilla_operation_trace.csv
 	cd $(dir $<) && python3 $(BSG_MANYCORE_DIR)/software/py/vanilla_pc_histogram.py --dim-x $(_BSG_MACHINE_TILES_X) --dim-y $(_BSG_MACHINE_TILES_Y) --tile --input $(notdir $<)
 
 analysis.clean:
+	rm -rf vanilla_stats.csv vanilla_operation_trace.csv
+	rm -rf vanilla.log vcache_non_blocking_stats.log vcache_blocking_stats.log
 	rm -rf *.dis
-	rm -rf vanilla_stats.csv vanilla_operation_trace.csv vanilla.log vcache_non_blocking_stats.log vcache_blocking_stats.log
 	rm -rf stats pc_stats
 	rm -rf blood_abstract.png blood_detailed.png
 	rm -rf key_abstract.png key_detailed.png
