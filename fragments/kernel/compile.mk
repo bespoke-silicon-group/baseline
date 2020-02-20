@@ -65,6 +65,7 @@ RISCV_CCPPFLAGS += -ffp-contract=off
 
 RISCV_CFLAGS   += -std=gnu99 $(RISCV_CCPPFLAGS)
 RISCV_CXXFLAGS += -std=c++11 $(RISCV_CCPPFLAGS)
+RISCV_CXXFLAGS += -fno-threadsafe-statics
 
 RISCV_INCLUDES += -I$(_BSG_MANYCORE_COMMON_PATH)
 RISCV_INCLUDES += -I$(BSG_MANYCORE_DIR)/software/bsg_manycore_lib
