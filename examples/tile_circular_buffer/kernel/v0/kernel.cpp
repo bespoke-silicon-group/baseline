@@ -57,7 +57,7 @@ extern "C" {
                 if (__bsg_x == C_SOURCE_X && __bsg_y == C_SOURCE_Y){
                         kernel_src();
                 }
-                bsg_print_int(42); // TODO: Only seeing 42 from one tile
+                bsg_print_int(1000 + __bsg_id); // TODO: Only seeing 42 from one tile
                 return 0;
         }
 }
