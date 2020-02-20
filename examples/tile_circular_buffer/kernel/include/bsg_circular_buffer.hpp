@@ -12,8 +12,7 @@ typedef enum _qtype{
 } qtype;
 
 
-
-template<typename T, unsigned int dst_y, unsigned int dst_x>
+template<unsigned int dst_y, unsigned int dst_x, typename T>
 T *bsg_remote_pointer(T* ptr){
         uintptr_t remote_prefix = (REMOTE_EPA_PREFIX << REMOTE_EPA_MASK_SHIFTS);
         uintptr_t y_bits = ((dst_y) << Y_CORD_SHIFTS);
@@ -32,17 +31,12 @@ public:
         CircularBuffer<T,N,E,src_y,src_x,dst_y,dst_x>(occ_t &o){
                 set_myself();
                 occ_t * volatile& occupancy = get_occ_ptr();
-
-                // This is the second ugliest piece of C++ code I've ever seen. Help?
-                occ_t * volatile& dst_occ_p = *reinterpret_cast<decltype(&dst_occ_p)>(((REMOTE_EPA_PREFIX << REMOTE_EPA_MASK_SHIFTS)
-                                                                                    | ((dst_y) << Y_CORD_SHIFTS )
-                                                                                    | ((dst_x) << X_CORD_SHIFTS )
-                                                                                    | reinterpret_cast<uintptr_t>(&occupancy)));
+                occ_t * volatile& dst_occ_p = *bsg_remote_pointer<dst_y, dst_x>(&occupancy);
 
                 if ((me == SOURCE) && (occupancy == nullptr)){
                         occupancy = &o;
                         dst_occ_p = &o;
-                        //bsg_print_hexadecimal((int)&dst_occ_p);
+                        bsg_print_hexadecimal((int)&dst_occ_p);
                 } else {
                         ; // Assert something
                 }
@@ -52,18 +46,12 @@ public:
         CircularBuffer<T,N,E,src_y,src_x,dst_y,dst_x>(buf_t &b){
                 set_myself();
                 buf_t * volatile& buffer = get_buf_ptr();
-
-                // This is the second ugliest piece of C++ code I've ever seen. Help?
-                buf_t * volatile& src_buf_p = *reinterpret_cast<decltype(&src_buf_p)>(((REMOTE_EPA_PREFIX << REMOTE_EPA_MASK_SHIFTS)
-                                                                                    | ((src_y) << Y_CORD_SHIFTS )
-                                                                                    | ((src_x) << X_CORD_SHIFTS )
-                                                                                    | reinterpret_cast<uintptr_t>(&buffer)));
-
+                buf_t * volatile& src_buf_p = *bsg_remote_pointer<src_y, src_x>(&buffer);
 
                 if((me == DEST) && (buffer == nullptr)){
                         buffer = &b;
                         src_buf_p = &b;
-                        //bsg_print_hexadecimal((int)&src_buf_p);
+                        bsg_print_hexadecimal((int)&src_buf_p);
                 } else {
                         ; // Assert something
                 }
@@ -88,9 +76,9 @@ private:
         // TODO: Comment
         __attribute__((noinline))
         static occ_t * volatile& get_occ_ptr() {static occ_t * volatile __arr = nullptr; return __arr;}
+
         __attribute__((noinline))
         static buf_t * volatile & get_buf_ptr() {static buf_t * volatile __arr = nullptr; return __arr;}
-        //volatile static std::array<TA, NA> *& get_ptr(std::array<TA, NA> &foo) {volatile static std::array<TA, NA> *__arr = nullptr; return __arr;}
 
         __attribute__((noinline))
         void set_myself(){
