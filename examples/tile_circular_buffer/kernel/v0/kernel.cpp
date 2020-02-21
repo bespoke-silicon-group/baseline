@@ -30,34 +30,34 @@
 #define C_DEST_X 1
 #define C_DEST_Y 0
 
-int kernel_dest(){
-        std::array<volatile unsigned int, 8> buf;
-        CircularBuffer<volatile unsigned int, 4, 2, C_SOURCE_Y,C_SOURCE_X, C_DEST_Y,C_DEST_X> foo = CircularBuffer<volatile unsigned int, 4, 2, C_SOURCE_Y,C_SOURCE_X, C_DEST_Y,C_DEST_X>(buf);
-        foo.wait();
+int kernel_dest(int *dest,
+                const uint32_t nelements){
+        CircularBuffer::Dest<unsigned int, 4, 2, C_SOURCE_Y,C_SOURCE_X, C_DEST_Y,C_DEST_X> fifo;
+        fifo.init_wait();
         return 0;
 }
 
-int kernel_src(){
-        std::array<volatile unsigned char, 2> occ;
-        CircularBuffer<volatile unsigned int, 4, 2, C_SOURCE_Y,C_SOURCE_X, C_DEST_Y,C_DEST_X> foo = CircularBuffer<volatile unsigned int, 4, 2, C_SOURCE_Y,C_SOURCE_X, C_DEST_Y,C_DEST_X>(occ);
-        foo.wait();
+int kernel_src(const int *src,
+               const uint32_t nelements){
+        CircularBuffer::Source<unsigned int, 4, 2, C_SOURCE_Y,C_SOURCE_X, C_DEST_Y,C_DEST_X> fifo;
+        fifo.init_wait();
         return 0;
 }
 
 extern "C" {
         __attribute__((noinline))
         int kernel_tile_circular_buffer(const int *src,
-                                        const uint32_t i_nelements,
+                                        const uint32_t nelements,
                                         int *dest){
 
                 if (__bsg_x == C_DEST_X && __bsg_y == C_DEST_Y){
-                        kernel_dest();
+                        kernel_dest(dest, nelements);
                 }
 
                 if (__bsg_x == C_SOURCE_X && __bsg_y == C_SOURCE_Y){
-                        kernel_src();
+                        kernel_src(src, nelements);
                 }
-                bsg_print_int(1000 + __bsg_id); // TODO: Only seeing 42 from one tile
+                bsg_print_int(1000 + __bsg_id);
                 return 0;
         }
 }
