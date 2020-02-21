@@ -30,10 +30,15 @@
 #define C_DEST_X 1
 #define C_DEST_Y 0
 
+INIT_TILE_GROUP_BARRIER(r_barrier, c_barrier, 0, bsg_tiles_X-1, 0, bsg_tiles_Y-1);
+
 int kernel_dest(int *dest,
                 const uint32_t nelements){
         CircularBuffer::Dest<unsigned int, 4, 2, C_SOURCE_Y,C_SOURCE_X, C_DEST_Y,C_DEST_X> fifo;
         fifo.init_wait();
+        unsigned int * foo = fifo.obtain_rd_ptr_wait();
+        bsg_print_hexadecimal(0xbad);
+        bsg_print_int(foo[0]);
         return 0;
 }
 
@@ -41,6 +46,12 @@ int kernel_src(const int *src,
                const uint32_t nelements){
         CircularBuffer::Source<unsigned int, 4, 2, C_SOURCE_Y,C_SOURCE_X, C_DEST_Y,C_DEST_X> fifo;
         fifo.init_wait();
+        unsigned int * foo = fifo.obtain_wr_ptr_wait();
+
+        bsg_print_hexadecimal((int) foo);
+        bsg_print_hexadecimal((int)&foo[0]);
+        foo[0] = 42;
+        fifo.finish_wr_ptr();
         return 0;
 }
 
@@ -58,6 +69,8 @@ extern "C" {
                         kernel_src(src, nelements);
                 }
                 bsg_print_int(1000 + __bsg_id);
+                bsg_tile_group_barrier(&r_barrier, &c_barrier); 
+
                 return 0;
         }
 }
