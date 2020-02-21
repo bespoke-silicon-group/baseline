@@ -114,15 +114,14 @@ int kernel_circular_buffer(int argc, char **argv)
         for(int i = 0; i < sizeof(A) / sizeof(A[0]); i++)
         {
                 A[i] = data_distribution(generator);
-                B[i] = A[i] + 1;
+                B[i] = A[i];
         }
         
-        /*
         rc = hb_mc_device_memcpy(mc,
                                  (void *) ((intptr_t) A_device),
                                  (void *) &A[0],
                                  sizeof(A), HB_MC_MEMCPY_TO_DEVICE);
-        */
+
         if(rc != HB_MC_SUCCESS)
         {
                 bsg_pr_test_err("Failed to copy A to the manycore.\n");
@@ -135,7 +134,9 @@ int kernel_circular_buffer(int argc, char **argv)
 
         uint32_t cuda_argv[] = {A_device, N, B_device};
         size_t cuda_argc = sizeof(cuda_argv) / sizeof(cuda_argv[0]);
-        rc = hb_mc_kernel_enqueue(mc, grid_dim, tilegroup_dim, "kernel_tile_circular_buffer", cuda_argc, cuda_argv);
+        rc = hb_mc_kernel_enqueue(mc, grid_dim, tilegroup_dim, 
+                                  "kernel_tile_circular_buffer", 
+                                  cuda_argc, cuda_argv);
         if(rc != HB_MC_SUCCESS)
         {
                 bsg_pr_test_err("Failed to initialize grid.\n");

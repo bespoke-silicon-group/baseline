@@ -30,28 +30,90 @@
 #define C_DEST_X 1
 #define C_DEST_Y 0
 
-INIT_TILE_GROUP_BARRIER(r_barrier, c_barrier, 0, bsg_tiles_X-1, 0, bsg_tiles_Y-1);
+#define C_NUM_ELEMENTS 4
+
+INIT_TILE_GROUP_BARRIER(r_barrier, c_barrier, 0, BSG_TILE_GROUP_X_DIM-1, 0, BSG_TILE_GROUP_Y_DIM-1);
 
 int kernel_dest(int *dest,
                 const uint32_t nelements){
-        CircularBuffer::Dest<unsigned int, 4, 2, C_SOURCE_Y,C_SOURCE_X, C_DEST_Y,C_DEST_X> fifo;
+        
+        // To use the Circular Buffer class, instantiate the
+        // Dest/Source pair.
+        CircularBuffer::Dest<unsigned int, C_SOURCE_Y, C_SOURCE_X, C_DEST_Y, C_DEST_X, C_NUM_ELEMENTS> fifo;
+
+        // THEN, call init_wait. This completes pairing. If multiple
+        // Dest/Source pairs are used, you must instantiate ALL of
+        // them and THEN call init_wait for each pair.
+        
+        // It is not possible to do this in the constructor, because
+        // there's no guarantee that all Dest/Source objects are
+        // constructed in some globally-agreed order to prevent
+        // deadlock. This is a better solution.
         fifo.init_wait();
-        unsigned int * foo = fifo.obtain_rd_ptr_wait();
-        bsg_print_hexadecimal(0xbad);
-        bsg_print_int(foo[0]);
+
+        // Once init is done, we can call 
+        const unsigned int * buf_p;
+
+        for(int i = 0; i < 10; ++i){
+                buf_p = fifo.obtain_rd_ptr_wait();
+                for(int n = 0; n < C_NUM_ELEMENTS; ++n){
+                        bsg_print_int(buf_p[n]);
+                }
+                fifo.finish_rd_ptr();
+        }
+
+        for(int i = 0; i < nelements; i += C_NUM_ELEMENTS){
+                // Wait until a write pointer is available. 
+                buf_p = fifo.obtain_rd_ptr_wait();
+                for(int n = 0; n < C_NUM_ELEMENTS; ++n){
+                        dest[i + n] = buf_p[n];
+                }
+                // Signal that that this write pointer is finished.
+                fifo.finish_rd_ptr();
+        }
+
         return 0;
 }
 
 int kernel_src(const int *src,
                const uint32_t nelements){
-        CircularBuffer::Source<unsigned int, 4, 2, C_SOURCE_Y,C_SOURCE_X, C_DEST_Y,C_DEST_X> fifo;
-        fifo.init_wait();
-        unsigned int * foo = fifo.obtain_wr_ptr_wait();
 
-        bsg_print_hexadecimal((int) foo);
-        bsg_print_hexadecimal((int)&foo[0]);
-        foo[0] = 42;
-        fifo.finish_wr_ptr();
+        // To use the Circular Buffer class, instantiate the
+        // Dest/Source pair.
+        CircularBuffer::Source<unsigned int, C_SOURCE_Y, C_SOURCE_X, C_DEST_Y, C_DEST_X, C_NUM_ELEMENTS> fifo;
+
+        // THEN, call init_wait. This completes pairing. If multiple
+        // Dest/Source pairs are used, you must instantiate ALL of
+        // them and THEN call init_wait for each pair.
+        
+        // It is not possible to do this in the constructor, because
+        // there's no guarantee that all Dest/Source objects are
+        // constructed in some globally-agreed order to prevent
+        // deadlock. This is a better solution.
+        fifo.init_wait();
+
+        unsigned int * buf_p;
+
+        for(int i = 0; i < 10; ++i){
+                // Wait until a write pointer is available. 
+                buf_p = fifo.obtain_wr_ptr_wait();
+                for(int n = 0; n < C_NUM_ELEMENTS; ++n){
+                        buf_p[n] = 42 * 1000000 + i * 1000 + n;
+                }
+                // Signal that that this write pointer is finished.
+                fifo.finish_wr_ptr();
+        }
+
+        for(int i = 0; i < nelements; i += C_NUM_ELEMENTS){
+                // Wait until a write pointer is available. 
+                buf_p = fifo.obtain_wr_ptr_wait();
+                for(int n = 0; n < C_NUM_ELEMENTS; ++n){
+                        buf_p[n] = src[i + n];
+                }
+                // Signal that that this write pointer is finished.
+                fifo.finish_wr_ptr();
+        }
+
         return 0;
 }
 
@@ -69,6 +131,7 @@ extern "C" {
                         kernel_src(src, nelements);
                 }
                 bsg_print_int(1000 + __bsg_id);
+
                 bsg_tile_group_barrier(&r_barrier, &c_barrier); 
 
                 return 0;
