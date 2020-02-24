@@ -31,7 +31,7 @@
 #define C_F_LENGTH 5
 #define C_A_LENGTH 128
 #define C_PAD_LENGTH 0
-#define C_STEP_LENGTH 1
+#define C_STEP_LENGTH 4
 
 // Print matrix A (M x N). This works well for small matricies.
 template <typename T>
@@ -94,7 +94,7 @@ void conv1d(const TA *A, const uint32_t A_LENGTH,
 
 int kernel_conv1d(int argc, char **argv)
 {       
-        bsg_pr_test_info("Running CUDA Conv1D Kernel on a 2x2 tile group.\n\n");
+        bsg_pr_test_info("Running CUDA Conv1D Kernel on a single tile.\n\n");
         char *elf, *test_name;
         struct arguments_path args = { NULL, NULL };
         argp_parse(&argp_path, argc, argv, 0, 0, &args);
@@ -195,7 +195,7 @@ int kernel_conv1d(int argc, char **argv)
         hb_mc_dimension_t tilegroup_dim = { .x = 1, .y = 1 };
         hb_mc_dimension_t grid_dim = { .x = 1, .y = 1 };
 
-        uint32_t cuda_argv[] = { A_device, N, filter_device, F, B_device};
+        uint32_t cuda_argv[] = { A_device, N, filter_device, F, S, B_device};
         size_t cuda_argc = sizeof(cuda_argv) / sizeof(cuda_argv[0]);
         rc = hb_mc_kernel_enqueue(mc, grid_dim, tilegroup_dim, "kernel_tile_conv1d", cuda_argc, cuda_argv);
         if(rc != HB_MC_SUCCESS)
@@ -235,6 +235,8 @@ int kernel_conv1d(int argc, char **argv)
         if(std::isnan(sse) || sse > .01)
         {
                 bsg_pr_test_err(BSG_RED("Result mismatch! SSE: %f\n"), sse);
+                for(int i = 0; i < M; i++)
+                        bsg_pr_test_info("B_actual[%d] = %f, %f = B_expected[%d]\n", i, B_result[i], B_expected[i], i);
                 return HB_MC_FAIL;
         }
         bsg_pr_test_info(BSG_GREEN("Result match! (SSE: %f)\n"), sse);

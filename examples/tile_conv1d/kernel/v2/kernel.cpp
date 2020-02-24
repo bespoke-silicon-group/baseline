@@ -21,38 +21,60 @@ int conv1d(const TI *INPUT,
            const uint32_t i_nelements,
            const TF *FILTER,
            const uint8_t f_nelements,
+           const uint8_t stride,
            TO *OUTPUT){
-
-                uint32_t nstep = f_nelements - FACTOR;
-                uint32_t b_nelements = i_nelements - f_nelements + 1;
+                uint32_t b_nelements = (i_nelements - f_nelements) / stride + 1;
+                uint32_t b_nelements_unrolled = (b_nelements / FACTOR) * FACTOR;
+                uint32_t elements_remaining = b_nelements - b_nelements_unrolled;
                 uint32_t ii = 0;
-                for(uint32_t oi = 0; oi < b_nelements; oi += FACTOR){
-                        TO sum[FACTOR] = {static_cast<TO>(0)};
-                        TI a[FACTOR];
+                const uint32_t step = FACTOR * stride;
+
+                TO sum[FACTOR];
+                TI a[FACTOR];
+                uint32_t ui;
+                for(uint32_t oi = 0; oi < b_nelements_unrolled; oi += FACTOR){
+                        for(int i = 0; i < FACTOR; i++)
+                                sum[i] = static_cast<TO>(0);
 
                         for(uint32_t fi = 0; fi < f_nelements; fi++) {// Opt: Assume non-zero
                                 TF f = FILTER[fi];
+                                ui = 0;
 
 #pragma GCC unroll 8
-                                for(uint32_t ui = 0; ui < FACTOR; ++ui){
-                                        a[ui] = INPUT[ii + ui + fi];
+                                for(uint32_t ai = 0; ai < FACTOR; ai++, ui += stride){
+                                        a[ai] = INPUT[ii + ui + fi];
                                 }
 
 #pragma GCC unroll 8
-                                for(uint32_t ui = 0; ui < FACTOR; ++ui){
+                                for(ui = 0; ui < FACTOR; ++ui){
                                         sum[ui] += f * a[ui];
                                 }
 
                         }
                         
 #pragma GCC unroll 8
-                        for(uint32_t ui = 0; ui < FACTOR; ++ui){
+                        for(ui = 0; ui < FACTOR; ++ui){
                                 OUTPUT[oi + ui] = sum[ui];
                         }
 
-                        ii += FACTOR;
+                        ii += step;
                 }
 
+                for(int i = 0; i < FACTOR; i++)
+                        sum[i] = static_cast<TO>(0);
+                
+                for(uint32_t fi = 0; fi < f_nelements; fi++) {
+                        TF f = FILTER[fi];
+                        ui = 0;
+                        for(uint32_t ai = 0; ai < elements_remaining; ai++, ui += stride)
+                                a[ai] = INPUT[ii + ui + fi];
+                        
+                        for(ui = 0; ui < elements_remaining; ui++)
+                                sum[ui] += f * a[ui];
+                }
+                for(ui = 0; ui < elements_remaining; ui++)
+                        OUTPUT[b_nelements_unrolled + ui] = sum[ui];
+                
                 return 0;
 }
 
@@ -63,10 +85,11 @@ extern "C" {
                                const int i_nelements,
                                const float *FILTER,
                                const int f_nelements,
+                               const int stride,
                                float *OUTPUT)
         {
                 int rc;
-                uint32_t o_nelements = i_nelements - f_nelements + 1;
+                uint32_t o_nelements = (i_nelements - f_nelements) / stride + 1;
 
                 float input[i_nelements];
                 float filter[f_nelements];
@@ -77,7 +100,7 @@ extern "C" {
 
                 for(int i = 0; i < 2; ++i){
                         bsg_cuda_print_stat_start(i);
-                        rc = conv1d<4>(input, i_nelements, filter, f_nelements, output);
+                        rc = conv1d<4>(input, i_nelements, filter, f_nelements, stride, output);
                         bsg_cuda_print_stat_end(i);
                 }
 

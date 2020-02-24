@@ -20,14 +20,14 @@ int conv1d(const TI *INPUT,
            const uint32_t i_nelements,
            const TF *FILTER,
            const uint8_t f_nelements,
+           const uint8_t stride,
            TO *OUTPUT){
 
-        uint32_t offset = (f_nelements + 1) / 2;
-        uint32_t b_nelements = i_nelements - f_nelements + 1;
+        uint32_t b_nelements = (i_nelements - f_nelements) / stride + 1;
         for(uint32_t oi = 0; oi < b_nelements; ++oi){
                 TO res = static_cast<TO>(0);
                 for(uint32_t fi = 0; fi < f_nelements; fi++) {
-                        res += FILTER[fi] * INPUT[fi + oi];
+                        res += FILTER[fi] * INPUT[fi + oi * stride];
                 }
                 OUTPUT[oi] = res;
         }
@@ -41,10 +41,11 @@ extern "C" {
                                const int i_nelements,
                                const float *FILTER,
                                const int f_nelements,
+                               const int stride,
                                float *OUTPUT)
         {
                 int rc;
-                uint32_t o_nelements = i_nelements - f_nelements + 1;
+                uint32_t o_nelements = (i_nelements - f_nelements) / stride + 1;
 
                 float input[i_nelements];
                 float filter[f_nelements];
@@ -55,7 +56,7 @@ extern "C" {
 
                 for(int i = 0; i < 2; ++i){
                         bsg_cuda_print_stat_start(i);
-                        rc = conv1d(input, i_nelements, filter, f_nelements, output);
+                        rc = conv1d(input, i_nelements, filter, f_nelements, stride, output);
                         bsg_cuda_print_stat_end(i);
                 }
 
