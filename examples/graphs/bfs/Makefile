@@ -70,11 +70,14 @@ GRAPH500_DIR := $(_REPO_ROOT)/examples/graphs/graph500
 ################################################################################
 
 # C Libraries
-KERNEL_CLIBRARIES   += $(BSG_MANYCORE_DIR)/software/bsg_manycore_lib/bsg_printf.c
+KERNEL_CLIBRARIES   += #$(BSG_MANYCORE_DIR)/software/bsg_manycore_lib/bsg_printf.c
+
 # C++ Libraries
-KERNEL_CXXLIBRARIES +=
+KERNEL_CXXLIBRARIES += $(HBGRAPHS_DIR)/src/device/csr_setup_graph_data.cpp
 
 KERNEL_INCLUDES     += -I$(CURRENT_PATH)/kernel/include
+KERNEL_INCLUDES     += -I$(HBGRAPHS_DIR)/include/device
+KERNEL_INCLUDES     += -I$(HBGRAPHS_DIR)/include/common
 
 # Define the default kernel.cpp file. If KERNEL_DEFAULT is not defined it will
 # be set to kernel.cpp in the same directory as this Makefile.
@@ -87,6 +90,10 @@ KERNEL_DEFAULT      := kernel/$(DEFAULT_VERSION)/kernel.cpp
 ################################################################################
 
 -include $(FRAGMENTS_PATH)/kernel/cudalite.mk
+
+
+RISCV_DEFINES += -Dbsg_tiles_X=2
+RISCV_DEFINES += -Dbsg_tiles_Y=2
 
 ################################################################################
 # END OF KERNEL-SPECIFIC RULES / START OF HOST-SPECIFIC RULES
@@ -128,6 +135,7 @@ $(HOST_TARGET).cosim: LDFLAGS += -lgraph500_generator
 # users can add commands and dependencies to custom.clean.
 ################################################################################
 version.clean:
+	rm -f $(KERNEL_CXXLIBRARIES:.cpp=.rvo)
 	rm -rf kernel/*/*{.csv,.log,.rvo,.riscv,.vpd,.key,.png,.dis}
 	rm -rf kernel/*/{stats,pc_stats}
 
