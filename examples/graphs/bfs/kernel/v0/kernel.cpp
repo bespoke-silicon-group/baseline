@@ -16,10 +16,11 @@ static void barrier()
     bsg_tile_group_barrier(&r_barrier, &c_barrier);
 }
 
-extern "C" int kernel(const csr_blob_header_t *graph,
-		      int       *visited,
-		      const int *frontier_in_sparse,
-		      int       *frontier_out_dense)
+extern "C" int bfs_sparse_in_dense_out
+(	const csr_blob_header_t *graph,
+	int			*visited,
+	const int		*frontier_in_sparse,
+	int			*frontier_out_dense)
 {
     csr_setup_graph_data(graph);    
     barrier();
@@ -46,5 +47,42 @@ extern "C" int kernel(const csr_blob_header_t *graph,
 
     barrier();
     
+    return 0;
+}
+
+extern "C" int bfs_dense_in_dense_out
+(const csr_blob_header_t *graph,
+ int                     *visited,
+ const int               *frontier_in_dense,
+ int                     *frontier_out_dense)
+{
+    csr_setup_graph_data(graph);
+    barrier();
+
+    // get my range
+    int dst_s, dst_e;
+    local_range(NODES, &dst_s, &dst_e);
+
+    // iterate over all nodes
+    for (int dst = dst_s; dst < dst_e; dst++) {
+	// visited?
+	if (visited[dst] == 1) continue;
+	// get the neighbors and degree
+	static_assert(sizeof(int) == sizeof(long int));
+	const int *neighbors = (const int*)(&B_NEIGH[B_OFF[dst]]);
+	int degree = B_DEGREE[dst];
+	// traverse edges
+	for (int src_i = 0; src_i < degree; src_i++) {
+	    int src = neighbors[src_i];
+	    if (frontier_in_dense[src] == 1) {
+		// pull update
+		visited[dst] = 1;
+		frontier_out_dense[dst] = 1;
+		break; // done with this destination node
+	    }
+	}
+    }
+    
+    barrier();
     return 0;
 }

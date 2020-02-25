@@ -110,6 +110,7 @@ RISCV_DEFINES += -Dbsg_tiles_Y=2
 HOST_TARGET         := bfs
 HOST_CSOURCES       :=
 HOST_CXXSOURCES     := $(HOST_TARGET).cpp
+HOST_CXXSOURCES     += $(HBGRAPHS_DIR)/src/host/breadth_first_search_host.cpp
 HOST_INCLUDES       := -I$(CURRENT_PATH)
 HOST_INCLUDES       += -I$(HBGRAPHS_DIR)/include/host
 HOST_INCLUDES       += -I$(HBGRAPHS_DIR)/include/common
