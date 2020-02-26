@@ -7,7 +7,7 @@
 #include <bsg_manycore_errno.h>
 #include <bsg_manycore_cuda.h>
 #include <bsg_manycore_printing.h>
-#include "../../common.h"
+#include "../../../common.h"
 #include <graph_generation/graph.hpp>
 #include <graph_generation/csr_blob.hpp>
 #include <graph_algorithm/BFS.hpp>
@@ -15,10 +15,13 @@
 #include <graph_formats/vertexset.hpp>
 #include <cuda_lite_applications/breadth_first_search.hpp>
 
+#define DEBUG_CORRECTNESS
+#include <graph_generation/scales.h>
 
 int kernel_bfs(int argc, char *argv[])
 { 
-    return breadth_first_search_top_down_baseline(argc, argv, 10, 1);
+    return breadth_first_search_bottom_up_baseline
+	(argc, argv, NODE_SCALE, EDGE_SCALE, SMALL_TILE_GROUP);
 }
 					
 

@@ -74,6 +74,7 @@ KERNEL_CLIBRARIES   += #$(BSG_MANYCORE_DIR)/software/bsg_manycore_lib/bsg_printf
 
 # C++ Libraries
 KERNEL_CXXLIBRARIES += $(HBGRAPHS_DIR)/src/device/csr_setup_graph_data.cpp
+KERNEL_CXXLIBRARIES += $(HBGRAPHS_DIR)/src/device/bfs_sparse_in_dense_out.cpp
 
 KERNEL_INCLUDES     += -I$(CURRENT_PATH)/kernel/include
 KERNEL_INCLUDES     += -I$(HBGRAPHS_DIR)/include/device
@@ -91,7 +92,6 @@ KERNEL_DEFAULT      := kernel/$(DEFAULT_VERSION)/kernel.cpp
 
 -include $(FRAGMENTS_PATH)/kernel/cudalite.mk
 
-
 RISCV_DEFINES += -Dbsg_tiles_X=2
 RISCV_DEFINES += -Dbsg_tiles_Y=2
 
@@ -107,7 +107,7 @@ RISCV_DEFINES += -Dbsg_tiles_Y=2
 # compiled and linked into the executable.
 ################################################################################
 
-HOST_TARGET         := bfs
+HOST_TARGET         := bfs_baseline_top_down
 HOST_CSOURCES       :=
 HOST_CXXSOURCES     := $(HOST_TARGET).cpp
 HOST_CXXSOURCES     += $(HBGRAPHS_DIR)/src/host/breadth_first_search_host.cpp
@@ -180,3 +180,7 @@ help:
 _HELP_STRING += "\n"
 _HELP_STRING += $(HELP_STRING)
 HELP_STRING := $(_HELP_STRING)
+
+
+.PHONY: native
+
