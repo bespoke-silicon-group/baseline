@@ -31,15 +31,7 @@
 _REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 CURRENT_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
--include $(_REPO_ROOT)/environment.mk
-
-################################################################################
-# Define BSG_MACHINE_PATH, the location of the Makefile.machine.include file
-# that defines the machine to compile and simulate on. Using BSG_F1_DIR (which
-# is set in environment.mk) uses the same machine as in bsg_replicant.
-################################################################################
-
-BSG_MACHINE_PATH=$(BSG_F1_DIR)
+-include $(_REPO_ROOT)/examples/graphs/bfs/mk/project.mk
 
 ################################################################################
 # Define the range of versions
@@ -47,13 +39,6 @@ BSG_MACHINE_PATH=$(BSG_F1_DIR)
 # Kernel versions. See kernel/README.md for more information.  Version names do
 # not need to use v* and can be any string
 VERSIONS = v0
-
-###############################
-# graph application libraries #
-###############################
-
-HBGRAPHS_DIR := $(_REPO_ROOT)/examples/graphs/hbgraphs
-GRAPH500_DIR := $(_REPO_ROOT)/examples/graphs/graph500
 
 ################################################################################
 # Define any sources that should be used compiled during kernel compilation,
@@ -73,12 +58,9 @@ GRAPH500_DIR := $(_REPO_ROOT)/examples/graphs/graph500
 KERNEL_CLIBRARIES   += #$(BSG_MANYCORE_DIR)/software/bsg_manycore_lib/bsg_printf.c
 
 # C++ Libraries
-KERNEL_CXXLIBRARIES += $(HBGRAPHS_DIR)/src/device/csr_setup_graph_data.cpp
 KERNEL_CXXLIBRARIES += $(HBGRAPHS_DIR)/src/device/bfs_sparse_in_dense_out.cpp
 
 KERNEL_INCLUDES     += -I$(CURRENT_PATH)/kernel/include
-KERNEL_INCLUDES     += -I$(HBGRAPHS_DIR)/include/device
-KERNEL_INCLUDES     += -I$(HBGRAPHS_DIR)/include/common
 
 # Define the default kernel.cpp file. If KERNEL_DEFAULT is not defined it will
 # be set to kernel.cpp in the same directory as this Makefile.
@@ -90,7 +72,7 @@ KERNEL_DEFAULT      := kernel/$(DEFAULT_VERSION)/kernel.cpp
 # KERNEL_DEFAULT, KERNEL_INCLUDES, etc)
 ################################################################################
 
--include $(FRAGMENTS_PATH)/kernel/cudalite.mk
+-include $(BFS_MK_PATH)/kernel/cudalite.mk
 
 ################################################################################
 # END OF KERNEL-SPECIFIC RULES / START OF HOST-SPECIFIC RULES
@@ -107,101 +89,16 @@ KERNEL_DEFAULT      := kernel/$(DEFAULT_VERSION)/kernel.cpp
 HOST_TARGET         := bfs_baseline_top_down
 HOST_CSOURCES       :=
 HOST_CXXSOURCES     := $(HOST_TARGET).cpp
-HOST_CXXSOURCES     += $(HBGRAPHS_DIR)/src/host/breadth_first_search_host.cpp
 HOST_INCLUDES       := -I$(CURRENT_PATH)
-HOST_INCLUDES       += -I$(HBGRAPHS_DIR)/include/host
-HOST_INCLUDES       += -I$(HBGRAPHS_DIR)/include/common
-HOST_INCLUDES       += -I$(GRAPH500_DIR)/generator
-
-$(HOST_TARGET).cosim: $(GRAPH500_DIR)/generator/libgraph500_generator.so
-$(GRAPH500_DIR)/generator/libgraph500_generator.so:
-	$(MAKE) -C $(GRAPH500_DIR)/generator
-
-$(HOST_TARGET).cosim: LDFLAGS += -L$(GRAPH500_DIR)/generator
-$(HOST_TARGET).cosim: LDFLAGS += -Wl,-rpath=$(GRAPH500_DIR)/generator
-$(HOST_TARGET).cosim: LDFLAGS += -lgraph500_generator
 
 ################################################################################
 # Include the Cosimulation host build rules (This must be included after
 # HOST_*SOURCES, HOST_TARGET, HOST_INCLUDES, etc)
 ################################################################################
 
--include $(FRAGMENTS_PATH)/host/cosim.mk
+-include $(BFS_MK_PATH)/host/cosim.mk
 
-################################################################################
-# Define the clean rules. clean calls the makefile-specific cleans, whereas
-# users can add commands and dependencies to custom.clean.
-################################################################################
-version.clean:
-	rm -f $(KERNEL_CXXLIBRARIES:.cpp=.rvo)
-	rm -rf kernel/*/*{.csv,.log,.rvo,.riscv,.vpd,.key,.png,.dis}
-	rm -rf kernel/*/{stats,pc_stats}
-
-custom.clean: version.clean
-
-clean: cosim.clean analysis.clean cudalite.clean custom.clean
-
-################################################################################
-# Define overall-goals. The all rule runs all kernel versions, and the default
-# kernel.
-################################################################################
-
-_HELP_STRING := "Makefile Rules\n"
-
-_HELP_STRING += "    default: \n"
-_HELP_STRING += "        - Run the default kernel ($KERNEL_DEFAULT) and generate all of the\n"
-_HELP_STRING += "          analysis products\n"
-default: default-dbg-correct
-
-_HELP_STRING += "    default-dbg-perf: \n"
-_HELP_STRING += "        - Run the default kernel ($KERNEL_DEFAULT) and generate all of the\n"
-_HELP_STRING += "          analysis products - for debugging performance\n"
-default-dbg-perf: RISCV_DEFINES += -Dbsg_tiles_X=8
-default-dbg-perf: RISCV_DEFINES += -Dbsg_tiles_Y=4
-default-dbg-perf: CXXFLAGS += -DDEBUG_PERFORMANCE
-default-dbg-perf: stats graphs pc_stats
-
-_HELP_STRING += "    default-dbg-correct: \n"
-_HELP_STRING += "        - Run the default kernel ($KERNEL_DEFAULT) and generate all of the\n"
-_HELP_STRING += "          analysis products - for debugging correctness\n"
-default-dbg-correct: RISCV_DEFINES += -Dbsg_tiles_X=2
-default-dbg-correct: RISCV_DEFINES += -Dbsg_tiles_Y=2
-default-dbg-correct: CXXFLAGS += -DDEBUG_CORRECTNESS
-default-dbg-correct: stats graphs pc_stats
-
-_HELP_STRING += "    default-benchmark: \n"
-_HELP_STRING += "        - Run the default kernel ($KERNEL_DEFAULT) and generate all of the\n"
-_HELP_STRING += "          analysis products - for benchmarking\n"
-default-benchmark: RISCV_DEFINES += -Dbsg_tiles_X=2
-default-benchmark: RISCV_DEFINES += -Dbsg_tiles_Y=2
-default-benchmark: CXXFLAGS += -DDEBUG_CORRECTNESS
-default-benchmark: stats graphs pc_stats
-
-_HELP_STRING += "    analysis: \n"
-_HELP_STRING += "        - Launch indpendent cosimulation executions of each kernel version.\n"
-_HELP_STRING += "          When execution finishes, it generates the analysis products for \n"
-_HELP_STRING += "          each kernel in each respective kernel/version_name/ directory\n"
-analysis: $(foreach v,$(VERSIONS),kernel/$v/stats kernel/$v/graphs kernel/$v/pc_stats)
-
-_HELP_STRING += "    all: \n"
-_HELP_STRING += "        - Launch both the default and analysis target\n"
-all: analysis default
-
-.DEFAULT_GOAL = help
-_HELP_STRING += "    help: \n"
-_HELP_STRING += "        - Output a friendly help message.\n"
-help:
-	@echo -e $(HELP_STRING)
-
-# Always re-run, if asked.
-.PHONY: default analysis help
-
-# These last three lines ensure that _HELP_STRING is appended to the top of
-# whatever else comes before it.
-_HELP_STRING += "\n"
-_HELP_STRING += $(HELP_STRING)
-HELP_STRING := $(_HELP_STRING)
-
-
-.PHONY: native
-
+###################################################
+# Include the high-level targets for cosimulation #
+###################################################
+-include $(BFS_MK_PATH)/targets.mk
