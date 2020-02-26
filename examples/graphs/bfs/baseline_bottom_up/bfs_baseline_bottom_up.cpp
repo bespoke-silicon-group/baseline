@@ -15,7 +15,6 @@
 #include <graph_formats/vertexset.hpp>
 #include <cuda_lite_applications/breadth_first_search.hpp>
 
-#define DEBUG_PERFORMANCE
 #include <graph_generation/scales.h>
 
 int kernel_bfs(int argc, char *argv[])

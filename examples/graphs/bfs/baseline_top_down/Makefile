@@ -92,9 +92,6 @@ KERNEL_DEFAULT      := kernel/$(DEFAULT_VERSION)/kernel.cpp
 
 -include $(FRAGMENTS_PATH)/kernel/cudalite.mk
 
-RISCV_DEFINES += -Dbsg_tiles_X=2
-RISCV_DEFINES += -Dbsg_tiles_Y=2
-
 ################################################################################
 # END OF KERNEL-SPECIFIC RULES / START OF HOST-SPECIFIC RULES
 ################################################################################
@@ -154,7 +151,31 @@ _HELP_STRING := "Makefile Rules\n"
 _HELP_STRING += "    default: \n"
 _HELP_STRING += "        - Run the default kernel ($KERNEL_DEFAULT) and generate all of the\n"
 _HELP_STRING += "          analysis products\n"
-default: stats graphs pc_stats
+default: default-dbg-correct
+
+_HELP_STRING += "    default-dbg-perf: \n"
+_HELP_STRING += "        - Run the default kernel ($KERNEL_DEFAULT) and generate all of the\n"
+_HELP_STRING += "          analysis products - for debugging performance\n"
+default-dbg-perf: RISCV_DEFINES += -Dbsg_tiles_X=8
+default-dbg-perf: RISCV_DEFINES += -Dbsg_tiles_Y=4
+default-dbg-perf: CXXFLAGS += -DDEBUG_PERFORMANCE
+default-dbg-perf: stats graphs pc_stats
+
+_HELP_STRING += "    default-dbg-correct: \n"
+_HELP_STRING += "        - Run the default kernel ($KERNEL_DEFAULT) and generate all of the\n"
+_HELP_STRING += "          analysis products - for debugging correctness\n"
+default-dbg-correct: RISCV_DEFINES += -Dbsg_tiles_X=2
+default-dbg-correct: RISCV_DEFINES += -Dbsg_tiles_Y=2
+default-dbg-correct: CXXFLAGS += -DDEBUG_CORRECTNESS
+default-dbg-correct: stats graphs pc_stats
+
+_HELP_STRING += "    default-benchmark: \n"
+_HELP_STRING += "        - Run the default kernel ($KERNEL_DEFAULT) and generate all of the\n"
+_HELP_STRING += "          analysis products - for benchmarking\n"
+default-benchmark: RISCV_DEFINES += -Dbsg_tiles_X=2
+default-benchmark: RISCV_DEFINES += -Dbsg_tiles_Y=2
+default-benchmark: CXXFLAGS += -DDEBUG_CORRECTNESS
+default-benchmark: stats graphs pc_stats
 
 _HELP_STRING += "    analysis: \n"
 _HELP_STRING += "        - Launch indpendent cosimulation executions of each kernel version.\n"
