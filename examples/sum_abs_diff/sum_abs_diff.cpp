@@ -339,7 +339,8 @@ int kernel_sum_abs_diff (int argc, char **argv) {
                 return rc;
         }
 
-        matrix_print(RES, res_height, res_width);
+        // Print result 
+        // matrix_print(RES, res_height, res_width);
 
 
         // Compare the known-correct matrix (R) and the result matrix (C)
