@@ -91,7 +91,7 @@ _HELP_STRING += "          The same executable is reused to run every kernel ver
 $(HOST_TARGET).cosim: NPROCS := $(shell echo "(`nproc`/4 + 1)" | bc)
 $(HOST_TARGET).cosim: $(HOST_OBJECTS) $(SIMLIBS)
 	SYNOPSYS_SIM_SETUP=$(TESTBENCH_PATH)/synopsys_sim.setup \
-	vcs tb glbl -j$(NPROCS) $(WRAPPER_NAME) $(filter %.o,$^) \
+	vcs tb glbl cosim_wrapper -j$(NPROCS) $(filter %.o,$^) \
 		-Mdirectory=$@.tmp \
 		$(VCS_LDFLAGS) $(VCS_VFLAGS) -o $@ -l $@.vcs.log
 
