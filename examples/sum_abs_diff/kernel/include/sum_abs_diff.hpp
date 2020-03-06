@@ -9,10 +9,10 @@
 
 
 
-int  __attribute__ ((noinline)) single_sum_abs_diff (int *REF, int *FRAME, int *RES,
-                                                     uint32_t ref_height, uint32_t ref_width,
-                                                     uint32_t frame_height, uint32_t frame_width,
-                                                     uint32_t res_height, uint32_t res_width) {
+int  __attribute__ ((noinline)) sum_abs_diff_single_work_per_tile (int *REF, int *FRAME, int *RES,
+                                                                   uint32_t ref_height, uint32_t ref_width,
+                                                                   uint32_t frame_height, uint32_t frame_width,
+                                                                   uint32_t res_height, uint32_t res_width) {
 
         int start_y = bsg_y;
         int end_y   = start_y + frame_height;
@@ -33,11 +33,11 @@ int  __attribute__ ((noinline)) single_sum_abs_diff (int *REF, int *FRAME, int *
 
 
 
-int  __attribute__ ((noinline)) multi_sum_abs_diff (int *REF, int *FRAME, int *RES,
-                                                    uint32_t ref_height, uint32_t ref_width,
-                                                    uint32_t frame_height, uint32_t frame_width,
-                                                    uint32_t res_height, uint32_t res_width,
-                                                    uint32_t block_size_y, uint32_t block_size_x) {
+int  __attribute__ ((noinline)) sum_abs_diff_multiple_work_per_tile (int *REF, int *FRAME, int *RES,
+                                                                     uint32_t ref_height, uint32_t ref_width,
+                                                                     uint32_t frame_height, uint32_t frame_width,
+                                                                     uint32_t res_height, uint32_t res_width,
+                                                                     uint32_t block_size_y, uint32_t block_size_x) {
 
 
         int tile_group_start_y = __bsg_tile_group_id_y * block_size_y;
@@ -61,6 +61,50 @@ int  __attribute__ ((noinline)) multi_sum_abs_diff (int *REF, int *FRAME, int *R
                         for (int y = start_y; y < end_y; y ++) {
                                 for (int x = start_x; x < end_x; x ++) {
                                         sad += ABS ( (REF [y * ref_width + x] - FRAME [(y - start_y) * frame_width + (x - start_x)]) );
+                                }
+                        }
+
+
+                        RES [iter_y * res_width + iter_x] = sad;
+
+                }
+        }
+
+        return 0;
+}
+
+
+
+
+
+
+int  __attribute__ ((noinline)) sum_abs_diff_fixed_frame_4x4 (int *REF, int *FRAME, int *RES,
+                                                                     uint32_t ref_height, uint32_t ref_width,
+                                                                     uint32_t res_height, uint32_t res_width,
+                                                                     uint32_t block_size_y, uint32_t block_size_x) {
+
+
+        int tile_group_start_y = __bsg_tile_group_id_y * block_size_y;
+        int tile_group_end_y = tile_group_start_y + block_size_y;
+        int tile_group_start_x = __bsg_tile_group_id_x * block_size_x;
+        int tile_group_end_x = tile_group_start_x + block_size_x;
+ 
+
+        for (int iter_y = tile_group_start_y + bsg_y; iter_y < tile_group_end_y; iter_y += bsg_tiles_Y) {
+                for (int iter_x = tile_group_start_x + bsg_x; iter_x < tile_group_end_x; iter_x += bsg_tiles_X) {
+
+
+
+                        int start_y = iter_y;
+                        int end_y = iter_y + 4;
+                        int start_x = iter_x;
+                        int end_x = iter_x + 4;
+
+
+                        int sad = 0;
+                        for (int y = start_y; y < end_y; y ++) {
+                                for (int x = start_x; x < end_x; x ++) {
+                                        sad += ABS ( (REF [y * ref_width + x] - FRAME [(y - start_y) << 2 + (x - start_x)]) );
                                 }
                         }
 

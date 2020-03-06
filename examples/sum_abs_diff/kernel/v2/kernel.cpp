@@ -37,11 +37,10 @@ extern "C" {
                 int rc;
                 bsg_cuda_print_stat_kernel_start();
                 bsg_cuda_print_stat_start(0);
-                rc = sum_abs_diff_multiple_work_per_tile   (REF, FRAME, RES,
-                                                            REF_HEIGHT, REF_WIDTH,
-                                                            FRAME_HEIGHT, FRAME_WIDTH,
-                                                            RES_HEIGHT, RES_WIDTH,
-                                                            block_size_y, block_size_x);
+                rc = sum_abs_diff_fixed_frame_4x4     (REF, FRAME, RES,
+                                                       REF_HEIGHT, REF_WIDTH,
+                                                       RES_HEIGHT, RES_WIDTH,
+                                                       block_size_y, block_size_x);
                 bsg_cuda_print_stat_end(0);
 
                 bsg_tile_group_barrier(&r_barrier, &c_barrier);
