@@ -51,6 +51,15 @@
 #define RES_HEIGHT_V1   (REF_HEIGHT_V1 - FRAME_HEIGHT_V1 + 1)
 #define RES_WIDTH_V1    (REF_WIDTH_V1 - FRAME_WIDTH_V1 + 1)
 
+// V2
+#define REF_HEIGHT_V2   65
+#define REF_WIDTH_V2    65
+#define FRAME_HEIGHT_V2 2
+#define FRAME_WIDTH_V2  2
+#define RES_HEIGHT_V2   (REF_HEIGHT_V2 - FRAME_HEIGHT_V2 + 1)
+#define RES_WIDTH_V2    (REF_WIDTH_V2 - FRAME_WIDTH_V2 + 1)
+
+
 
 
 
@@ -178,6 +187,19 @@ int kernel_sum_abs_diff (int argc, char **argv) {
                 frame_width = FRAME_WIDTH_V1;
                 res_height = RES_HEIGHT_V1;
                 res_width = RES_WIDTH_V1;
+
+                block_size_x = 16;
+                block_size_y = 16;
+                tg_dim = { .x = 4, .y = 4 };
+                grid_dim = { .x = res_width / block_size_x,
+                             .y = res_height / block_size_y };
+        } else if (!strcmp("v2", test_name)) {
+                ref_height = REF_HEIGHT_V2;
+                ref_width = REF_WIDTH_V2;
+                frame_height = FRAME_HEIGHT_V2;
+                frame_width = FRAME_WIDTH_V2;
+                res_height = RES_HEIGHT_V2;
+                res_width = RES_WIDTH_V2;
 
                 block_size_x = 16;
                 block_size_y = 16;
