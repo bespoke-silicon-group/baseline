@@ -46,7 +46,7 @@ _REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 # Include the analysis rules. These define how to generate analysis products
 # like vanilla_operation_trace, etc.
 ################################################################################
--include $(FRAGMENTS_PATH)/analysis.mk
+-include $(FRAGMENTS_PATH)/host/analysis.mk
 
 ################################################################################
 # The following rules define how to RUN cosimulation tests:
@@ -67,12 +67,12 @@ $(VERSIONS): %: kernel/%/$(HOST_TARGET).cosim.log
 # run. They are aliases for running $(HOST_TARGET).cosim.log. We use empty an
 # make recipe for aliases for reasons described here:
 # https://www.gnu.org/software/make/manual/html_node/Empty-Recipes.html
-ALIASES = vanilla_stats.csv $(HOST_TARGET).vpd vanilla_operation_trace.csv
+ALIASES = vanilla_stats.csv vcache_stats.csv vanilla_operation_trace.csv
+vanilla_operation_trace.csv: SIM_ARGS += +trace
 $(ALIASES): $(HOST_TARGET).cosim.log ;
 $(HOST_TARGET).cosim.log: kernel.riscv $(HOST_TARGET).cosim 
-	./$(HOST_TARGET).cosim +ntb_random_seed_automatic +trace  \
-		+c_args="kernel.riscv $(DEFAULT_VERSION)" \
-		+vpdfile+$(HOST_TARGET).vpd | tee $@
+	./$(HOST_TARGET).cosim +ntb_random_seed_automatic +rad $(SIM_ARGS) \
+		+c_args="kernel.riscv $(DEFAULT_VERSION)" | tee $@
 
 ################################################################################
 # Define rules for version-specific cosimulation execution. EXEC_PATH and

@@ -129,9 +129,24 @@ default: stats graphs pc_stats
 
 _HELP_STRING += "    analysis: \n"
 _HELP_STRING += "        - Launch indpendent cosimulation executions of each kernel version.\n"
-_HELP_STRING += "          When execution finishes, it generates the analysis products for \n"
-_HELP_STRING += "          each kernel in each respective kernel/version_name/ directory\n"
+_HELP_STRING += "          When execution finishes, it generates all the analysis products \n"
+_HELP_STRING += "          for each kernel in each respective kernel/<version_name>/ \n"
+_HELP_STRING += "          directory\n"
 analysis: $(foreach v,$(VERSIONS),kernel/$v/stats kernel/$v/graphs kernel/$v/pc_stats)
+
+_HELP_STRING += "    statistics: \n"
+_HELP_STRING += "        - Launch indpendent cosimulation executions of each kernel version.\n"
+_HELP_STRING += "          When execution finishes, it generates ONLY the parsed operation \n"
+_HELP_STRING += "          stats for each kernel in each respective kernel/<version_name>/ \n"
+_HELP_STRING += "          directory\n"
+statistics: $(foreach v,$(VERSIONS),kernel/$v/stats)
+
+_HELP_STRING += "    statistics: \n"
+_HELP_STRING += "        - Launch indpendent cosimulation executions of each kernel version.\n"
+_HELP_STRING += "          When execution finishes, it generates ONLY the parsed operation \n"
+_HELP_STRING += "          stats for each kernel in each respective kernel/<version_name>/ \n"
+_HELP_STRING += "          directory\n"
+statistics: $(foreach v,$(VERSIONS),kernel/$v/stats)
 
 _HELP_STRING += "    all: \n"
 _HELP_STRING += "        - Launch both the default and analysis target\n"
