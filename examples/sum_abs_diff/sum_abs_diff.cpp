@@ -44,8 +44,8 @@
 #define RES_WIDTH_V0    (REF_WIDTH_V0 - FRAME_WIDTH_V0 + 1)
 
 // V1
-#define REF_HEIGHT_V1   65
-#define REF_WIDTH_V1    65
+#define REF_HEIGHT_V1   17
+#define REF_WIDTH_V1    17
 #define FRAME_HEIGHT_V1 2
 #define FRAME_WIDTH_V1  2
 #define RES_HEIGHT_V1   (REF_HEIGHT_V1 - FRAME_HEIGHT_V1 + 1)

@@ -4,7 +4,7 @@
 
 
 
-#define ABS_DIFF(x,y) (x>y) ? (x-y) : (y-x)
+#define ABS(x) ((x) >= 0) ? (x) : (-(x))
 
 
 
@@ -23,7 +23,7 @@ int  __attribute__ ((noinline)) single_sum_abs_diff (int *REF, int *FRAME, int *
         int sad = 0;
         for (int y = start_y; y < end_y; y ++) {
                 for (int x = start_x; x < end_x; x ++) {
-                        sad += ABS_DIFF (REF[y * ref_width + x] , FRAME[(y - start_y) * frame_width + (x - start_x)]);
+                        sad += ABS ( (REF[y * ref_width + x] - FRAME[(y - start_y) * frame_width + (x - start_x)]) );
                 }
         }
 
@@ -60,7 +60,7 @@ int  __attribute__ ((noinline)) multi_sum_abs_diff (int *REF, int *FRAME, int *R
                         int sad = 0;
                         for (int y = start_y; y < end_y; y ++) {
                                 for (int x = start_x; x < end_x; x ++) {
-                                        sad += ABS_DIFF ( REF [y * ref_width + x] , FRAME [(y - start_y) * frame_width + (x - start_x)] );
+                                        sad += ABS ( (REF [y * ref_width + x] - FRAME [(y - start_y) * frame_width + (x - start_x)]) );
                                 }
                         }
 
