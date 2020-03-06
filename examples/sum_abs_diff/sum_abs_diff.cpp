@@ -36,6 +36,7 @@
 
 // Reference and Frame sizes:
 // V0
+// Single work per tile
 #define REF_HEIGHT_V0   5
 #define REF_WIDTH_V0    5
 #define FRAME_HEIGHT_V0 2
@@ -44,6 +45,7 @@
 #define RES_WIDTH_V0    (REF_WIDTH_V0 - FRAME_WIDTH_V0 + 1)
 
 // V1
+// Multiple work per tile
 #define REF_HEIGHT_V1   19
 #define REF_WIDTH_V1    19
 #define FRAME_HEIGHT_V1 4
@@ -52,6 +54,7 @@
 #define RES_WIDTH_V1    (REF_WIDTH_V1 - FRAME_WIDTH_V1 + 1)
 
 // V2
+// Template kernel for frame dimensions
 #define REF_HEIGHT_V2   19
 #define REF_WIDTH_V2    19
 #define FRAME_HEIGHT_V2 4
@@ -59,6 +62,14 @@
 #define RES_HEIGHT_V2   (REF_HEIGHT_V2 - FRAME_HEIGHT_V2 + 1)
 #define RES_WIDTH_V2    (REF_WIDTH_V2 - FRAME_WIDTH_V2 + 1)
 
+// V3
+// Frame dimensions fixed to 4x4
+#define REF_HEIGHT_V3   19
+#define REF_WIDTH_V3    19
+#define FRAME_HEIGHT_V3 4
+#define FRAME_WIDTH_V3  4
+#define RES_HEIGHT_V3   (REF_HEIGHT_V3 - FRAME_HEIGHT_V3 + 1)
+#define RES_WIDTH_V3    (REF_WIDTH_V3 - FRAME_WIDTH_V3 + 1)
 
 
 
@@ -206,6 +217,20 @@ int kernel_sum_abs_diff (int argc, char **argv) {
                 tg_dim = { .x = 4, .y = 4 };
                 grid_dim = { .x = res_width / block_size_x,
                              .y = res_height / block_size_y };
+        } else if (!strcmp("v3", test_name)) {
+                ref_height = REF_HEIGHT_V3;
+                ref_width = REF_WIDTH_V3;
+                frame_height = FRAME_HEIGHT_V3;
+                frame_width = FRAME_WIDTH_V3;
+                res_height = RES_HEIGHT_V3;
+                res_width = RES_WIDTH_V3;
+
+                block_size_x = 16;
+                block_size_y = 16;
+                tg_dim = { .x = 4, .y = 4 };
+                grid_dim = { .x = res_width / block_size_x,
+                             .y = res_height / block_size_y };
+
         } else {
                 bsg_pr_test_err("Invalid version provided!.\n");
                 return HB_MC_INVALID;
