@@ -14,9 +14,9 @@ int  __attribute__ ((noinline)) sum_abs_diff_single_work_per_tile (int *REF, int
                                                                    uint32_t frame_height, uint32_t frame_width,
                                                                    uint32_t res_height, uint32_t res_width) {
 
-        int start_y = bsg_y;
+        int start_y = __bsg_tile_group_id_y * bsg_tiles_Y + bsg_y;
         int end_y   = start_y + frame_height;
-        int start_x = bsg_x;
+        int start_x = __bsg_tile_group_id_x * bsg_tiles_X + bsg_x;
         int end_x   = start_x + frame_width;
 
 
@@ -27,7 +27,7 @@ int  __attribute__ ((noinline)) sum_abs_diff_single_work_per_tile (int *REF, int
                 }
         }
 
-        RES[bsg_y * res_width + bsg_x] = sad;
+        RES[start_y * res_width + start_x] = sad;
         return 0;
 }
 

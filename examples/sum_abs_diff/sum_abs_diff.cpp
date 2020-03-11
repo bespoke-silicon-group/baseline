@@ -35,43 +35,17 @@
 
 
 // Reference and Frame sizes:
-// V0
-// Single work per tile
-#define REF_HEIGHT_V0   5
-#define REF_WIDTH_V0    5
-#define FRAME_HEIGHT_V0 2
-#define FRAME_WIDTH_V0  2
-#define RES_HEIGHT_V0   (REF_HEIGHT_V0 - FRAME_HEIGHT_V0 + 1)
-#define RES_WIDTH_V0    (REF_WIDTH_V0 - FRAME_WIDTH_V0 + 1)
+#define REF_HEIGHT   19
+#define REF_WIDTH    19
+#define FRAME_HEIGHT 4
+#define FRAME_WIDTH  4
+#define RES_HEIGHT   (REF_HEIGHT - FRAME_HEIGHT + 1)
+#define RES_WIDTH    (REF_WIDTH - FRAME_WIDTH + 1)
 
-// V1
-// Multiple work per tile
-#define REF_HEIGHT_V1   19
-#define REF_WIDTH_V1    19
-#define FRAME_HEIGHT_V1 4
-#define FRAME_WIDTH_V1  4
-#define RES_HEIGHT_V1   (REF_HEIGHT_V1 - FRAME_HEIGHT_V1 + 1)
-#define RES_WIDTH_V1    (REF_WIDTH_V1 - FRAME_WIDTH_V1 + 1)
-
-// V2
-// Template kernel for frame dimensions
-#define REF_HEIGHT_V2   19
-#define REF_WIDTH_V2    19
-#define FRAME_HEIGHT_V2 4
-#define FRAME_WIDTH_V2  4
-#define RES_HEIGHT_V2   (REF_HEIGHT_V2 - FRAME_HEIGHT_V2 + 1)
-#define RES_WIDTH_V2    (REF_WIDTH_V2 - FRAME_WIDTH_V2 + 1)
-
-// V3
-// Frame dimensions fixed to 4x4
-#define REF_HEIGHT_V3   19
-#define REF_WIDTH_V3    19
-#define FRAME_HEIGHT_V3 4
-#define FRAME_WIDTH_V3  4
-#define RES_HEIGHT_V3   (REF_HEIGHT_V3 - FRAME_HEIGHT_V3 + 1)
-#define RES_WIDTH_V3    (REF_WIDTH_V3 - FRAME_WIDTH_V3 + 1)
-
-
+// V0 Single work per tile
+// V1 Multiple work per tile
+// V2 Template kernel for frame dimensions
+// V3 Frame dimensions fixed to 4x4
 
 
 
@@ -178,55 +152,32 @@ int kernel_sum_abs_diff (int argc, char **argv) {
         uint32_t res_width = 0;
 
 
-        if(!strcmp("v0", test_name)){
-                ref_height = REF_HEIGHT_V0;
-                ref_width = REF_WIDTH_V0;
-                frame_height = FRAME_HEIGHT_V0;
-                frame_width = FRAME_WIDTH_V0;
-                res_height = RES_HEIGHT_V0;
-                res_width = RES_WIDTH_V0;
+
+        if(!strcmp("v0", test_name)) {
+                ref_height = REF_HEIGHT;
+                ref_width = REF_WIDTH;
+                frame_height = FRAME_HEIGHT;
+                frame_width = FRAME_WIDTH;
+                res_height = RES_HEIGHT;
+                res_width = RES_WIDTH;
+
+                block_size_x = 1;
+                block_size_y = 1;
+                tg_dim = { .x = 4, .y = 4 };
+                grid_dim = { .x = res_width / block_size_x,
+                             .y = res_height / block_size_y };
+
+        } else if (!strcmp("v1", test_name) || !strcmp("v2", test_name) ||
+                   !strcmp("v3", test_name)) {
+                ref_height = REF_HEIGHT;
+                ref_width = REF_WIDTH;
+                frame_height = FRAME_HEIGHT;
+                frame_width = FRAME_WIDTH;
+                res_height = RES_HEIGHT;
+                res_width = RES_WIDTH;
 
                 block_size_x = 4;
                 block_size_y = 4;
-                tg_dim = { .x = 4, .y = 4 };
-                grid_dim = { .x = res_width / block_size_x,
-                             .y = res_height / block_size_y };
-        } else if (!strcmp("v1", test_name)) {
-                ref_height = REF_HEIGHT_V1;
-                ref_width = REF_WIDTH_V1;
-                frame_height = FRAME_HEIGHT_V1;
-                frame_width = FRAME_WIDTH_V1;
-                res_height = RES_HEIGHT_V1;
-                res_width = RES_WIDTH_V1;
-
-                block_size_x = 16;
-                block_size_y = 16;
-                tg_dim = { .x = 4, .y = 4 };
-                grid_dim = { .x = res_width / block_size_x,
-                             .y = res_height / block_size_y };
-        } else if (!strcmp("v2", test_name)) {
-                ref_height = REF_HEIGHT_V2;
-                ref_width = REF_WIDTH_V2;
-                frame_height = FRAME_HEIGHT_V2;
-                frame_width = FRAME_WIDTH_V2;
-                res_height = RES_HEIGHT_V2;
-                res_width = RES_WIDTH_V2;
-
-                block_size_x = 16;
-                block_size_y = 16;
-                tg_dim = { .x = 4, .y = 4 };
-                grid_dim = { .x = res_width / block_size_x,
-                             .y = res_height / block_size_y };
-        } else if (!strcmp("v3", test_name)) {
-                ref_height = REF_HEIGHT_V3;
-                ref_width = REF_WIDTH_V3;
-                frame_height = FRAME_HEIGHT_V3;
-                frame_width = FRAME_WIDTH_V3;
-                res_height = RES_HEIGHT_V3;
-                res_width = RES_WIDTH_V3;
-
-                block_size_x = 16;
-                block_size_y = 16;
                 tg_dim = { .x = 4, .y = 4 };
                 grid_dim = { .x = res_width / block_size_x,
                              .y = res_height / block_size_y };
