@@ -40,12 +40,13 @@ unit of work (or vitual thread).
 
 ### Version 2
 
-In this version, the frame dimensions are templatized in the kernel, instead 
-of being passed in as an input argument to the kernel. This gives the compiler
-the opportunity to optimize based on frame dimensions known at compiler time.
+In this version, frame dimensions are fixed at 4 by 4.
+
 
 ### Version 3
 
-In this version, frame dimensions are fixed at 4 by 4.
+In this version, the frame dimensions are templatized in the kernel, instead 
+of being passed in as an input argument to the kernel. This gives the compiler
+the opportunity to optimize based on frame dimensions known at compiler time.
 
 
