@@ -5,7 +5,6 @@
  * sum of absolute differnces for every sub-matrix that matches 
  * the sizes of the frame matrix, and stores the result for that 
  * location into result matrix. 
- * TODO: more explanation 
  */
 
 // BSG_TILE_GROUP_X_DIM and BSG_TILE_GROUP_Y_DIM must be defined
@@ -25,6 +24,37 @@
 INIT_TILE_GROUP_BARRIER(r_barrier, c_barrier,
                         0, BSG_TILE_GROUP_X_DIM-1,
                         0, BSG_TILE_GROUP_Y_DIM-1);
+
+
+/* 
+ * Version 0 - Singler work per tile 
+ * In this version, each tile only performs one unit of work, i.e. calculating one
+ * element of the result matrix. Based on the size of the result matrix, and the 
+ * tile group dimensions, enough tile groups will be launched to populate the 
+ * entire result matrix.
+ */
+int  __attribute__ ((noinline)) sum_abs_diff_single_work_per_tile (int *REF, int *FRAME, int *RES,
+                                                                   uint32_t ref_height, uint32_t ref_width,
+                                                                   uint32_t frame_height, uint32_t frame_width,
+                                                                   uint32_t res_height, uint32_t res_width) {
+
+        int start_y = __bsg_tile_group_id_y * bsg_tiles_Y + bsg_y;
+        int end_y   = MIN (start_y + frame_height, res_height);
+        int start_x = __bsg_tile_group_id_x * bsg_tiles_X + bsg_x;
+        int end_x   = MIN (start_x + frame_width, res_width);
+
+
+        int sad = 0;
+        for (int y = start_y; y < end_y; y ++) {
+                for (int x = start_x; x < end_x; x ++) {
+                        sad += ABS ( (REF[y * ref_width + x] - FRAME[(y - start_y) * frame_width + (x - start_x)]) );
+                }
+        }
+
+        RES[start_y * res_width + start_x] = sad;
+        return 0;
+}
+
 
 
 extern "C" {

@@ -5,7 +5,6 @@
  * sum of absolute differnces for every sub-matrix that matches 
  * the sizes of the frame matrix, and stores the result for that 
  * location into result matrix. 
- * TODO: more explanation 
  */
 
 // BSG_TILE_GROUP_X_DIM and BSG_TILE_GROUP_Y_DIM must be defined
@@ -25,6 +24,53 @@
 INIT_TILE_GROUP_BARRIER(r_barrier, c_barrier,
                         0, BSG_TILE_GROUP_X_DIM-1,
                         0, BSG_TILE_GROUP_Y_DIM-1);
+
+
+/*
+ * Version 4 - Refernce dimensions templatized
+ * In this version, the reference dimensions are templatized in the kernel, instead 
+ * of being passed in as an input argument to the kernel. This gives the compiler
+ * the opportunity to optimize based on reference dimensions known at compiler time.
+ */
+template <int REF_HEIGHT, int REF_WIDTH>
+int  __attribute__ ((noinline)) sum_abs_diff_fixed_reference (int *REF, int *FRAME, int *RES,
+                                                          uint32_t frame_height, uint32_t frame_width,
+                                                          uint32_t res_height, uint32_t res_width,
+                                                          uint32_t block_size_y, uint32_t block_size_x) {
+
+
+        int tile_group_start_y = __bsg_tile_group_id_y * block_size_y;
+        int tile_group_end_y = MIN (tile_group_start_y + block_size_y, res_height);
+        int tile_group_start_x = __bsg_tile_group_id_x * block_size_x;
+        int tile_group_end_x = MIN (tile_group_start_x + block_size_x, res_width);
+ 
+
+        for (int iter_y = tile_group_start_y + bsg_y; iter_y < tile_group_end_y; iter_y += bsg_tiles_Y) {
+                for (int iter_x = tile_group_start_x + bsg_x; iter_x < tile_group_end_x; iter_x += bsg_tiles_X) {
+
+
+
+                        int start_y = iter_y;
+                        int end_y = iter_y + frame_height;
+                        int start_x = iter_x;
+                        int end_x = iter_x + frame_width;
+
+
+                        int sad = 0;
+                        for (int y = start_y; y < end_y; y ++) {
+                                for (int x = start_x; x < end_x; x ++) {
+                                        sad += ABS ( (REF [y * REF_WIDTH + x] - FRAME [(y - start_y) * frame_width + (x - start_x)]) );
+                                }
+                        }
+
+
+                        RES [iter_y * res_width + iter_x] = sad;
+
+                }
+        }
+
+        return 0;
+}
 
 
 extern "C" {
