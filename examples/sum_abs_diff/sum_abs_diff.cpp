@@ -35,8 +35,8 @@
 
 
 // Reference and Frame sizes:
-#define REF_HEIGHT   19
-#define REF_WIDTH    19
+#define REF_HEIGHT   16
+#define REF_WIDTH    16
 #define FRAME_HEIGHT 4
 #define FRAME_WIDTH  4
 #define RES_HEIGHT   (REF_HEIGHT - FRAME_HEIGHT + 1)
@@ -154,8 +154,8 @@ int kernel_sum_abs_diff (int argc, char **argv) {
 
 
         if(!strcmp("v0", test_name)) {
-                ref_height = REF_HEIGHT;
-                ref_width = REF_WIDTH;
+                ref_height = 4;
+                ref_width = 4;
                 frame_height = FRAME_HEIGHT;
                 frame_width = FRAME_WIDTH;
                 res_height = RES_HEIGHT;
@@ -164,11 +164,11 @@ int kernel_sum_abs_diff (int argc, char **argv) {
                 block_size_x = 1;
                 block_size_y = 1;
                 tg_dim = { .x = 4, .y = 4 };
-                grid_dim = { .x = res_width / block_size_x,
-                             .y = res_height / block_size_y };
+                grid_dim = { .x = (res_width + block_size_x-1) / block_size_x,
+                             .y = (res_height + block_size_y -1) / block_size_y };
 
         } else if (!strcmp("v1", test_name) || !strcmp("v2", test_name) ||
-                   !strcmp("v3", test_name)) {
+                   !strcmp("v3", test_name) || !strcmp("v4", test_name)) {
                 ref_height = REF_HEIGHT;
                 ref_width = REF_WIDTH;
                 frame_height = FRAME_HEIGHT;
@@ -179,8 +179,8 @@ int kernel_sum_abs_diff (int argc, char **argv) {
                 block_size_x = 4;
                 block_size_y = 4;
                 tg_dim = { .x = 4, .y = 4 };
-                grid_dim = { .x = res_width / block_size_x,
-                             .y = res_height / block_size_y };
+                grid_dim = { .x = (res_width + block_size_x -1) / block_size_x,
+                             .y = (res_height + block_size_y - 1) / block_size_y };
 
         } else {
                 bsg_pr_test_err("Invalid version provided!.\n");
@@ -338,7 +338,8 @@ int kernel_sum_abs_diff (int argc, char **argv) {
         }
 
         // Print result 
-        // matrix_print(RES, res_height, res_width);
+        //matrix_print(RES, res_height, res_width);
+        //matrix_print(RES_host, res_height, res_width);
 
 
         // Compare the known-correct matrix (R) and the result matrix (C)
