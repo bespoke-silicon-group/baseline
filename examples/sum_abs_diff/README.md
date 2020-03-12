@@ -82,4 +82,11 @@ and frame matrxix into shared meomry and using that for compuation.
 This version is currently not working.
 
 
+### Version 8
+
+This version loads frame into tile group shared memory similar to version 7,
+however it uses the new replacement for the deprecated tile group shared memory
+macros, the striped array.
+
+
 
