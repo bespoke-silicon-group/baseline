@@ -89,4 +89,8 @@ however it uses the new replacement for the deprecated tile group shared memory
 macros, the striped array.
 
 
+### Version 9
+
+Similar to version 8, but uses the new templatized barrier library instead of 
+the deprecated barrier macros.
 
