@@ -168,7 +168,8 @@ int kernel_sum_abs_diff (int argc, char **argv) {
                              .y = (res_height + block_size_y -1) / block_size_y };
 
         } else if (!strcmp("v1", test_name) || !strcmp("v2", test_name) ||
-                   !strcmp("v3", test_name) || !strcmp("v4", test_name)) {
+                   !strcmp("v3", test_name) || !strcmp("v4", test_name) ||
+                   !strcmp("v5", test_name)) {
                 ref_height = REF_HEIGHT;
                 ref_width = REF_WIDTH;
                 frame_height = FRAME_HEIGHT;

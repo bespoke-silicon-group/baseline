@@ -50,3 +50,21 @@ of being passed in as an input argument to the kernel. This gives the compiler
 the opportunity to optimize based on frame dimensions known at compiler time.
 
 
+### Version 4
+
+In this version, the reference dimensions are templatized in the kernel, instead 
+of being passed in as an input argument to the kernel. This gives the compiler
+the opportunity to optimize based on reference dimensions known at compiler time.
+
+
+### Version 5
+
+Version 5 - Refernce and frame dimensions templatized
+In this version, both the reference and frame dimensions are templatized 
+in the kernel, instead of being passed in as an input argument to the kernel.
+This gives the compiler the opportunity to optimize based on reference 
+dimensions known at compiler time.
+
+
+
+
