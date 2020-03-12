@@ -66,5 +66,11 @@ This gives the compiler the opportunity to optimize based on reference
 dimensions known at compiler time.
 
 
+### Version 6
+
+This version loads the frame into tile group shared memory using tile group
+shared memory macros, and uses the shared memory for redundant accesses to 
+the frame.
+
 
 
