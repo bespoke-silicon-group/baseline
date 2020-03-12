@@ -73,4 +73,13 @@ shared memory macros, and uses the shared memory for redundant accesses to
 the frame.
 
 
+### Version 7
+
+This version uses tile group shared memory macros for storing refernce & frame 
+Due to redundant accesses to DRAM, performance can be improved by loading reference 
+and frame matrxix into shared meomry and using that for compuation.
+
+This version is currently not working.
+
+
 
