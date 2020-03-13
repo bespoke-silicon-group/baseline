@@ -36,9 +36,9 @@
 
 
 // Sparse matrix and dense vector dimensions
-#define MATRIX_HEIGHT  16
-#define MATRIX_WIDTH   16
-#define VECTOR_LENGTH  8
+#define MATRIX_HEIGHT  64
+#define MATRIX_WIDTH   64
+#define VECTOR_LENGTH  32
 
 
 
@@ -115,9 +115,9 @@ int kernel_spvm (int argc, char **argv) {
 
 
 
-        if(!strcmp("v0", test_name)) {
+        if(!strcmp("v0", test_name) || !strcmp("v1", test_name)) {
 
-                block_size = 4;
+                block_size = 64;
                 tg_dim = { .x = 4, .y = 4 };
                 grid_dim = { .x = (MATRIX_HEIGHT + block_size - 1) / block_size,
                              .y = 1 };
