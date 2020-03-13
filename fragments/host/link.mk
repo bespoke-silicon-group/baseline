@@ -90,7 +90,7 @@ _HELP_STRING += "        - Build the host executable for RTL Cosimulation using 
 _HELP_STRING += "          The same executable is reused to run every kernel version \n"
 # We parallelize VCS compilation, but we leave a few cores on the table.
 $(HOST_TARGET).cosim: NPROCS := $(shell echo "(`nproc`/4 + 1)" | bc)
-$(HOST_TARGET).cosim: $(HOST_OBJECTS) $(SIMLIBS) $(TESTBENCH_PATH)/msg_config
+$(HOST_TARGET).cosim: $(HOST_OBJECTS) $(SIMLIBS) #$(TESTBENCH_PATH)/msg_config
 	SYNOPSYS_SIM_SETUP=$(TESTBENCH_PATH)/synopsys_sim.setup \
 	vcs tb glbl cosim_wrapper -j$(NPROCS) $(filter %.o,$^) \
 		-Mdirectory=$@.tmp \
