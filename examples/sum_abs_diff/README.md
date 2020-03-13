@@ -94,3 +94,13 @@ macros, the striped array.
 Similar to version 8, but uses the new templatized barrier library instead of 
 the deprecated barrier macros.
 
+
+### Version 10
+
+This version combines all optimizations together:
+ * Templatized reference and frame dimensions
+ * Frame is loaded into tile group shared striped memory
+ * Templatized barrier library is used for synchronization
+
+
+
