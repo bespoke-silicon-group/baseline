@@ -94,7 +94,7 @@ void host_spmv (TM* sparse_matrix,
 
 
 
-int kernel_spvm (int argc, char **argv) {
+int kernel_spmv (int argc, char **argv) {
 
         int rc;
         char *bin_path, *test_name;
@@ -115,7 +115,8 @@ int kernel_spvm (int argc, char **argv) {
 
 
 
-        if(!strcmp("v0", test_name) || !strcmp("v1", test_name)) {
+        if(!strcmp("v0", test_name) || !strcmp("v1", test_name) ||
+           !strcmp("v2", test_name)) {
 
                 block_size = 64;
                 tg_dim = { .x = 4, .y = 4 };
@@ -132,9 +133,7 @@ int kernel_spvm (int argc, char **argv) {
         std::numeric_limits<int8_t> lim; // Used to get INT_MIN and INT_MAX in C++
         std::default_random_engine generator;
         generator.seed(42);
-        // Random numbers are RGB, so the values are limited to [0,255]
-        //std::uniform_real_distribution<float> distribution(lim.min(),lim.max());
-        std::uniform_real_distribution<float> distribution(0, 255);
+        std::uniform_real_distribution<float> distribution(lim.min(),lim.max());
 
         // Allocate sparse matrix and dense vector on the host
         int sparse_matrix [MATRIX_HEIGHT * MATRIX_WIDTH];
@@ -365,14 +364,14 @@ void cosim_main(uint32_t *exit_code, char * args) {
         scope = svGetScopeFromName("tb");
         svSetScope(scope);
 #endif
-        int rc = kernel_spvm(argc, argv);
+        int rc = kernel_spmv(argc, argv);
         *exit_code = rc;
         bsg_pr_test_pass_fail(rc == HB_MC_SUCCESS);
         return;
 }
 #else
 int main(int argc, char ** argv) {
-        int rc = kernel_spvm(argc, argv);
+        int rc = kernel_spmv(argc, argv);
         bsg_pr_test_pass_fail(rc == HB_MC_SUCCESS);
         return rc;
 }

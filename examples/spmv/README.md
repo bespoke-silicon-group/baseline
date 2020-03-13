@@ -1,4 +1,4 @@
-# Sum of Absolute Differences
+# Sparse Matrix Dense Vector Multiplication Kernel
 
 This example runs the sparse matrix dense vector multiplication kernel.
 The kernel performs a multiplication between a sparse matrix and a 
@@ -32,4 +32,10 @@ vector.
 Sparse matrix and dense vector dimensions are templatized in the kernel to allow
 for better compiler optimization.
 
+
+### Version 2
+
+This version loads the dense vector into tile group shared memory, 
+to reduce the redundant access latency to the dense vector. 
+This version also uses the new template barrier library.
 
