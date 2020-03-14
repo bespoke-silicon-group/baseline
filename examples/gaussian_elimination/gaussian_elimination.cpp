@@ -28,14 +28,17 @@
 #include "gaussian_elimination.hpp"
 
 
-/******************************************************************************/
-/* Runs the gaussian elimination on an input MxN matrix.                      */
-/* Input matrix represents a set of coefficients for an N-dimension linear    */
-/* equation. The purpose of this kernel is to transform the input matrix into */
-/* a matrix where the triangle portion of the matrix below the diameter is    */
-/* zero.                                                                      */
-/* Result is an MxN matrix.                                                   */
-/******************************************************************************/
+/********************************************************************************/
+/* Runs the gaussian elimination on an input MxN matrix.                        */
+/* Input matrix represents a set of coefficients for an N-dimension linear      */
+/* equation. The purpose of this kernel is to transform the input matrix into   */
+/* a matrix where the triangle portion of the matrix below the diameter is zero.*/
+/* Because of the nature of the application and the need for synchronization    */
+/* among threads, the entire operation has to be done within one tile group.    */
+/* Therefore, a single tile group has to handle the entire matrix, and the block*/
+/* size (a tile group's workload) is set to the matrix height.                  */
+/* Result is an MxN matrix.                                                     */
+/********************************************************************************/
 
 
 
@@ -83,6 +86,20 @@ void host_gaussian_elimination (T* A,
                                 uint32_t M,
                                 uint32_t N) {
 
+        // Fill the first row as is
+        for (int x = 0; x < N; x ++) 
+                B[x] = A[x];
+
+        for (int y_src = 0; y_src < M; y_src ++) {
+                for (int y_dst = y_src + 1; y_dst < M; y_dst ++) {
+                        // Coefficient = A[y_dst][y_src] / A[y_src][y_src]
+                        float c = A[y_dst * N + y_src] / A[y_src * N + y_src];
+                        for (int x = 0; x < N; x ++) {
+                                // B [y_dst][x] = A[y_dst][x] - c * A[y_src][x]       
+                                B[y_dst * N + x] = A[y_dst * N + x] - c * A[y_src * N + x];
+                        }
+                }
+        }
         return;
 }
 
@@ -112,9 +129,9 @@ int kernel_gaussian_elimination (int argc, char **argv) {
 
         if(!strcmp("v0", test_name)) {
 
-                block_size = 16;
+                block_size = MATRIX_HEIGHT;
                 tg_dim = { .x = 4, .y = 4 };
-                grid_dim = { .x = MATRIX_HEIGHT / block_size,
+                grid_dim = { .x = 1,
                              .y = 1 };
 
         } else {
@@ -150,6 +167,7 @@ int kernel_gaussian_elimination (int argc, char **argv) {
                        !res);
 
                 A_host[i] = static_cast<float>(res);
+                //A_host[i] = static_cast<float>(i+1);
         }
 
 
