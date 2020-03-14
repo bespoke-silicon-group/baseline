@@ -36,6 +36,30 @@ int  __attribute__ ((noinline)) dense_vector_dot_single_tile (int* dense_A_index
                                                               uint32_t B_width,
                                                               TR* result) {
 
+        int A_ptr = 0;
+        int B_ptr = 0;
+
+        TR sum = 0;
+
+        while (A_ptr < A_width && B_ptr < B_width) {
+                int A_idx = dense_A_index[A_ptr];
+                int B_idx = dense_B_index[B_ptr];
+
+                if (A_idx == B_idx) {
+                        sum += dense_A_data[A_idx] * dense_B_data[B_idx];
+                        A_idx += 1;
+                        B_idx += 1;
+                }
+                else if (A_idx < B_idx) {
+                    A_ptr += 1;
+                }
+                else {
+                    B_ptr += 1;
+                }
+        }
+
+        *result = sum;
+
         return 0;
 }
 

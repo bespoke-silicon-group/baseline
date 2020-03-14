@@ -20,6 +20,7 @@ the [kernel](kernel) directory.
 
 ### Version 0
 
-Initial version.
+This is sequential version, a single tile handles the entire dot product.
+
 
 
