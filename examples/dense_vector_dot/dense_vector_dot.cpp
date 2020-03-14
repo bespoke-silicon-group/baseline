@@ -81,7 +81,7 @@ void host_dense_vector_dot (int* dense_A_index,
 
 
 
-int kernel_spvm (int argc, char **argv) {
+int kernel_dense_vector_dot (int argc, char **argv) {
 
         int rc;
         char *bin_path, *test_name;
@@ -382,14 +382,14 @@ void cosim_main(uint32_t *exit_code, char * args) {
         scope = svGetScopeFromName("tb");
         svSetScope(scope);
 #endif
-        int rc = kernel_spvm(argc, argv);
+        int rc = kernel_dense_vector_dot(argc, argv);
         *exit_code = rc;
         bsg_pr_test_pass_fail(rc == HB_MC_SUCCESS);
         return;
 }
 #else
 int main(int argc, char ** argv) {
-        int rc = kernel_spvm(argc, argv);
+        int rc = kernel_dense_vector_dot(argc, argv);
         bsg_pr_test_pass_fail(rc == HB_MC_SUCCESS);
         return rc;
 }
