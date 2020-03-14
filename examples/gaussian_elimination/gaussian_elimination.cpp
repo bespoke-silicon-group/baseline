@@ -43,8 +43,8 @@
 
 
 // Matirx dimensions
-#define MATRIX_HEIGHT 16
-#define MATRIX_WIDTH 16
+#define MATRIX_HEIGHT 8 
+#define MATRIX_WIDTH 8
 
 
 
@@ -82,21 +82,17 @@ void matrix_print(T *A, uint64_t M, uint64_t N) {
 // Host side gaussian elimination
 template <typename T>
 void host_gaussian_elimination (T* A,
-                                T* B,
                                 uint32_t M,
                                 uint32_t N) {
 
-        // Fill the first row as is
-        for (int x = 0; x < N; x ++) 
-                B[x] = A[x];
 
         for (int y_src = 0; y_src < M; y_src ++) {
                 for (int y_dst = y_src + 1; y_dst < M; y_dst ++) {
                         // Coefficient = A[y_dst][y_src] / A[y_src][y_src]
                         float c = A[y_dst * N + y_src] / A[y_src * N + y_src];
                         for (int x = 0; x < N; x ++) {
-                                // B [y_dst][x] = A[y_dst][x] - c * A[y_src][x]       
-                                B[y_dst * N + x] = A[y_dst * N + x] - c * A[y_src * N + x];
+                                // A [y_dst][x] -= c * A[y_src][x]       
+                                A[y_dst * N + x] -= c * A[y_src * N + x];
                         }
                 }
         }
@@ -150,8 +146,8 @@ int kernel_gaussian_elimination (int argc, char **argv) {
 
         // Allocate dense vectors on the host
         float A_host[MATRIX_HEIGHT * MATRIX_WIDTH];
-        float B_from_host[MATRIX_HEIGHT * MATRIX_WIDTH];
-        float B_from_device[MATRIX_HEIGHT * MATRIX_WIDTH];
+        float A_from_host[MATRIX_HEIGHT * MATRIX_WIDTH];
+        float A_from_device[MATRIX_HEIGHT * MATRIX_WIDTH];
 
         // Generate random numbers. Since the Manycore can't handle infinities,
         // subnormal numbers, or NANs, filter those out.
@@ -167,14 +163,13 @@ int kernel_gaussian_elimination (int argc, char **argv) {
                        !res);
 
                 A_host[i] = static_cast<float>(res);
-                //A_host[i] = static_cast<float>(i+1);
+                A_from_host[i] = static_cast<float>(res);
         }
 
 
 
         // Generate the known-correct results on the host
-        host_gaussian_elimination (A_host,
-                                   B_from_host,
+        host_gaussian_elimination (A_from_host,
                                    MATRIX_HEIGHT,
                                    MATRIX_WIDTH);
 
@@ -197,11 +192,11 @@ int kernel_gaussian_elimination (int argc, char **argv) {
         }
 
 
-        // Allocate memory on the device for sparse matrix, dense vector, and 
-        // the sparse result vector. Since sizeof(float) == sizeof(int32_t) > 
+        // Allocate memory on the device for the matrix.
+        // Since sizeof(float) == sizeof(int32_t) > 
         // sizeof(int16_t) > sizeof(int8_t) we'll reuse the same buffers for 
         // each test (if multiple tests are conducted)
-        hb_mc_eva_t A_device, B_device; 
+        hb_mc_eva_t A_device; 
 
 
         // Allocate A on the device
@@ -210,14 +205,6 @@ int kernel_gaussian_elimination (int argc, char **argv) {
                 bsg_pr_test_err("failed to allocate memory on device.\n");
                 return rc;
         }
-
-        // Allocate B on the device
-        rc = hb_mc_device_malloc(&device, MATRIX_HEIGHT * MATRIX_WIDTH * sizeof(float), &B_device);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_test_err("failed to allocate memory on device.\n");
-                return rc;
-        }
-
 
 
 
@@ -235,12 +222,12 @@ int kernel_gaussian_elimination (int argc, char **argv) {
 
 
         // Prepare list of input arguments for kernel.
-        uint32_t cuda_argv[4] = {A_device, B_device, MATRIX_HEIGHT, MATRIX_WIDTH};
+        uint32_t cuda_argv[3] = {A_device, MATRIX_HEIGHT, MATRIX_WIDTH};
 
 
         // Enquque grid of tile groups, pass in grid and tile group dimensions,
         // kernel name, number and list of input arguments
-        rc = hb_mc_kernel_enqueue (&device, grid_dim, tg_dim, "kernel_gaussian_elimination", 4, cuda_argv);
+        rc = hb_mc_kernel_enqueue (&device, grid_dim, tg_dim, "kernel_gaussian_elimination", 3, cuda_argv);
         if (rc != HB_MC_SUCCESS) {
                 bsg_pr_test_err("failed to initialize grid.\n");
                 return rc;
@@ -254,8 +241,8 @@ int kernel_gaussian_elimination (int argc, char **argv) {
         }
 
         // Copy result back from device DRAM into host memory.
-        src = (void *) ((intptr_t) B_device);
-        dst = (void *) &B_from_device[0];
+        src = (void *) ((intptr_t) A_device);
+        dst = (void *) &A_from_device[0];
         rc = hb_mc_device_memcpy (&device, dst, src,
                                   MATRIX_HEIGHT * MATRIX_WIDTH * sizeof(float),
                                   HB_MC_MEMCPY_TO_HOST);
@@ -272,14 +259,14 @@ int kernel_gaussian_elimination (int argc, char **argv) {
         }
 
         // Print result 
-        matrix_print(B_from_host, MATRIX_HEIGHT, MATRIX_WIDTH);
-        matrix_print(B_from_device, MATRIX_HEIGHT, MATRIX_WIDTH);
+        matrix_print(A_from_host, MATRIX_HEIGHT, MATRIX_WIDTH);
+        matrix_print(A_from_device, MATRIX_HEIGHT, MATRIX_WIDTH);
 
 
         // Compare the known-correct result (result_from_host) 
         // and the result copied from device (result_from_device);
         float max = 0.1;
-        double sse = matrix_sse(B_from_host, B_from_device, MATRIX_HEIGHT, MATRIX_WIDTH);
+        double sse = matrix_sse(A_from_host, A_from_device, MATRIX_HEIGHT, MATRIX_WIDTH);
 
         bsg_pr_test_info ("SSE: %f\n", sse);
 

@@ -26,7 +26,13 @@ the [kernel](kernel) directory.
 
 ### Version 0
 
-Initial Version
+In this version, each thread is responsible for calculating a row in 
+each step of the computation. Each tile in the tile group can be 
+responsible for multple threads (i.e. calculating multiple rows).
+The second loop of the sequential compuation, which loops over all
+rows to calculate the new values in each step, is broken and divided 
+among tiles. Each step of the outter loop needs a barrier to sync 
+the new values of all rows.
 
 
 
