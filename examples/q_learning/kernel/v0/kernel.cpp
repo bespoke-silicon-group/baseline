@@ -33,6 +33,7 @@ INIT_TILE_GROUP_BARRIER(r_barrier, c_barrier,
                         0, BSG_TILE_GROUP_Y_DIM-1);
 
 
+
 /* 
  * Version 0 
  */
@@ -44,6 +45,71 @@ int  __attribute__ ((noinline)) q_learning (T* feature,
                                             T* weight,
                                             float alpha) {
                                             
+
+        //TileGroupStripedArray<T, WIDTH, bsg_tiles_X, bsg_tiles_Y, 1> sh_val;
+        bsg_tile_group_shared_mem(float, sh_val, WIDTH);
+
+        const int num_tiles = bsg_tiles_X * bsg_tiles_Y;
+
+        for (int y = 0; y < HEIGHT; y ++) {
+
+                for (int x = __bsg_id; x < WIDTH; x += num_tiles) {
+                        //sh_val[x] = feature[y * WIDTH + x] * weight[x];
+                        bsg_tile_group_shared_store (float, sh_val, x, (feature[y * WIDTH + x] * weight[x]));
+                }
+
+                bsg_tile_group_barrier(&r_barrier, &c_barrier);
+
+                //reduce(sh_val, WIDTH);
+
+
+                /*************/
+                /* REDUCTION */
+                /*************/
+                int offset = 1;
+                int mult = 2;        
+        
+                while (offset < WIDTH) {
+                        for (int x = bsg_id; x < WIDTH; x += num_tiles) {
+                                if (!(x % mult)){
+                                        float lc_A, lc_B;
+        
+                                        // lc_A <-- sh_val[x]
+                                        bsg_tile_group_shared_load (float, sh_val, x, lc_A);
+                                        // lc_B <-- sh_val[x + offset]
+                                        bsg_tile_group_shared_load (float, sh_val, x + offset, lc_B);
+        
+                                        // sh_val[x] <-- lc_A + lc_B
+                                        bsg_tile_group_shared_store (float, sh_val, x, lc_A + lc_B);
+                                }
+                        }
+        
+                        mult *= 2;
+                        offset *= 2;
+
+                        bsg_tile_group_barrier(&r_barrier, &c_barrier);
+        	}
+
+
+                bsg_tile_group_barrier(&r_barrier, &c_barrier);
+
+
+
+                //float err = value[y] - sh_val[0];
+                float lc_val;
+                bsg_tile_group_shared_load (float, sh_val, 0, lc_val);
+                float err = value[y] - lc_val;
+
+                for (int x = __bsg_id; x < WIDTH; x += num_tiles) {
+                        weight[x] += alpha * err * feature[y * WIDTH + x];
+                }
+
+                bsg_tile_group_barrier(&r_barrier, &c_barrier);
+        }
+
+
+        bsg_tile_group_barrier(&r_barrier, &c_barrier);
+
 
 
         return 0;
