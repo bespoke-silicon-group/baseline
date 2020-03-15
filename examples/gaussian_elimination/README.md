@@ -35,4 +35,16 @@ among tiles. Each step of the outter loop needs a barrier to sync
 the new values of all rows.
 
 
+### Version 1
+
+In this version matrix dimensions are templatized for better 
+compiler optimization.
+
+
+### Version 2
+
+In this version, tiles in the tile group first load the matrix
+into tile group shared memory, perform the compuation on tile grou
+shared memory to alleviate redundant access latencies to DRAM,
+and then store results back into DRAM.
 

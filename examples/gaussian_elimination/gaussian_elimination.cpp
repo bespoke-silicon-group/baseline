@@ -112,7 +112,7 @@ int kernel_gaussian_elimination (int argc, char **argv) {
         bin_path = args.path;
         test_name = args.name;
 
-        bsg_pr_test_info("Running Sparse Matrix Dense Vector Multiplication Kernel.\n\n");
+        bsg_pr_test_info("Running Gaussian Elimination Kernel.\n\n");
 
         // Define block_size: amount of work for each tile group
         // Define tg_dim_x/y: number of tiles in each tile group
@@ -123,7 +123,8 @@ int kernel_gaussian_elimination (int argc, char **argv) {
 
 
 
-        if(!strcmp("v0", test_name)) {
+        if(!strcmp("v0", test_name) || !strcmp("v1", test_name) ||
+           !strcmp("v2", test_name)) {
 
                 block_size = MATRIX_HEIGHT;
                 tg_dim = { .x = 4, .y = 4 };
@@ -140,9 +141,7 @@ int kernel_gaussian_elimination (int argc, char **argv) {
         std::numeric_limits<int8_t> lim; // Used to get INT_MIN and INT_MAX in C++
         std::default_random_engine generator;
         generator.seed(42);
-        // Random numbers are RGB, so the values are limited to [0,255]
-        //std::uniform_real_distribution<float> distribution(lim.min(),lim.max());
-        std::uniform_real_distribution<float> distribution(0, 255);
+        std::uniform_real_distribution<float> distribution(lim.min(),lim.max());
 
         // Allocate dense vectors on the host
         float A_host[MATRIX_HEIGHT * MATRIX_WIDTH];
@@ -259,8 +258,8 @@ int kernel_gaussian_elimination (int argc, char **argv) {
         }
 
         // Print result 
-        matrix_print(A_from_host, MATRIX_HEIGHT, MATRIX_WIDTH);
-        matrix_print(A_from_device, MATRIX_HEIGHT, MATRIX_WIDTH);
+        //matrix_print(A_from_host, MATRIX_HEIGHT, MATRIX_WIDTH);
+        //matrix_print(A_from_device, MATRIX_HEIGHT, MATRIX_WIDTH);
 
 
         // Compare the known-correct result (result_from_host) 
