@@ -57,52 +57,38 @@
 
 
 
-// Compute the sum of squared error between matricies A and B (M x N)
+// Compute the sum of squared error between vectors A and B (N)
 template <typename T>
-double matrix_sse (const T *A, const T *B, uint64_t M, uint64_t N) {
+double vector_sse (const T *A, const T *B, uint64_t N) {
         double sum = 0;
-        for (uint64_t y = 0; y < M; y ++) {
-                for (uint64_t x = 0; x < N; x ++) {
-                        T diff = A[y * N + x] - B[y * N + x];
-                        if(std::isnan(diff)){
-                                return diff;
-                        }
-                        sum += diff * diff;
+        for (uint64_t x = 0; x < N; x ++) {
+                T diff = A[x] - B[x];
+                if(std::isnan(diff)){
+                        return diff;
                 }
+                sum += diff * diff;
         }
         return sum;
 }
 
-// Print matrix A (M x N). This works well for small matricies.
+// Print vector A (N). This works well for small vectors.
 template <typename T>
-void matrix_print(T *A, uint64_t M, uint64_t N) {
+void vector_print(T *A, uint64_t N) {
         T sum = 0;
-        for (uint64_t y = 0; y < M; y ++) {
-                for (uint64_t x = 0; x < N; x ++) {
-                        std::cout << A[y * N + x] << " ";
-                }
-                std::cout << '\n';
-
+        for (uint64_t x = 0; x < N; x ++) {
+                std::cout << A[x] << " ";
         }
+        std::cout << '\n';
 }
 
 // Host side gaussian elimination
 template <typename T>
-void host_q_learning (T* A,
-                                uint32_t M,
-                                uint32_t N) {
+void host_q_learning (T* feature,
+                      T* value,
+                      uint64_t M,
+                      uint64_t N,
+                      T* weight) {
 
-
-        for (int y_src = 0; y_src < M; y_src ++) {
-                for (int y_dst = y_src + 1; y_dst < M; y_dst ++) {
-                        // Coefficient = A[y_dst][y_src] / A[y_src][y_src]
-                        float c = A[y_dst * N + y_src] / A[y_src * N + y_src];
-                        for (int x = 0; x < N; x ++) {
-                                // A [y_dst][x] -= c * A[y_src][x]       
-                                A[y_dst * N + x] -= c * A[y_src * N + x];
-                        }
-                }
-        }
         return;
 }
 
@@ -119,7 +105,7 @@ int kernel_q_learning (int argc, char **argv) {
         bin_path = args.path;
         test_name = args.name;
 
-        bsg_pr_test_info("Running Sparse Matrix Dense Vector Multiplication Kernel.\n\n");
+        bsg_pr_test_info("Running Q-Learning Kernel.\n\n");
 
         // Define block_size: amount of work for each tile group
         // Define tg_dim_x/y: number of tiles in each tile group
@@ -130,10 +116,9 @@ int kernel_q_learning (int argc, char **argv) {
 
 
 
-        if(!strcmp("v0", test_name) || !strcmp("v1", test_name) ||
-           !strcmp("v2", test_name)) {
+        if(!strcmp("v0", test_name)) {
 
-                block_size = MATRIX_HEIGHT;
+                block_size = WIDTH;
                 tg_dim = { .x = 4, .y = 4 };
                 grid_dim = { .x = 1,
                              .y = 1 };
@@ -152,34 +137,55 @@ int kernel_q_learning (int argc, char **argv) {
         //std::uniform_real_distribution<float> distribution(lim.min(),lim.max());
         std::uniform_real_distribution<float> distribution(0, 255);
 
-        // Allocate dense vectors on the host
-        float A_host[MATRIX_HEIGHT * MATRIX_WIDTH];
-        float A_from_host[MATRIX_HEIGHT * MATRIX_WIDTH];
-        float A_from_device[MATRIX_HEIGHT * MATRIX_WIDTH];
+        // Allocate feature matrix, value vector and weight vector  on the host
+        float feature_host[HEIGHT * WIDTH];
+        float value_host[HEIGHT];
+        float weight_host[WIDTH];
+        float weight_from_host[WIDTH];
+        float weight_from_device[WIDTH];        
+
 
         // Generate random numbers. Since the Manycore can't handle infinities,
         // subnormal numbers, or NANs, filter those out.
         auto res = distribution(generator);
 
-        // Fill A with non-zero values
-        for (uint64_t i = 0; i < MATRIX_HEIGHT * MATRIX_WIDTH; i++) {
+        // Fill feature matrix with random values
+        for (uint64_t i = 0; i < HEIGHT * WIDTH; i++) {
                 do{
                         res = distribution(generator);
                 }while(!std::isnormal(res) ||
                        !std::isfinite(res) ||
-                       std::isnan(res)     ||
-                       !res);
+                       std::isnan(res));
 
-                A_host[i] = static_cast<float>(res);
-                A_from_host[i] = static_cast<float>(res);
+                feature_host[i] = static_cast<float>(res);
+        }
+
+        // Fill value vector with random values
+        for (uint64_t i = 0; i < HEIGHT; i++) {
+                do{
+                        res = distribution(generator);
+                }while(!std::isnormal(res) ||
+                       !std::isfinite(res) ||
+                       std::isnan(res));
+
+                value_host[i] = static_cast<float>(res);
+        }
+
+        // Set weight vectors to zero
+        for (uint64_t i = 0; i < WIDTH; i++) {
+                weight_host[i] = 0;
+                weight_from_host[i] = 0;
+                weight_from_device[i] = 0;
         }
 
 
 
         // Generate the known-correct results on the host
-        host_q_learning (A_from_host,
-                                   MATRIX_HEIGHT,
-                                   MATRIX_WIDTH);
+        host_q_learning (feature_host,
+                         value_host,
+                         HEIGHT,
+                         WIDTH,
+                         weight_from_host);
 
 
 
@@ -200,27 +206,65 @@ int kernel_q_learning (int argc, char **argv) {
         }
 
 
-        // Allocate memory on the device for the matrix.
+        // Allocate memory on the device for the feature matrix, value vector
+        // and weight vectos.
         // Since sizeof(float) == sizeof(int32_t) > 
         // sizeof(int16_t) > sizeof(int8_t) we'll reuse the same buffers for 
         // each test (if multiple tests are conducted)
-        hb_mc_eva_t A_device; 
+        hb_mc_eva_t feature_device,
+                    value_device,
+                    weight_device;
 
 
-        // Allocate A on the device
-        rc = hb_mc_device_malloc(&device, MATRIX_HEIGHT * MATRIX_WIDTH * sizeof(float), &A_device);
+        // Allocate feature matrix on the device
+        rc = hb_mc_device_malloc(&device, HEIGHT * WIDTH * sizeof(float), &feature_device);
+        if (rc != HB_MC_SUCCESS) {
+                bsg_pr_test_err("failed to allocate memory on device.\n");
+                return rc;
+        }
+
+        // Allocate value vector on the device
+        rc = hb_mc_device_malloc(&device, HEIGHT * sizeof(float), &value_device);
+        if (rc != HB_MC_SUCCESS) {
+                bsg_pr_test_err("failed to allocate memory on device.\n");
+                return rc;
+        }
+
+        // Allocate weight vector on the device
+        rc = hb_mc_device_malloc(&device, WIDTH * sizeof(float), &weight_device);
         if (rc != HB_MC_SUCCESS) {
                 bsg_pr_test_err("failed to allocate memory on device.\n");
                 return rc;
         }
 
 
-
-        // Copy A from the host to the device
-        void *dst = (void *) ((intptr_t) A_device);
-        void *src = (void *) &A_host[0];
+        // Copy feature matrix from the host to the device
+        void *dst = (void *) ((intptr_t) feature_device);
+        void *src = (void *) &feature_host[0];
         rc = hb_mc_device_memcpy (&device, dst, src,
-                                  (MATRIX_HEIGHT * MATRIX_WIDTH) * sizeof(A_host[0]),
+                                  (HEIGHT * WIDTH) * sizeof(feature_host[0]),
+                                  HB_MC_MEMCPY_TO_DEVICE);
+        if (rc != HB_MC_SUCCESS) {
+                bsg_pr_test_err("failed to copy memory to device.\n");
+                return rc;
+        }
+
+        // Copy value vector from the host to the device
+        dst = (void *) ((intptr_t) value_device);
+        src = (void *) &value_host[0];
+        rc = hb_mc_device_memcpy (&device, dst, src,
+                                  (HEIGHT) * sizeof(value_host[0]),
+                                  HB_MC_MEMCPY_TO_DEVICE);
+        if (rc != HB_MC_SUCCESS) {
+                bsg_pr_test_err("failed to copy memory to device.\n");
+                return rc;
+        }
+
+        // Copy weight vector from the host to the device
+        dst = (void *) ((intptr_t) weight_device);
+        src = (void *) &weight_host[0];
+        rc = hb_mc_device_memcpy (&device, dst, src,
+                                  (WIDTH) * sizeof(weight_host[0]),
                                   HB_MC_MEMCPY_TO_DEVICE);
         if (rc != HB_MC_SUCCESS) {
                 bsg_pr_test_err("failed to copy memory to device.\n");
@@ -230,12 +274,12 @@ int kernel_q_learning (int argc, char **argv) {
 
 
         // Prepare list of input arguments for kernel.
-        uint32_t cuda_argv[3] = {A_device, MATRIX_HEIGHT, MATRIX_WIDTH};
+        uint32_t cuda_argv[5] = {feature_device, value_device, HEIGHT, WIDTH, weight_device};
 
 
         // Enquque grid of tile groups, pass in grid and tile group dimensions,
         // kernel name, number and list of input arguments
-        rc = hb_mc_kernel_enqueue (&device, grid_dim, tg_dim, "kernel_q_learning", 3, cuda_argv);
+        rc = hb_mc_kernel_enqueue (&device, grid_dim, tg_dim, "kernel_q_learning", 5, cuda_argv);
         if (rc != HB_MC_SUCCESS) {
                 bsg_pr_test_err("failed to initialize grid.\n");
                 return rc;
@@ -248,11 +292,11 @@ int kernel_q_learning (int argc, char **argv) {
                 return rc;
         }
 
-        // Copy result back from device DRAM into host memory.
-        src = (void *) ((intptr_t) A_device);
-        dst = (void *) &A_from_device[0];
+        // Copy weight result back from device DRAM into host memory.
+        src = (void *) ((intptr_t) weight_device);
+        dst = (void *) &weight_from_device[0];
         rc = hb_mc_device_memcpy (&device, dst, src,
-                                  MATRIX_HEIGHT * MATRIX_WIDTH * sizeof(float),
+                                  WIDTH * sizeof(float),
                                   HB_MC_MEMCPY_TO_HOST);
         if (rc != HB_MC_SUCCESS) {
                 bsg_pr_test_err("failed to copy memory from device.\n");
@@ -267,24 +311,24 @@ int kernel_q_learning (int argc, char **argv) {
         }
 
         // Print result 
-        //matrix_print(A_from_host, MATRIX_HEIGHT, MATRIX_WIDTH);
-        //matrix_print(A_from_device, MATRIX_HEIGHT, MATRIX_WIDTH);
+        vector_print(weight_from_host, WIDTH);
+        vector_print(weight_from_device, WIDTH);
 
 
         // Compare the known-correct result (result_from_host) 
         // and the result copied from device (result_from_device);
         float max = 0.1;
-        double sse = matrix_sse(A_from_host, A_from_device, MATRIX_HEIGHT, MATRIX_WIDTH);
+        double sse = vector_sse(weight_from_host, weight_from_device, WIDTH);
 
         bsg_pr_test_info ("SSE: %f\n", sse);
 
         if (std::isnan(sse) || sse > max) {
-                bsg_pr_test_info(BSG_RED("Matrix Mismatch. SSE: %f\n"), sse);
+                bsg_pr_test_info(BSG_RED("Vector Mismatch. SSE: %f\n"), sse);
                 return HB_MC_FAIL;
         }
 
 
-        bsg_pr_test_info(BSG_GREEN("Matrix Match.\n"));
+        bsg_pr_test_info(BSG_GREEN("Vector Match.\n"));
         return HB_MC_SUCCESS;
 }
 

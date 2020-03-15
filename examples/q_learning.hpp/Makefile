@@ -91,7 +91,7 @@ KERNEL_DEFAULT      := kernel/$(DEFAULT_VERSION)/kernel.cpp
 # compiled and linked into the executable.
 ################################################################################
 
-HOST_TARGET         := q-learning
+HOST_TARGET         := q_learning
 HOST_CSOURCES       := 
 HOST_CXXSOURCES     := $(HOST_TARGET).cpp
 HOST_INCLUDES       := -I$(CURRENT_PATH)
