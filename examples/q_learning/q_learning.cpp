@@ -52,7 +52,13 @@
 // Feature vector width (WDITH) and number of feature vectors (HEIGHT)
 #define HEIGHT 8
 #define WIDTH  8
-#define ALPHA 0.001
+#define ALPHA 0.25
+
+#define FEATURE_MIN_VAL -1
+#define FEATURE_MAX_VAL 1
+#define VALUE_MIN_VAL   -5
+#define VALUE_MAX_VAL   5
+
 
 
 
@@ -148,9 +154,8 @@ int kernel_q_learning (int argc, char **argv) {
         std::numeric_limits<int8_t> lim; // Used to get INT_MIN and INT_MAX in C++
         std::default_random_engine generator;
         generator.seed(42);
-        // Random numbers are RGB, so the values are limited to [0,255]
-        //std::uniform_real_distribution<float> distribution(lim.min(),lim.max());
-        std::uniform_real_distribution<float> distribution(0, 255);
+        std::uniform_real_distribution<float> feature_distribution(FEATURE_MIN_VAL, FEATURE_MAX_VAL);
+        std::uniform_real_distribution<float> value_distribution(VALUE_MIN_VAL, VALUE_MAX_VAL);
 
         // Allocate feature matrix, value vector and weight vector  on the host
         float feature_host[HEIGHT * WIDTH];
@@ -162,12 +167,12 @@ int kernel_q_learning (int argc, char **argv) {
 
         // Generate random numbers. Since the Manycore can't handle infinities,
         // subnormal numbers, or NANs, filter those out.
-        auto res = distribution(generator);
+        auto res = feature_distribution(generator);
 
         // Fill feature matrix with random values
         for (uint64_t i = 0; i < HEIGHT * WIDTH; i++) {
                 do{
-                        res = distribution(generator);
+                        res = feature_distribution(generator);
                 }while(!std::isnormal(res) ||
                        !std::isfinite(res) ||
                        std::isnan(res));
@@ -178,13 +183,15 @@ int kernel_q_learning (int argc, char **argv) {
         // Fill value vector with random values
         for (uint64_t i = 0; i < HEIGHT; i++) {
                 do{
-                        res = distribution(generator);
+                        res = value_distribution(generator);
                 }while(!std::isnormal(res) ||
                        !std::isfinite(res) ||
                        std::isnan(res));
 
                 value_host[i] = static_cast<float>(res);
         }
+
+
 
         // Set weight vectors to zero
         for (uint64_t i = 0; i < WIDTH; i++) {
