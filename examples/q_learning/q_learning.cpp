@@ -52,7 +52,7 @@
 // Feature vector width (WDITH) and number of feature vectors (HEIGHT)
 #define HEIGHT 8
 #define WIDTH  8
-
+#define ALPHA 0.001
 
 
 
@@ -87,7 +87,22 @@ void host_q_learning (T* feature,
                       T* value,
                       uint64_t M,
                       uint64_t N,
-                      T* weight) {
+                      T* weight,
+                      float alpha) {
+
+        for (int y = 0; y < M; y ++) {
+
+                T val = 0;
+                for (int x = 0; x < N; x ++) {
+                        val += feature[y * N + x] * weight[x];
+                }
+                
+                float err = value[y] - val;
+
+                for (int x = 0; x < N; x ++) {
+                        weight[x] += alpha * err * feature[y * N + x];
+                }
+        }
 
         return;
 }
@@ -142,7 +157,7 @@ int kernel_q_learning (int argc, char **argv) {
         float value_host[HEIGHT];
         float weight_host[WIDTH];
         float weight_from_host[WIDTH];
-        float weight_from_device[WIDTH];        
+        float weight_from_device[WIDTH];
 
 
         // Generate random numbers. Since the Manycore can't handle infinities,
@@ -185,7 +200,8 @@ int kernel_q_learning (int argc, char **argv) {
                          value_host,
                          HEIGHT,
                          WIDTH,
-                         weight_from_host);
+                         weight_from_host,
+                         ALPHA);
 
 
 
@@ -274,12 +290,12 @@ int kernel_q_learning (int argc, char **argv) {
 
 
         // Prepare list of input arguments for kernel.
-        uint32_t cuda_argv[5] = {feature_device, value_device, HEIGHT, WIDTH, weight_device};
+        uint32_t cuda_argv[6] = {feature_device, value_device, HEIGHT, WIDTH, weight_device, ALPHA};
 
 
         // Enquque grid of tile groups, pass in grid and tile group dimensions,
         // kernel name, number and list of input arguments
-        rc = hb_mc_kernel_enqueue (&device, grid_dim, tg_dim, "kernel_q_learning", 5, cuda_argv);
+        rc = hb_mc_kernel_enqueue (&device, grid_dim, tg_dim, "kernel_q_learning", 6, cuda_argv);
         if (rc != HB_MC_SUCCESS) {
                 bsg_pr_test_err("failed to initialize grid.\n");
                 return rc;

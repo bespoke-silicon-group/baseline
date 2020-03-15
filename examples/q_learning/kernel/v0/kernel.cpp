@@ -41,7 +41,8 @@ int  __attribute__ ((noinline)) q_learning (T* feature,
                                             T* value,
                                             uint32_t HEIGHT,
                                             uint32_t WIDTH,
-                                            T* weight) {
+                                            T* weight,
+                                            float alpha) {
                                             
 
 
@@ -55,7 +56,8 @@ extern "C" {
                                                            float* value,
                                                            uint32_t HEIGHT,
                                                            uint32_t WIDTH,
-                                                           float* weight) {
+                                                           float* weight,
+                                                           float alpha) {
                 //bsg_barrier <bsg_tiles_Y, bsg_tiles_X> barrier;
 
                 int rc;
@@ -66,7 +68,8 @@ extern "C" {
                                  value,
                                  HEIGHT,
                                  WIDTH,
-                                 weight); 
+                                 weight,
+                                 alpha); 
 
                 bsg_cuda_print_stat_end(0);
 
