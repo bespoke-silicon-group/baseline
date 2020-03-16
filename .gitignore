@@ -11,3 +11,4 @@ vc_hdrs.h
 *.riscv
 *.png
 *.dis
+*.rva

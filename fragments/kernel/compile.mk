@@ -76,6 +76,11 @@ RISCV_DEFINES += -Dbsg_group_size=$(_BSG_MACHINE_TILES)
 RISCV_DEFINES += -DPREALLOCATE=0
 RISCV_DEFINES += -DHOST_DEBUG=0
 
+# BSG Manycore Library Objects
+LIBBSG_MANYCORE_OBJECTS  += bsg_set_tile_x_y.rvo
+LIBBSG_MANYCORE_OBJECTS  += bsg_tile_config_vars.rvo
+LIBBSG_MANYCORE_OBJECTS  += bsg_printf.rvo
+
 # We build and name a machine-specific crt.rvo because it's REALLY
 # difficult to figure out why your program/cosimulation is hanging
 # when the wrong link script was used during linking
@@ -91,11 +96,14 @@ $(MACHINE_CRT_OBJ) crt.rvo: $(_BSG_MANYCORE_COMMON_PATH)/crt.S $(BSG_MACHINE_PAT
 # bsg_printf.rvo *** IS A HACK ***. They aren't used in any source file or
 # function that CUDA uses, but bsg_manycore.h will FAIL to compile if they
 # aren't defined because they are used in macros.
-bsg_set_tile_x_y.rvo bsg_printf.rvo main.rvo: RISCV_DEFINES += -Dbsg_tiles_X=$(_BSG_MACHINE_TILES_X)
-bsg_set_tile_x_y.rvo bsg_printf.rvo main.rvo: RISCV_DEFINES += -Dbsg_tiles_Y=$(_BSG_MACHINE_TILES_Y)
+$(LIBBSG_MANYCORE_OBJECTS) main.rvo: RISCV_DEFINES += -Dbsg_tiles_X=$(_BSG_MACHINE_TILES_X)
+$(LIBBSG_MANYCORE_OBJECTS) main.rvo: RISCV_DEFINES += -Dbsg_tiles_Y=$(_BSG_MACHINE_TILES_Y)
 
-bsg_set_tile_x_y.rvo bsg_printf.rvo: %.rvo:$(_BSG_MANYCORE_LIB_PATH)/%.c
+$(LIBBSG_MANYCORE_OBJECTS): %.rvo:$(_BSG_MANYCORE_LIB_PATH)/%.c
 	$(RISCV_GCC) $(RISCV_CFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -c $< -o $@
+
+libbsg_manycore.rva: $(LIBBSG_MANYCORE_OBJECTS)
+	$(RISCV_AR) rcs $@ $^
 
 main.rvo: $(_BSG_MANYCORE_CUDALITE_MAIN_PATH)/main.c
 	$(RISCV_GCC) $(RISCV_CFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -c $< -o $@
