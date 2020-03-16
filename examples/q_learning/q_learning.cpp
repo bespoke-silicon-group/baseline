@@ -50,7 +50,7 @@
 
 
 // Feature vector width (WDITH) and number of feature vectors (HEIGHT)
-#define HEIGHT 1
+#define HEIGHT 4
 #define WIDTH  8
 #define ALPHA 0.25
 
