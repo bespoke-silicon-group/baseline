@@ -51,8 +51,25 @@ int  __attribute__ ((noinline)) q_learning (T* feature,
 
         const int num_tiles = bsg_tiles_X * bsg_tiles_Y;
 
+        // Treat every row of the feature matrix as a new feature observation
+        // With the corresponding value of value[y]
+        // For every new feature observation, the prediction value is calculated
+        // by performing a dot product of the row y of the feature matrix, and 
+        // the weight vector. 
+        // Each tile performes its share of the dot product and stores it in 
+        // a shared array 
+        // A sum reduction is performed among the values in the shared array to 
+        // calcualte the value of the prediction
+        // The error is calculated as the difference between the prediction and 
+        // the actual value. 
+        // Each weight in the weight vector is then updated as below:
+        // weight[x] += ALPHA * error * feature[y][x]
+        // The process repeats for all rows in the feature matrix 
         for (int y = 0; y < HEIGHT; y ++) {
 
+                // Perform dot product between row y of the feature matrix and 
+                // the weight vector and store the multiplication result into
+                // tile group shared value array
                 for (int x = __bsg_id; x < WIDTH; x += num_tiles) {
                         //sh_val[x] = feature[y * WIDTH + x] * weight[x];
                         bsg_tile_group_shared_store (float, sh_val, x, (feature[y * WIDTH + x] * weight[x]));
@@ -63,9 +80,9 @@ int  __attribute__ ((noinline)) q_learning (T* feature,
                 //reduce(sh_val, WIDTH);
 
 
-                /*************/
-                /* REDUCTION */
-                /*************/
+                // This while loop reduces all the elements in the shared value 
+                // vector to the first element. For more details on how the reduction 
+                // works, refer to the reduction example.
                 int offset = 1;
                 int mult = 2;        
         
@@ -95,6 +112,7 @@ int  __attribute__ ((noinline)) q_learning (T* feature,
 
 
 
+                // Update the weight vector
                 //float err = value[y] - sh_val[0];
                 float lc_val;
                 bsg_tile_group_shared_load (float, sh_val, 0, lc_val);
