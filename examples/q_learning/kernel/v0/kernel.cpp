@@ -33,6 +33,7 @@ INIT_TILE_GROUP_BARRIER(r_barrier, c_barrier,
                         0, BSG_TILE_GROUP_Y_DIM-1);
 
 
+#define ALPHA 0.25
 
 /* 
  * Version 0 
@@ -42,8 +43,7 @@ int  __attribute__ ((noinline)) q_learning (T* feature,
                                             T* value,
                                             uint32_t HEIGHT,
                                             uint32_t WIDTH,
-                                            T* weight,
-                                            float alpha) {
+                                            T* weight) {
                                             
 
         //TileGroupStripedArray<T, WIDTH, bsg_tiles_X, bsg_tiles_Y, 1> sh_val;
@@ -101,8 +101,7 @@ int  __attribute__ ((noinline)) q_learning (T* feature,
                 float err = value[y] - lc_val;
 
                 for (int x = __bsg_id; x < WIDTH; x += num_tiles) {
-                        //weight[x] += alpha * err * feature[y * WIDTH + x];
-                        weight[x] += 0.25 * err * feature[y * WIDTH + x];
+                        weight[x] += ALPHA * err * feature[y * WIDTH + x];
                 }
 
                 bsg_tile_group_barrier(&r_barrier, &c_barrier);
@@ -135,8 +134,7 @@ extern "C" {
                                  value,
                                  HEIGHT,
                                  WIDTH,
-                                 weight,
-                                 alpha); 
+                                 weight);
 
                 bsg_cuda_print_stat_end(0);
 
