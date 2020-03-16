@@ -101,7 +101,8 @@ int  __attribute__ ((noinline)) q_learning (T* feature,
                 float err = value[y] - lc_val;
 
                 for (int x = __bsg_id; x < WIDTH; x += num_tiles) {
-                        weight[x] += alpha * err * feature[y * WIDTH + x];
+                        //weight[x] += alpha * err * feature[y * WIDTH + x];
+                        weight[x] += 0.25 * err * feature[y * WIDTH + x];
                 }
 
                 bsg_tile_group_barrier(&r_barrier, &c_barrier);
