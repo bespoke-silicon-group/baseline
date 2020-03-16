@@ -15,15 +15,16 @@
 #include <cstdint>
 #include <cstring>
 
-
+//1418 cycles
 template <uint32_t FACTOR, typename TI, typename TF, typename TO>
 int conv1d(const TI *INPUT,
            const uint32_t i_nelements,
            const TF *FILTER,
            const uint8_t f_nelements,
            const uint8_t stride,
-           TO *OUTPUT) {
-                uint32_t b_nelements = (i_nelements - f_nelements) / stride + 1;
+           TO *OUTPUT,
+           uint32_t b_nelements) {
+
                 uint32_t b_nelements_unrolled = (b_nelements / FACTOR) * FACTOR;
                 uint32_t elements_remaining = b_nelements - b_nelements_unrolled;
                 uint32_t ii = 0;
@@ -34,9 +35,8 @@ int conv1d(const TI *INPUT,
                 uint32_t ui;
                 for(uint32_t oi = 0; oi < b_nelements_unrolled; oi += FACTOR){
 
-                        for (uint32_t fi = 0; fi < FACTOR; ++fi){
-                                asm volatile ("fmv.s.x %0,zero\n\t" : "=f" (sum[fi]));
-                        }
+                        for (uint32_t fi = 0; fi < FACTOR; ++fi)
+                                sum[fi] = 0;
 
                         for(uint32_t fi = 0; fi < f_nelements; fi++) {
                                 TF f = FILTER[fi];
@@ -63,7 +63,7 @@ int conv1d(const TI *INPUT,
 
 
                 for (uint32_t fi = 0; fi < FACTOR; ++fi)
-                        asm volatile ("fmv.s.x %0,zero\n\t" : "=f" (sum[fi]));
+                        sum[fi] = 0;
                 for(uint32_t fi = 0; fi < f_nelements; fi++) {
                         TF f = FILTER[fi];
                         
@@ -76,6 +76,7 @@ int conv1d(const TI *INPUT,
                 }
                 for(ui = 0; ui < elements_remaining; ui++)
                         OUTPUT[b_nelements_unrolled + ui] = sum[ui];
+
 
                 return 0;
 }
@@ -102,7 +103,7 @@ extern "C" {
 
                 for(int i = 0; i < 2; ++i){
                         bsg_cuda_print_stat_start(i);
-                        rc = conv1d<4>(input, i_nelements, filter, f_nelements, stride, output);
+                        rc = conv1d<4>(input, i_nelements, filter, f_nelements, stride, output, o_nelements);
                         bsg_cuda_print_stat_end(i);
                 }
 

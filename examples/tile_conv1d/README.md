@@ -41,3 +41,29 @@ output pixels concurrently.
 
 This version unrolls the outer loop, but also uses assembly to
 initialize the sum array.
+
+### Version 4
+
+Almost identical to Version 3, but requires the host to compute
+the output vector size. Further, removes the assembly optimization
+due to it generating poor code.
+
+### Version 5
+
+Switches to a manually-unrolled, untemplated version of the kernel,
+making it easier for the compiler.
+
+### Version 6
+
+Removes the `sum` and `a` arrays, which were confusing the compiler
+into forcing a writeback into memory rather than keeping them in
+registers. Instead, we keep them in four explicit variables marked
+`register`. Also converts the "leftover" phase of the unrolling algorithm
+to a series of switch statements, which actually performs very well.
+
+### Version 7
+Takes the idea from Version 6 and runs with it: converts the whole
+loop into a series of switch statements. This seems to be peak
+performance: there are no stalls, executes in about 30 cycles per
+output element, and has 0.9808 IPC. The only bubbles are due to
+branch mispredicts, which are unavoidable. 
