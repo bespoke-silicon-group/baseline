@@ -30,7 +30,7 @@
 ################################################################################
 _REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 CURRENT_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-
+GRAPHIT_PATH := $(_REPO_ROOT)/../graphit
 -include $(_REPO_ROOT)/environment.mk
 
 ################################################################################
@@ -65,7 +65,7 @@ KERNEL_CLIBRARIES   += $(BSG_MANYCORE_DIR)/software/bsg_manycore_lib/bsg_printf.
 # C++ Libraries
 KERNEL_CXXLIBRARIES +=
 
-KERNEL_INCLUDES     += -I$(CURRENT_PATH)/kernel/include -I/mnt/users/ssd0/homes/eafurst/graphit/src/runtime_lib/hammerblade/device/
+KERNEL_INCLUDES     += -I$(CURRENT_PATH)/kernel/include -I$(GRAPHIT_PATH)/src/runtime_lib/hammerblade/device/
 
 # Define the default kernel.cpp file. If KERNEL_DEFAULT is not defined it will
 # be set to kernel.cpp in the same directory as this Makefile.
@@ -94,7 +94,7 @@ KERNEL_DEFAULT      := kernel/$(DEFAULT_VERSION)/kernel.cpp
 HOST_TARGET         := bfs_pull_benchmark
 HOST_CSOURCES       := 
 HOST_CXXSOURCES     := $(HOST_TARGET).cpp
-HOST_INCLUDES       := -I$(CURRENT_PATH) -I/mnt/users/ssd0/homes/eafurst/graphit/src/runtime_lib/
+HOST_INCLUDES       := -I$(CURRENT_PATH) -I$(GRAPHIT_PATH)/src/runtime_lib/
 
 ################################################################################
 # Include the Cosimulation host build rules (This must be included after
@@ -108,7 +108,7 @@ HOST_INCLUDES       := -I$(CURRENT_PATH) -I/mnt/users/ssd0/homes/eafurst/graphit
 # users can add commands and dependencies to custom.clean.
 ################################################################################
 version.clean:
-	rm -rf kernel/*/*{.csv,.log,.rvo,.riscv,.vpd,.key,.png}
+	rm -rf kernel/*/*{.csv,.log,.rvo,.riscv,.vpd,.key,.png,.dis}
 	rm -rf kernel/*/{stats,pc_stats}
 
 custom.clean: version.clean
