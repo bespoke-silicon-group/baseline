@@ -12,4 +12,4 @@ RISCV_CCPPFLAGS += -mno-fdiv
 	$(RISCV_GCC) $(RISCV_GCC_OPTS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -D__ASSEMBLY__=1 -c $< -o $@ |& tee $*.gcc.log
 
 kernel.compile.clean:
-	rm -rf *.rvo *.gcc.log *.rva
+	rm -rf *.rvo *.gcc.log *.rva *.a
