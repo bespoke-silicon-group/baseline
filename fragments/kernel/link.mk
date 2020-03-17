@@ -131,12 +131,6 @@ else
   $(error $(shell echo -e "$(RED)Invalid BSG_ELF_OFF_CHIP_MEM = $(BSG_ELF_OFF_CHIP_MEM); Only 0 and 1 are valid$(NC)"))
 endif
 
-# BSG Manycore Library Variables
-BSG_MANYCORE_LIB_OBJECTS  += bsg_set_tile_x_y.rvo
-# We don't include bsg_printf.rvo in all files so that we can reduce the
-# elf file sizes
-# BSG_MANYCORE_LIB_OBJECTS  += bsg_printf.rvo
-
 ################################################################################
 # Linker Flags
 ################################################################################
@@ -169,9 +163,9 @@ _LINK_HELP_STRING += "    kernel.riscv | kernel/<version>/kernel.riscv :\n"
 _LINK_HELP_STRING += "        - Compile the RISC-V Manycore Kernel from the [default | <version>] \n"
 _LINK_HELP_STRING += "          source file named $(notdir $(KERNEL_DEFAULT)). The default source \n"
 _LINK_HELP_STRING += "          file is $(KERNEL_DEFAULT)\n"
-kernel.riscv: $(MACHINE_CRT_OBJ) main.rvo $(BSG_MANYCORE_LIB_OBJECTS) $(KERNEL_OBJECTS) $(basename $(KERNEL_DEFAULT)).rvo 
+kernel.riscv: $(MACHINE_CRT_OBJ) main.rvo $(basename $(KERNEL_DEFAULT)).rvo bsg_manycore_lib.a
 	$(RISCV_LD) -T $(RISCV_LINK_SCRIPT) $^ $(RISCV_LDFLAGS) -o $@
-%/kernel.riscv: $(MACHINE_CRT_OBJ) main.rvo $(BSG_MANYCORE_LIB_OBJECTS) $(KERNEL_OBJECTS) %/kernel.rvo 
+%/kernel.riscv: $(MACHINE_CRT_OBJ) main.rvo $(KERNEL_OBJECTS) %/kernel.rvo bsg_manycore_lib.a
 	$(RISCV_LD) -T $(RISCV_LINK_SCRIPT) $^ $(RISCV_LDFLAGS) -o $@
 
 kernel.link.clean:

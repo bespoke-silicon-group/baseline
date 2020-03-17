@@ -21,8 +21,6 @@
 #include <matrix_multiply.hpp>
 #include <cstring>
 
-extern int bsg_printf(const char*, ...);
-
 /* We wrap all external-facing C++ kernels with `extern "C"` to
  * prevent name mangling 
  */
