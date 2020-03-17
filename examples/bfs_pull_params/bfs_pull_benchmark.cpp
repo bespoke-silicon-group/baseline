@@ -30,8 +30,8 @@ int launch(int argc, char * argv[]){
   device->write_dma(); 
  
 
-  int host_parent[edges.num_nodes()];
-  int host_frontier[edges.num_nodes()];
+  //int host_parent[edges.num_nodes()];
+  //int host_frontier[edges.num_nodes()];
   std::cerr << "starting while loop" << std::endl;
   for(int i = 0; i < 1; i++) //just doing one large iteration 
   {
