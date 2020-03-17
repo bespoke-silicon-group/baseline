@@ -77,9 +77,7 @@ VCS_LDFLAGS    += $(foreach def,$(LDFLAGS),-LDFLAGS "$(def)")
 
 VCS_VFLAGS     += -M -ntb_opts tb_timescale=1ps/1ps -lca -v2005
 VCS_VFLAGS     += -timescale=1ps/1ps -sverilog -full64 -licqueue -q
-VCS_VFLAGS     += +warn=noLCA_FEATURES_ENABLED -q 
-VCS_VFLAGS     += -msg_config=$(TESTBENCH_PATH)/msg_config
-
+VCS_VFLAGS     += +warn=none +lint=none +warn=noLCA_FEATURES_ENABLED
 
 
 # VCS Generates an executable file by linking against the .o files in
@@ -90,7 +88,7 @@ _HELP_STRING += "        - Build the host executable for RTL Cosimulation using 
 _HELP_STRING += "          The same executable is reused to run every kernel version \n"
 # We parallelize VCS compilation, but we leave a few cores on the table.
 $(HOST_TARGET).cosim: NPROCS := $(shell echo "(`nproc`/4 + 1)" | bc)
-$(HOST_TARGET).cosim: $(HOST_OBJECTS) $(SIMLIBS) $(TESTBENCH_PATH)/msg_config
+$(HOST_TARGET).cosim: $(HOST_OBJECTS) $(SIMLIBS)
 	SYNOPSYS_SIM_SETUP=$(TESTBENCH_PATH)/synopsys_sim.setup \
 	vcs tb glbl cosim_wrapper -j$(NPROCS) $(filter %.o,$^) \
 		-Mdirectory=$@.tmp \
