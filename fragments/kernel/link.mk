@@ -163,9 +163,9 @@ _LINK_HELP_STRING += "    kernel.riscv | kernel/<version>/kernel.riscv :\n"
 _LINK_HELP_STRING += "        - Compile the RISC-V Manycore Kernel from the [default | <version>] \n"
 _LINK_HELP_STRING += "          source file named $(notdir $(KERNEL_DEFAULT)). The default source \n"
 _LINK_HELP_STRING += "          file is $(KERNEL_DEFAULT)\n"
-kernel.riscv: $(MACHINE_CRT_OBJ) main.rvo $(basename $(KERNEL_DEFAULT)).rvo libbsg_manycore.rva
+kernel.riscv: $(MACHINE_CRT_OBJ) main.rvo $(basename $(KERNEL_DEFAULT)).rvo bsg_manycore_lib.a
 	$(RISCV_LD) -T $(RISCV_LINK_SCRIPT) $^ $(RISCV_LDFLAGS) -o $@
-%/kernel.riscv: $(MACHINE_CRT_OBJ) main.rvo $(KERNEL_OBJECTS) %/kernel.rvo libbsg_manycore.rva
+%/kernel.riscv: $(MACHINE_CRT_OBJ) main.rvo $(KERNEL_OBJECTS) %/kernel.rvo bsg_manycore_lib.a
 	$(RISCV_LD) -T $(RISCV_LINK_SCRIPT) $^ $(RISCV_LDFLAGS) -o $@
 
 kernel.link.clean:

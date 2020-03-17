@@ -102,7 +102,7 @@ $(LIBBSG_MANYCORE_OBJECTS) main.rvo: RISCV_DEFINES += -Dbsg_tiles_Y=$(_BSG_MACHI
 $(LIBBSG_MANYCORE_OBJECTS): %.rvo:$(_BSG_MANYCORE_LIB_PATH)/%.c
 	$(RISCV_GCC) $(RISCV_CFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -c $< -o $@
 
-libbsg_manycore.rva: $(LIBBSG_MANYCORE_OBJECTS)
+bsg_manycore_lib.a: $(LIBBSG_MANYCORE_OBJECTS)
 	$(RISCV_AR) rcs $@ $^
 
 main.rvo: $(_BSG_MANYCORE_CUDALITE_MAIN_PATH)/main.c
