@@ -30,7 +30,7 @@
 ################################################################################
 _REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 CURRENT_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-
+GRAPHIT_PATH := $(_REPO_ROOT)/../graphit
 -include $(_REPO_ROOT)/environment.mk
 
 ################################################################################
@@ -65,7 +65,11 @@ KERNEL_CLIBRARIES   +=
 # C++ Libraries
 KERNEL_CXXLIBRARIES +=
 
+<<<<<<< HEAD:examples/conv1d/Makefile
 KERNEL_INCLUDES     += -I$(CURRENT_PATH)/kernel/include
+=======
+KERNEL_INCLUDES     += -I$(CURRENT_PATH)/kernel/include -I$(GRAPHIT_PATH)/src/runtime_lib/hammerblade/device/
+>>>>>>> move graphit and define graphit root:examples/bfs_pull_params/Makefile
 
 # Define the default kernel.cpp file. If KERNEL_DEFAULT is not defined it will
 # be set to kernel.cpp in the same directory as this Makefile.
