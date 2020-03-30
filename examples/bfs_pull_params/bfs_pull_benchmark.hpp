@@ -7,8 +7,7 @@
 #include "../common.h"
 
 const std::string ucode_path =
-        "/nbu/spin/eafurst/bsg_bladerunner/baseline"
-        "/examples/bfs_pull_params/kernel.riscv";
+        "./kernel.riscv";
 
 using hammerblade::Device;
 using hammerblade::Vector;
