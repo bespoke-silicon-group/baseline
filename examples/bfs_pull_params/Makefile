@@ -33,6 +33,10 @@ CURRENT_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 GRAPHIT_PATH := $(_REPO_ROOT)/../graphit
 -include $(_REPO_ROOT)/environment.mk
 
+GRAPH_PATH := $(GRAPHIT_PATH)/test/graphs/graph500.16.16.el
+FRONTIER_PATH := $(GRAPHIT_PATH)/test/graphs/frontier_dense_graph500.16.16.txt
+PARENT_PATH := $(GRAPHIT_PATH)/test/graphs/parent_dense_graph500.16.16.txt
+
 ################################################################################
 # Define BSG_MACHINE_PATH, the location of the Makefile.machine.include file
 # that defines the machine to compile and simulate on. Using BSG_F1_DIR (which
@@ -46,7 +50,7 @@ BSG_MACHINE_PATH=$(BSG_F1_DIR)
 ################################################################################
 # Kernel versions. See kernel/README.md for more information.  Version names do
 # not need to use v* and can be any string
-VERSIONS = v0 
+VERSIONS = v0 v1 v2 v3 v4
 
 ################################################################################
 # Define any sources that should be used compiled during kernel compilation,
@@ -103,6 +107,19 @@ HOST_INCLUDES       := -I$(CURRENT_PATH) -I$(GRAPHIT_PATH)/src/runtime_lib/
 
 -include $(FRAGMENTS_PATH)/host/cosim.mk
 
+$(HOST_TARGET).cosim.log: kernel.riscv $(HOST_TARGET).cosim
+	./$(HOST_TARGET).cosim +ntb_random_seed_automatic +rad $(SIM_ARGS) \
+		+c_args="kernel.riscv $(DEFAULT_VERSION) -g $(GRAPH_PATH) -f $(FRONTIER_PATH) -p $(PARENT_PATH)" | tee $@
+
+kernel/%/$(HOST_TARGET).cosim.log: kernel/%/kernel.riscv $(HOST_TARGET).cosim
+	$(eval EXEC_PATH   := $(patsubst %/,%,$(dir $@)))
+	$(eval KERNEL_PATH := $(CURRENT_PATH)/$(EXEC_PATH))
+	$(eval _VERSION    := $(notdir $(EXEC_PATH)))
+	cd $(EXEC_PATH) && \
+	$(CURRENT_PATH)/$(HOST_TARGET).cosim +ntb_random_seed_automatic +trace \
+		+vpdfile+$(HOST_TARGET).vpd \
+		+c_args="$(KERNEL_PATH)/kernel.riscv $(_VERSION) -g $(GRAPH_PATH) -f $(FRONTIER_PATH) -p $(PARENT_PATH)" | tee $(notdir $@)
+
 ################################################################################
 # Define the clean rules. clean calls the makefile-specific cleans, whereas
 # users can add commands and dependencies to custom.clean.
@@ -125,13 +142,13 @@ _HELP_STRING := "Makefile Rules\n"
 _HELP_STRING += "    default: \n"
 _HELP_STRING += "        - Run the default kernel ($KERNEL_DEFAULT) and generate all of the\n"
 _HELP_STRING += "          analysis products\n"
-default: stats graphs pc_stats
+default: pc_stats graphs stats
 
 _HELP_STRING += "    analysis: \n"
 _HELP_STRING += "        - Launch indpendent cosimulation executions of each kernel version.\n"
 _HELP_STRING += "          When execution finishes, it generates the analysis products for \n"
 _HELP_STRING += "          each kernel in each respective kernel/version_name/ directory\n"
-analysis: $(foreach v,$(VERSIONS),kernel/$v/stats kernel/$v/graphs kernel/$v/pc_stats)
+analysis: $(foreach v,$(VERSIONS),kernel/$v/pc_stats kernel/$v/graphs kernel/$v/stats)
 
 _HELP_STRING += "    all: \n"
 _HELP_STRING += "        - Launch both the default and analysis target\n"

@@ -6,34 +6,46 @@ Vector<int32_t> frontier_dev;
 Vector<int32_t> next_frontier_dev;
 
 int launch(int argc, char * argv[]){
+  InputParser input(argc, argv);
+  if(!input.cmdOptionExists("-g") || !input.cmdOptionExists("-f") || !input.cmdOptionExists("-p")){
+    std::cerr << "no input args\n";
+    return 0;
+  }
+  std::string ucode_path = input.getRISCVFile();
+
   std::cerr << "load microcode" << std::endl;
   hammerblade::builtin_loadMicroCodeFromFile(ucode_path);
   std::cerr << "load graph" << std::endl;
-  edges = hammerblade::builtin_loadEdgesFromFileToHB ( "/mnt/users/ssd0/homes/eafurst/graphit/test/graphs/graph500.20.16.el") ;
+
+  std::string graph_f = input.getCmdOption("-g");
+  std::string frontier_f = input.getCmdOption("-f");
+  std::string parent_f = input.getCmdOption("-p");
+  edges = hammerblade::builtin_loadEdgesFromFileToHB (graph_f.c_str()); 
+  //edges = hammerblade::builtin_loadEdgesFromFileToHB ( "/mnt/users/ssd0/homes/eafurst/graphit/test/graphs/graph500.16.16.el") ;
   Device::Ptr device = Device::GetInstance();
-  std::cerr << "init global arrays" << std::endl; 
+  std::cerr << "init global arrays" << std::endl;
   parent_dev = Vector<int32_t>(edges.num_nodes());
   frontier_dev = Vector<int32_t>(edges.num_nodes());
   next_frontier_dev = Vector<int32_t>(edges.num_nodes());
- 
+
   std::vector<int32_t> zeros(edges.num_nodes(), 0);
   next_frontier_dev.copyToDevice(zeros.data(), zeros.size());
-  
+
   std::cerr << "Try to insert val to parent" << std::endl;
-  int * file_frontier = hammerblade::builtin_loadFrontierFromFile("/mnt/users/ssd0/homes/eafurst/graphit/test/graphs/frontier_dense_graph500.20.16.txt");
-  int * file_parent = hammerblade::builtin_loadFrontierFromFile("/mnt/users/ssd0/homes/eafurst/graphit/test/graphs/parent_dense_graph500.20.16.txt");
+  int * file_frontier = hammerblade::builtin_loadFrontierFromFile(frontier_f.c_str());
+  int * file_parent = hammerblade::builtin_loadFrontierFromFile(parent_f.c_str());
   std::cerr << "done with file read" << std::endl;
 
   parent_dev.copyToDevice(file_parent, edges.num_nodes());
   frontier_dev.copyToDevice(file_frontier, edges.num_nodes());
   std::cerr << "doing batch dma write" << std::endl;
-  device->write_dma(); 
- 
+  device->write_dma();
+
 
   //int host_parent[edges.num_nodes()];
   //int host_frontier[edges.num_nodes()];
   std::cerr << "starting while loop" << std::endl;
-  for(int i = 0; i < 1; i++) //just doing one large iteration 
+  for(int i = 0; i < 1; i++) //just doing one large iteration
   {
       device->enqueueJob("edgeset_apply_pull_parallel_from_vertexset_to_filter_func_with_frontier_call",
                         {edges.getInIndicesAddr(),
@@ -80,4 +92,3 @@ int main(int argc, char ** argv) {
     return rc;
 }
 #endif
-
