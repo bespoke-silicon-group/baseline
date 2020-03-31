@@ -47,7 +47,7 @@ int launch(int argc, char * argv[]){
   std::cerr << "starting while loop" << std::endl;
   for(int i = 0; i < 1; i++) //just doing one large iteration
   {
-      device->enqueueJob("edgeset_apply_pull_parallel_from_vertexset_to_filter_func_with_frontier_call",
+      device->enqueueJob("edgeset_apply_pull_parallel_from_vertexset_to_filter_func_with_frontier_call", hb_mc_dimension(4,4),
                         {edges.getInIndicesAddr(),
                          edges.getInNeighborsAddr(),
                          frontier_dev.getAddr(), next_frontier_dev.getAddr(),  parent_dev.getAddr(),
