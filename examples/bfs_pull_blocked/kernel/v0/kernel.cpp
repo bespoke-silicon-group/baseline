@@ -13,13 +13,20 @@ INIT_TILE_GROUP_BARRIER(r_barrier, c_barrier, 0, bsg_tiles_X-1, 0, bsg_tiles_Y-1
 #include <bfs_pull_benchmark.hpp>
 #include <cstring>
 
+#ifdef DEBUG
+#define pr_dbg(fmt, ...)                        \
+    bsg_printf(fmt, ##__VA_ARGS__)
+#else
+#define pr_dbg(fmt, ...)
+#endif
+
 #define BLOCK_SIZE 1024
 
 template <typename TO_FUNC , typename APPLY_FUNC> int edgeset_apply_pull_parallel_from_vertexset_to_filter_func_with_frontier(int *in_indices , int *in_neighbors, int * frontier, int * next_frontier, int * parent, TO_FUNC to_func, APPLY_FUNC apply_func, int V, int E, int block_size_x) 
 {
   int num_blocks = number_of_blocks(V, BLOCK_SIZE);
   if(bsg_id == 0) 
-    bsg_printf("size of array: %i, num blocks: %i, num iters: %i\n", V, num_blocks, num_blocks*num_blocks); 
+    pr_dbg("size of array: %i, num blocks: %i, num iters: %i\n", V, num_blocks, num_blocks*num_blocks); 
   bsg_cuda_print_stat_start(1);
   int start, end;
   local_range(V, &start, &end);
@@ -27,10 +34,10 @@ template <typename TO_FUNC , typename APPLY_FUNC> int edgeset_apply_pull_paralle
   int end_block = block_of(end, BLOCK_SIZE); 
   for(int frontier_block = 0; frontier_block < number_of_blocks(V, BLOCK_SIZE); frontier_block++) {
     if(bsg_id == 0)
-      bsg_printf("%i/%i iters\n", frontier_block, num_blocks);
+      pr_dbg("%i/%i iters\n", frontier_block, num_blocks);
     //for(int next_block = start_block; next_block < (end_block + 1); next_block++) {
       //if(bsg_id == 0)
-        //bsg_printf("%i/%i inner iters\n", next_block, num_blocks);
+        //pr_dbg("%i/%i inner iters\n", next_block, num_blocks);
       for ( int d = start; d < end; d++) {
         if(d < V-1) {
           if (parent[d] == -1){ 
@@ -70,7 +77,7 @@ template <typename TO_FUNC , typename APPLY_FUNC> int edgeset_apply_pull_paralle
     //}
   } //end of outer for loop
   bsg_cuda_print_stat_end(1);
-  bsg_printf("reached end of loop %i\n", bsg_id);
+  pr_dbg("reached end of loop %i\n", bsg_id);
   bsg_tile_group_barrier(&r_barrier, &c_barrier);
   return 0;
 } //end of edgeset apply function 
@@ -139,7 +146,7 @@ extern "C" int  __attribute__ ((noinline)) reset_kernel(int * parent, int V, int
 extern "C" int __attribute__ ((noinline)) edgeset_apply_pull_parallel_from_vertexset_to_filter_func_with_frontier_call(int *in_indices, int *in_neighbors, int * frontier, int * next_frontier, int * parent, int V, int E, int block_size_x) {
         //bsg_cuda_print_stat_start(1);
         if(bsg_id == 0)
-          bsg_printf("before call to kernel\n");
+          pr_dbg("before call to kernel\n");
         edgeset_apply_pull_parallel_from_vertexset_to_filter_func_with_frontier(in_indices, in_neighbors, frontier, next_frontier, parent, toFilter(), updateEdge(), V, E, block_size_x);
         //bsg_cuda_print_stat_end(1);
   	//bsg_tile_group_barrier(&r_barrier, &c_barrier);
