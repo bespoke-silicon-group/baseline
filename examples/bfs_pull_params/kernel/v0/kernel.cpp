@@ -2,8 +2,8 @@
 // before bsg_manycore.h and bsg_tile_group_barrier.h are
 // included. bsg_tiles_X and bsg_tiles_Y must also be defined for
 // legacy reasons, but they are deprecated.
-#define BSG_TILE_GROUP_X_DIM 4
-#define BSG_TILE_GROUP_Y_DIM 4
+#define BSG_TILE_GROUP_X_DIM 16
+#define BSG_TILE_GROUP_Y_DIM 8
 #define bsg_tiles_X BSG_TILE_GROUP_X_DIM
 #define bsg_tiles_Y BSG_TILE_GROUP_Y_DIM
 #include <bsg_manycore.h>
@@ -13,6 +13,13 @@ INIT_TILE_GROUP_BARRIER(r_barrier, c_barrier, 0, bsg_tiles_X-1, 0, bsg_tiles_Y-1
 #include <bfs_pull_benchmark.hpp>
 #include <cstring>
 #include <local_range.h>
+
+#ifdef DEBUG
+#define pr_dbg(fmt, ...)                        \
+    bsg_printf(fmt, ##__VA_ARGS__)
+#else
+#define pr_dbg(fmt, ...)
+#endif
 
 template <typename TO_FUNC , typename APPLY_FUNC> int edgeset_apply_pull_parallel_from_vertexset_to_filter_func_with_frontier(int *in_indices , int *in_neighbors, int * frontier, int * next_frontier, int * parent, TO_FUNC to_func, APPLY_FUNC apply_func, int V, int E, int block_size_x) 
 {
@@ -34,7 +41,7 @@ template <typename TO_FUNC , typename APPLY_FUNC> int edgeset_apply_pull_paralle
             int src = neighbors[s];
             //bool active = (frontier[src] == 1);
             //if(active){
-            //bsg_printf("attempt to print from global scalar: %i\n", frontier[src]);
+            //pr_dbg("attempt to print from global scalar: %i\n", frontier[src]);
             //bsg_print_hexadecimal((unsigned int) &frontier[src]);
             if(frontier[src] == 1) {
             //if( apply_func( src, d )) { 
@@ -69,7 +76,7 @@ template <typename TO_FUNC , typename APPLY_FUNC> int edgeset_apply_pull_paralle
         }
       }
   } //end of outer for loop
-  bsg_printf("reached end of loop %i\n", bsg_id);
+  pr_dbg("reached end of loop %i\n", bsg_id);
   //bsg_cuda_print_stat_end(1);
   //bsg_tile_group_barrier(&r_barrier, &c_barrier);
   return 0;
@@ -137,12 +144,11 @@ extern "C" int  __attribute__ ((noinline)) reset_kernel(int * parent, int V, int
 	return 0;
 }
 extern "C" int __attribute__ ((noinline)) edgeset_apply_pull_parallel_from_vertexset_to_filter_func_with_frontier_call(int *in_indices, int *in_neighbors, int * frontier, int * next_frontier, int * parent, int V, int E, int block_size_x) {
+        bsg_tile_group_barrier(&r_barrier, &c_barrier);
         bsg_cuda_print_stat_start(1);
-        bsg_printf("before call to kernel\n");
+        pr_dbg("before call to kernel\n");
         edgeset_apply_pull_parallel_from_vertexset_to_filter_func_with_frontier(in_indices, in_neighbors, frontier, next_frontier, parent, toFilter(), updateEdge(), V, E, block_size_x);
         bsg_cuda_print_stat_end(1);
   	bsg_tile_group_barrier(&r_barrier, &c_barrier);
 	return 0;
 }
-
-
