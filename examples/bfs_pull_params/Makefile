@@ -43,7 +43,7 @@ PARENT_PATH := $(GRAPHIT_PATH)/test/graphs/parent_dense_graph500.16.16.txt
 # is set in environment.mk) uses the same machine as in bsg_replicant.
 ################################################################################
 
-BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/8x4_blocking_dramsim3_hbm2_4gb
+BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/16x8_fast_n_fake
 
 ################################################################################
 # Define the range of versions
@@ -65,7 +65,7 @@ VERSIONS = v0 v1 v2 v3 v4
 ################################################################################
 
 # C Libraries
-KERNEL_CLIBRARIES   += $(BSG_MANYCORE_DIR)/software/bsg_manycore_lib/bsg_printf.c
+#KERNEL_CLIBRARIES   += $(BSG_MANYCORE_DIR)/software/bsg_manycore_lib/bsg_printf.c
 # C++ Libraries
 KERNEL_CXXLIBRARIES +=
 
