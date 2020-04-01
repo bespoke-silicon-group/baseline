@@ -144,6 +144,7 @@ extern "C" int  __attribute__ ((noinline)) reset_kernel(int * parent, int V, int
 	return 0;
 }
 extern "C" int __attribute__ ((noinline)) edgeset_apply_pull_parallel_from_vertexset_to_filter_func_with_frontier_call(int *in_indices, int *in_neighbors, int * frontier, int * next_frontier, int * parent, int V, int E, int block_size_x) {
+        bsg_tile_group_barrier(&r_barrier, &c_barrier);
         //bsg_cuda_print_stat_start(1);
         if(bsg_id == 0)
           pr_dbg("before call to kernel\n");
