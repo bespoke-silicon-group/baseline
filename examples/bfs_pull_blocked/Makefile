@@ -43,7 +43,7 @@ PARENT_PATH := $(GRAPHIT_PATH)/test/graphs/parent_dense_graph500.16.16.txt
 # is set in environment.mk) uses the same machine as in bsg_replicant.
 ################################################################################
 
-BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/timing_v0_16_8
+BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/16x8_fast_n_fake
 
 ################################################################################
 # Define the range of versions
