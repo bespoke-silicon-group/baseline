@@ -32,12 +32,6 @@ extern "C" int bfs_sparse_in_dense_out(int V, int E, const int *offsets, const i
     bsg_tile_group_barrier(&bfs_r_barrier, &bfs_c_barrier);
     bsg_cuda_print_stat_kernel_start();
 
-    if (bsg_id == 0)
-        bsg_printf("V=%d, E=%d, "
-                   "offsets=%08x, edges=%08x, "
-                   "sparse_i=%08x, dense_o=%08x, visited_io=%08x\n",
-                   V, E, offsets, edges, sparse_i, dense_o, visited_io);
-
     for (int i = bsg_id; i < V; i += bsg_tiles_X*bsg_tiles_Y) {
         int src = sparse_i[i];
         if (src == -1) break;
