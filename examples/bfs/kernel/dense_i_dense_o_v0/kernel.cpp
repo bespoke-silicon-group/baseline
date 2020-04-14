@@ -35,7 +35,6 @@ extern "C" int bfs_dense_in_dense_out(int V, int E, const int *roffsets, const i
     for (int dst = bsg_id; dst < V; dst += bsg_tiles_X*bsg_tiles_Y) {
         // skip visited
         if (visited_io[dst] == 1) continue;
-        bsg_print_int(dst);
         const int *neighbors = &redges[roffsets[dst]];
         int src_n = degree(dst, V, E, roffsets, redges);
         for (int src_i = 0; src_i < src_n; src_i++) {
