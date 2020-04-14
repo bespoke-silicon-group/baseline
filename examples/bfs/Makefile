@@ -46,7 +46,7 @@ BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/4x4_fast_n_fake
 ################################################################################
 # Kernel versions. See kernel/README.md for more information.  Version names do
 # not need to use v* and can be any string
-VERSIONS = v0 v1 v2 v3
+VERSIONS += sparse_i_dense_o_v0
 
 ################################################################################
 # Define any sources that should be used compiled during kernel compilation,
@@ -75,7 +75,7 @@ include $(hammerblade-helpers-dir)/libhammerblade-helpers-host.mk
 
 # Define the default kernel.cpp file. If KERNEL_DEFAULT is not defined it will
 # be set to kernel.cpp in the same directory as this Makefile.
-DEFAULT_VERSION     := v0
+DEFAULT_VERSION     := sparse_i_dense_o_v0
 KERNEL_DEFAULT      := kernel/$(DEFAULT_VERSION)/kernel.cpp
 
 ################################################################################
