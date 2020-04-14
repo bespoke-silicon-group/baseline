@@ -57,6 +57,7 @@ namespace {
 
         std::vector<int> dense_o (4, 0);
         std::vector<int> visited_io = {1, 0, 0, 0};
+        int traversed = 2;
 }
 static
 void generate(void)
@@ -69,6 +70,7 @@ namespace {
         std::vector<int> sparse_i;
         std::vector<int> dense_o;
         std::vector<int> visited_io;
+        int traversed = 0;
 }
 
 static
@@ -96,13 +98,18 @@ void generate(void)
 
         // init algorithm vectors
         // run bfs from a hub node
+        int iterations = 1;
         BFS bfs;
         bfs.graph() = &g;
-        bfs.run(g.node_with_max_degree(), 1);
+        bfs.run(g.node_with_max_degree(), iterations+1);
+        traversed = static_cast<int>(bfs.traversed());
 
-        //
+        bfs.run(g.node_with_max_degree(), iterations);
+
         auto & active = bfs.active();
         auto & visited = bfs.visited();
+
+        traversed -= static_cast<int>(bfs.traversed());
 
         visited_io.clear();
         dense_o.clear();
@@ -151,6 +158,8 @@ void bfs_sparse_in_dense_out(void)
         hb->push_read(dense_o_dev,    &dense_o[0],    sizeof(int) * dense_o.size());
         hb->push_read(visited_io_dev, &visited_io[0], sizeof(int) * visited_io.size());
         hb->sync_read();
+
+        std::cout << "traversed " << traversed << " edges" << std::endl;
 
         for (int v = 0; v < visited_io.size(); v++) {
                 std::cout << "visited[" << v << "] = " << visited_io[v] << std::endl;
