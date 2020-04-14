@@ -37,6 +37,7 @@ namespace {
         Graph g;
         std::vector<int> offsets;
         std::vector<int> edges;
+        hb_mc_eva_t offsets_dev = 0, edges_dev = 0;
 
         void generate_graph_vectors(void)
         {
@@ -52,6 +53,16 @@ namespace {
                 for (int e = 0; e < g.num_edges(); e++) {
                         edges.push_back(static_cast<int>(g.get_neighbors()[e]));
                 }
+
+                HammerBlade::Ptr hb = HammerBlade::Get();
+
+                // allocate
+                offsets_dev    = hb->alloc(sizeof(int) * offsets.size());
+                edges_dev      = hb->alloc(sizeof(int) * edges.size());
+
+                // write
+                hb->push_write(offsets_dev,    &offsets[0],    sizeof(int) * offsets.size());
+                hb->push_write(edges_dev,      &edges[0],      sizeof(int) * edges.size());
         }
 }
 
@@ -100,17 +111,13 @@ namespace bfs_sparse_i_dense_o {
         void run(void)
         {
                 HammerBlade::Ptr hb = HammerBlade::Get();
-                hb_mc_eva_t offsets_dev = 0, edges_dev = 0;
                 hb_mc_eva_t sparse_i_dev = 0, dense_o_dev = 0, visited_io_dev = 0;
 
-                offsets_dev    = hb->alloc(sizeof(int) * offsets.size());
-                edges_dev      = hb->alloc(sizeof(int) * edges.size());
+
                 sparse_i_dev   = hb->alloc(sizeof(int) * sparse_i.size());
                 dense_o_dev    = hb->alloc(sizeof(int) * dense_o.size());
                 visited_io_dev = hb->alloc(sizeof(int) * visited_io.size());
 
-                hb->push_write(offsets_dev,    &offsets[0],    sizeof(int) * offsets.size());
-                hb->push_write(edges_dev,      &edges[0],      sizeof(int) * edges.size());
                 hb->push_write(sparse_i_dev,   &sparse_i[0],   sizeof(int) * sparse_i.size());
                 hb->push_write(visited_io_dev, &visited_io[0], sizeof(int) * visited_io.size());
                 hb->sync_write();
