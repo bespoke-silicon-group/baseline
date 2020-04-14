@@ -34,35 +34,61 @@ using namespace hammerblade::host;
 using namespace graph_tools;
 
 namespace {
-        Graph g;
+        Graph g, t;
         std::vector<int> offsets;
         std::vector<int> edges;
+        std::vector<int> roffsets;
+        std::vector<int> redges;
         hb_mc_eva_t offsets_dev = 0, edges_dev = 0;
+        hb_mc_eva_t roffsets_dev = 0, redges_dev = 0;
+        int iterations = 1;
 
-        void generate_graph_vectors(void)
+        void generate_graph_vectors(bool forward = true, bool transpose = true)
         {
-                g = Graph::Tiny();
-
-                // init graph vectors
-                offsets.clear();
-                edges.clear();
-
-                for (int v = 0; v < g.num_nodes(); v++) {
-                        offsets.push_back(static_cast<int>(g.get_offsets()[v]));
-                }
-                for (int e = 0; e < g.num_edges(); e++) {
-                        edges.push_back(static_cast<int>(g.get_neighbors()[e]));
-                }
-
                 HammerBlade::Ptr hb = HammerBlade::Get();
 
-                // allocate
-                offsets_dev    = hb->alloc(sizeof(int) * offsets.size());
-                edges_dev      = hb->alloc(sizeof(int) * edges.size());
+                g = Graph::Tiny();
+                t = g.transpose();
 
-                // write
-                hb->push_write(offsets_dev,    &offsets[0],    sizeof(int) * offsets.size());
-                hb->push_write(edges_dev,      &edges[0],      sizeof(int) * edges.size());
+                if (forward) {
+                        // init graph vectors
+                        offsets.clear();
+                        edges.clear();
+
+                        for (int v = 0; v < g.num_nodes(); v++) {
+                                offsets.push_back(static_cast<int>(g.get_offsets()[v]));
+                        }
+                        for (int e = 0; e < g.num_edges(); e++) {
+                                edges.push_back(static_cast<int>(g.get_neighbors()[e]));
+                        }
+
+                        // allocate
+                        offsets_dev    = hb->alloc(sizeof(int) * offsets.size());
+                        edges_dev      = hb->alloc(sizeof(int) * edges.size());
+
+                        // write
+                        hb->push_write(offsets_dev,    &offsets[0],    sizeof(int) * offsets.size());
+                        hb->push_write(edges_dev,      &edges[0],      sizeof(int) * edges.size());
+                }
+
+                if (transpose) {
+                        roffsets.clear();
+                        redges.clear();
+
+                        for (int v = 0; v < t.num_nodes(); v++)
+                                roffsets.push_back(static_cast<int>(t.get_offsets()[v]));
+
+                        for (int e = 0; e < t.num_edges(); e++)
+                                redges.push_back(static_cast<int>(t.get_neighbors()[e]));
+
+                        // allocate
+                        roffsets_dev = hb->alloc(sizeof(int) * roffsets.size());
+                        redges_dev   = hb->alloc(sizeof(int) * redges.size());
+
+                        // write
+                        hb->push_write(roffsets_dev, &roffsets[0], sizeof(int) * roffsets.size());
+                        hb->push_write(redges_dev,   &redges[0],   sizeof(int) * redges.size());
+                }
         }
 }
 
@@ -77,7 +103,6 @@ namespace bfs_sparse_i_dense_o {
         {
                 // init algorithm vectors
                 // run bfs from a hub node
-                int iterations = 1;
                 BFS bfs;
                 bfs.graph() = &g;
                 bfs.run(g.node_with_max_degree(), iterations+1);
@@ -145,6 +170,71 @@ namespace bfs_sparse_i_dense_o {
         }
 }
 
+namespace bfs_dense_i_dense_o {
+        std::vector<int> dense_i, dense_o, visited_io;
+        hb_mc_eva_t dense_i_dev, dense_o_dev, visited_io_dev;
+        int traversed = 0;
+
+        void generate()
+        {
+                dense_i_dev = dense_o_dev = visited_io_dev = 0;
+
+                BFS bfs;
+                bfs.graph() = &g;
+
+                bfs.run(g.node_with_max_degree(), iterations+1, false);
+                traversed = static_cast<int>(bfs.traversed());
+
+                bfs.run(g.node_with_max_degree(), iterations, false);
+                traversed -= static_cast<int>(bfs.traversed());
+
+                dense_i.resize(g.num_nodes(), 0);
+                dense_o.resize(g.num_nodes(), 0);
+                visited_io.resize(g.num_nodes(), 0);
+
+                for (Graph::NodeID v : bfs.active())
+                        dense_i[v] = 1;
+
+                for (Graph::NodeID v : bfs.visited())
+                        visited_io[v] = 1;
+        }
+
+        void run()
+        {
+                HammerBlade::Ptr hb = HammerBlade::Get();
+
+                // allocation
+                dense_i_dev    = hb->alloc(sizeof(int32_t) * dense_i.size());
+                dense_o_dev    = hb->alloc(sizeof(int32_t) * dense_o.size());
+                visited_io_dev = hb->alloc(sizeof(int32_t) * visited_io.size());
+
+                hb->push_write(dense_i_dev, &dense_i[0], sizeof(int32_t) * dense_i.size());
+                hb->push_write(visited_io_dev, &visited_io[0], sizeof(int32_t) * visited_io.size());
+
+                hb->sync_write();
+                hb->push_job("bfs_dense_in_dense_out",
+                             static_cast<int>(g.num_nodes()), static_cast<int>(g.num_edges()),
+                             roffsets_dev, redges_dev,
+                             dense_i_dev, dense_o_dev, visited_io_dev);
+                hb->exec();
+
+                hb->push_read(dense_o_dev,    &dense_o[0],    sizeof(int32_t)*dense_o.size());
+                hb->push_read(visited_io_dev, &visited_io[0], sizeof(int32_t)*visited_io.size());
+
+                hb->sync_read();
+
+
+                std::cout << "traversed " << traversed << " edges" << std::endl;
+
+                for (int v = 0; v < visited_io.size(); v++) {
+                        std::cout << "visited[" << v << "] = " << visited_io[v] << std::endl;
+                }
+
+                for (int v = 0; v < visited_io.size(); v++) {
+                        std::cout << "dense[" << v << "] = " << dense_o[v] << std::endl;
+                }
+        }
+}
 
 int kernel_run (int argc, char **argv) {
         int rc;
@@ -155,11 +245,20 @@ int kernel_run (int argc, char **argv) {
         bin_path = args.path;
         test_name = args.name;
 
+        std::cout << "test_name = " << std::string(test_name) << std::endl;
+
         HammerBlade::Ptr hb = HammerBlade::Get();
         hb->load_application(args.path);
-        generate_graph_vectors();
-        bfs_sparse_i_dense_o::generate();
-        bfs_sparse_i_dense_o::run();
+
+        if (strncmp(test_name, "sparse_i_dense_o", strlen("sparse_i_dense_o"))==0) {
+                generate_graph_vectors(true, false);
+                bfs_sparse_i_dense_o::generate();
+                bfs_sparse_i_dense_o::run();
+        } else if (strncmp(test_name, "dense_i_dense_o", strlen("dense_i_dense_o"))==0) {
+                generate_graph_vectors(false, true);
+                bfs_dense_i_dense_o::generate();
+                bfs_dense_i_dense_o::run();
+        }
 
         return HB_MC_SUCCESS;
 }
