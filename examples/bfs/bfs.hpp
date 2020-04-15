@@ -37,5 +37,7 @@
 #include <bsg_manycore_errno.h>
 #include <bsg_manycore_cuda.h>
 #include "../common.h"
+#include "bfs-common.hpp"
+#include <vector>
 
 #endif
