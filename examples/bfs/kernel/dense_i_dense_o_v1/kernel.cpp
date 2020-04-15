@@ -19,10 +19,10 @@ INIT_TILE_GROUP_BARRIER(bfs_r_barrier, bfs_c_barrier,
                         0, bsg_tiles_X-1,
                         0, bsg_tiles_Y-1);
 
-extern "C" int bfs_dense_in_dense_out(int V, int E, const node_data_t *rnode_data, const int *redges,
-                                       int *dense_i,
-                                       int *dense_o,
-                                       int *visited_io)
+extern "C" int bfs_dense_i_dense_o(int V, int E, const node_data_t *rnode_data, const int *redges,
+                                   int *dense_i,
+                                   int *dense_o,
+                                   int *visited_io)
 {
     bsg_tile_group_barrier(&bfs_r_barrier, &bfs_c_barrier);
     bsg_cuda_print_stat_kernel_start();

@@ -39,9 +39,5 @@
 #include "../common.h"
 #include "bfs-common.hpp"
 #include <vector>
-#include <RuntimeError.hpp>
-#include <HammerBlade.hpp>
-#include <Graph.hpp>
-
 
 #endif

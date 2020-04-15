@@ -24,12 +24,12 @@ int degree(int v, int V, int E, const int *offsets, const int *edges)
     return (v < (V-1) ? offsets[v+1]-offsets[v] : E-offsets[v]);
 }
 
-extern "C" int bfs_sparse_in_dense_out(int V, int E,
-                                       const node_data_t *node_data,
-                                       const int *edges,
-                                       int *sparse_i,
-                                       int *dense_o,
-                                       int *visited_io)
+extern "C" int bfs_sparse_i_dense_o(int V, int E,
+                                    const node_data_t *node_data,
+                                    const int *edges,
+                                    int *sparse_i,
+                                    int *dense_o,
+                                    int *visited_io)
 {
     bsg_tile_group_barrier(&bfs_r_barrier, &bfs_c_barrier);
     bsg_cuda_print_stat_kernel_start();
