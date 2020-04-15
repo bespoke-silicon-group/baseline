@@ -117,6 +117,8 @@ HOST_INCLUDES       += -I$(CURRENT_PATH)/kernel/include
 # Include the Cosimulation host build rules (This must be included after
 # HOST_*SOURCES, HOST_TARGET, HOST_INCLUDES, etc)
 ################################################################################
+$(HOST_TARGET).cosim: $(wildcard $(CURRENT_PATH)/*.hpp)
+$(HOST_TARGET).cosim: $(CURRENT_PATH)/kernel/include/bfs-common.hpp
 $(HOST_TARGET).cosim: $(libgraphtools-interface-headers)
 $(HOST_TARGET).cosim: $(libgraphtools-interface-libraries)
 $(HOST_TARGET).cosim: $(libhammerblade-helpers-host-interface-headers)
