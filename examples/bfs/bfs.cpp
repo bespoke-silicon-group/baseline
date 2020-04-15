@@ -29,18 +29,19 @@
 #include <Graph.hpp>
 #include <BFS.hpp>
 #include "bfs.hpp"
+#include "bfs-common.hpp"
 
 using namespace hammerblade::host;
 using namespace graph_tools;
 
 namespace {
         Graph g, t;
-        std::vector<int> offsets;
+        std::vector<node_data_t> fnode_data;
         std::vector<int> edges;
-        std::vector<int> roffsets;
+        std::vector<node_data_t> rnode_data;
         std::vector<int> redges;
-        hb_mc_eva_t offsets_dev = 0, edges_dev = 0;
-        hb_mc_eva_t roffsets_dev = 0, redges_dev = 0;
+        hb_mc_eva_t fnode_data_dev = 0,   edges_dev = 0;
+        hb_mc_eva_t rnode_data_dev = 0, redges_dev = 0;
         int iterations = 1;
 
         void generate_graph_vectors(bool forward = true, bool transpose = true)
@@ -50,43 +51,59 @@ namespace {
                 g = Graph::Tiny();
                 t = g.transpose();
 
+                std::cout << g.string() << std::endl;
+
                 if (forward) {
                         // init graph vectors
-                        offsets.clear();
+                        fnode_data.clear();
                         edges.clear();
 
                         for (int v = 0; v < g.num_nodes(); v++) {
-                                offsets.push_back(static_cast<int>(g.get_offsets()[v]));
+                                node_data_t ndata = {
+                                        .offset = static_cast<int>(g.offset(v)),
+                                        .degree = static_cast<int>(g.degree(v)),
+                                };
+                                fnode_data.push_back(ndata);
                         }
+
                         for (int e = 0; e < g.num_edges(); e++) {
                                 edges.push_back(static_cast<int>(g.get_neighbors()[e]));
                         }
 
                         // allocate
-                        offsets_dev    = hb->alloc(sizeof(int) * offsets.size());
+                        fnode_data_dev = hb->alloc(sizeof(node_data_t) * fnode_data.size());
                         edges_dev      = hb->alloc(sizeof(int) * edges.size());
 
                         // write
-                        hb->push_write(offsets_dev,    &offsets[0],    sizeof(int) * offsets.size());
-                        hb->push_write(edges_dev,      &edges[0],      sizeof(int) * edges.size());
+                        hb->push_write(fnode_data_dev, &fnode_data[0],
+                                       sizeof(node_data_t) * fnode_data.size());
+
+                        hb->push_write(edges_dev,     &edges[0],  sizeof(int) * edges.size());
                 }
 
                 if (transpose) {
-                        roffsets.clear();
+                        rnode_data.clear();
                         redges.clear();
 
-                        for (int v = 0; v < t.num_nodes(); v++)
-                                roffsets.push_back(static_cast<int>(t.get_offsets()[v]));
+                        for (int v = 0; v < t.num_nodes(); v++) {
+                                node_data_t ndata = {
+                                        .offset = static_cast<int>(t.offset(v)),
+                                        .degree = static_cast<int>(t.degree(v)),
+                                };
+
+                                rnode_data.push_back(ndata);
+                        }
 
                         for (int e = 0; e < t.num_edges(); e++)
                                 redges.push_back(static_cast<int>(t.get_neighbors()[e]));
 
                         // allocate
-                        roffsets_dev = hb->alloc(sizeof(int) * roffsets.size());
-                        redges_dev   = hb->alloc(sizeof(int) * redges.size());
+                        rnode_data_dev = hb->alloc(sizeof(node_data_t) * rnode_data.size());
+                        redges_dev     = hb->alloc(sizeof(int) * redges.size());
 
                         // write
-                        hb->push_write(roffsets_dev, &roffsets[0], sizeof(int) * roffsets.size());
+                        hb->push_write(rnode_data_dev, &rnode_data[0],
+                                       sizeof(node_data_t) * rnode_data.size());
                         hb->push_write(redges_dev,   &redges[0],   sizeof(int) * redges.size());
                 }
         }
@@ -148,7 +165,7 @@ namespace bfs_sparse_i_dense_o {
                 hb->sync_write();
 
                 hb->push_job("bfs_sparse_in_dense_out",
-                             offsets.size(), edges.size(), offsets_dev, edges_dev,
+                             fnode_data.size(), edges.size(), fnode_data_dev, edges_dev,
                              sparse_i_dev,
                              dense_o_dev,
                              visited_io_dev);
@@ -214,7 +231,7 @@ namespace bfs_dense_i_dense_o {
                 hb->sync_write();
                 hb->push_job("bfs_dense_in_dense_out",
                              static_cast<int>(g.num_nodes()), static_cast<int>(g.num_edges()),
-                             roffsets_dev, redges_dev,
+                             rnode_data_dev, redges_dev,
                              dense_i_dev, dense_o_dev, visited_io_dev);
                 hb->exec();
 

@@ -46,8 +46,8 @@ BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/4x4_fast_n_fake
 ################################################################################
 # Kernel versions. See kernel/README.md for more information.  Version names do
 # not need to use v* and can be any string
-VERSIONS += sparse_i_dense_o_v0
-VERSIONS += dense_i_dense_o_v0
+VERSIONS += sparse_i_dense_o_v1
+VERSIONS += dense_i_dense_o_v1
 
 ################################################################################
 # Define any sources that should be used compiled during kernel compilation,
@@ -108,6 +108,8 @@ HOST_TARGET         := bfs
 HOST_CSOURCES       :=
 HOST_CXXSOURCES     := $(HOST_TARGET).cpp
 HOST_INCLUDES       := -I$(CURRENT_PATH)
+HOST_INCLUDES       += -I$(CURRENT_PATH)/kernel/include
+
 ################################################################################
 # Include the Cosimulation host build rules (This must be included after
 # HOST_*SOURCES, HOST_TARGET, HOST_INCLUDES, etc)
