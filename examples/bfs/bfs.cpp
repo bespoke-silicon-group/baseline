@@ -77,7 +77,7 @@ int kernel_run (int argc, char **argv) {
         bfs.run(g.node_with_max_degree(), iterations, forward);
         traversed -= static_cast<int>(bfs.traversed());
 
-        std::cout << "traversing " << traversed << "edges" << std::endl;
+        std::cout << "traversing " << traversed << " edges" << std::endl;
 
         // setup the components of the application
         BFSGraph::Ptr bfsg_ptr; //...
