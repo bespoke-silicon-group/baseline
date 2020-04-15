@@ -12,8 +12,8 @@
 #define bsg_tiles_Y BSG_TILE_GROUP_Y_DIM
 #include <bsg_manycore.h>
 #include <bsg_tile_group_barrier.h>
-
 #include <hello_world.hpp>
+#include "bfs-common.hpp"
 
 INIT_TILE_GROUP_BARRIER(bfs_r_barrier, bfs_c_barrier,
                         0, bsg_tiles_X-1,
@@ -24,28 +24,27 @@ int degree(int v, int V, int E, const int *offsets, const int *edges)
     return (v < (V-1) ? offsets[v+1]-offsets[v] : E-offsets[v]);
 }
 
-extern "C" int bfs_dense_i_dense_o(int V, int E, const int *roffsets, const int *redges,
-                                   int *dense_i,
-                                   int *dense_o,
-                                   int *visited_io)
+extern "C" int bfs_sparse_i_dense_o(int V, int E,
+                                    const node_data_t *node_data,
+                                    const int *edges,
+                                    int *sparse_i,
+                                    int *dense_o,
+                                    int *visited_io)
 {
     bsg_tile_group_barrier(&bfs_r_barrier, &bfs_c_barrier);
     bsg_cuda_print_stat_kernel_start();
 
-    for (int dst = bsg_id; dst < V; dst += bsg_tiles_X*bsg_tiles_Y) {
-        // skip visited
-        if (visited_io[dst] == 1) continue;
-        const int *neighbors = &redges[roffsets[dst]];
-        int src_n = degree(dst, V, E, roffsets, redges);
-        for (int src_i = 0; src_i < src_n; src_i++) {
-            int src = neighbors[src_i];
-            // skip inactive
-            if (dense_i[src] == 0) continue;
+    for (int i = bsg_id; i < V; i += bsg_tiles_X*bsg_tiles_Y) {
+        int src = sparse_i[i];
+        if (src == -1) break;
 
-            // update
-            dense_o[dst] = 1;
+        const int *neighbors = &edges[node_data[src].offset];
+        int dst_n = node_data[src].degree;
+        for (int dst_i = 0; dst_i < dst_n; dst_i++) {
+            int dst = neighbors[dst_i];
+            if (visited_io[dst] == 1) continue;
             visited_io[dst] = 1;
-            break;
+            dense_o[dst] = 1;
         }
     }
 

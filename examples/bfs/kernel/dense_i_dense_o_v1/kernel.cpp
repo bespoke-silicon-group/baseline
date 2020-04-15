@@ -12,19 +12,14 @@
 #define bsg_tiles_Y BSG_TILE_GROUP_Y_DIM
 #include <bsg_manycore.h>
 #include <bsg_tile_group_barrier.h>
-
+#include "bfs-common.hpp"
 #include <hello_world.hpp>
 
 INIT_TILE_GROUP_BARRIER(bfs_r_barrier, bfs_c_barrier,
                         0, bsg_tiles_X-1,
                         0, bsg_tiles_Y-1);
 
-int degree(int v, int V, int E, const int *offsets, const int *edges)
-{
-    return (v < (V-1) ? offsets[v+1]-offsets[v] : E-offsets[v]);
-}
-
-extern "C" int bfs_dense_i_dense_o(int V, int E, const int *roffsets, const int *redges,
+extern "C" int bfs_dense_i_dense_o(int V, int E, const node_data_t *rnode_data, const int *redges,
                                    int *dense_i,
                                    int *dense_o,
                                    int *visited_io)
@@ -35,8 +30,8 @@ extern "C" int bfs_dense_i_dense_o(int V, int E, const int *roffsets, const int 
     for (int dst = bsg_id; dst < V; dst += bsg_tiles_X*bsg_tiles_Y) {
         // skip visited
         if (visited_io[dst] == 1) continue;
-        const int *neighbors = &redges[roffsets[dst]];
-        int src_n = degree(dst, V, E, roffsets, redges);
+        const int *neighbors = &redges[rnode_data[dst].offset];
+        int src_n = rnode_data[dst].degree;
         for (int src_i = 0; src_i < src_n; src_i++) {
             int src = neighbors[src_i];
             // skip inactive
