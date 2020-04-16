@@ -24,4 +24,15 @@ public:
         ss << "}";
         return ss.str();
     }
+
+protected:
+    std::set<Graph::NodeID> set_from_vec() const {
+        std::set<Graph::NodeID> rset;
+        for (int i = 0; i < vec().size(); i++) {
+            int v = vec()[i];
+            if (v == -1) break;
+            rset.insert(static_cast<Graph::NodeID>(v));
+        }
+        return rset;
+    }
 };

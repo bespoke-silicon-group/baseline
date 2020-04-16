@@ -15,13 +15,29 @@ public:
 
     void build () {
         for (int v : _set) {
-            int b = block_of(v);            
+            int b = block_of(v);
             _vec[b*BLOCK_SIZE + _block_pop[b]++] = v;
         }
         std::cout << string() << std::endl;
     }
-    
-private:   
+
+protected:
+    std::set<Graph::NodeID> set_from_vec() const {
+        std::set<Graph::NodeID> rset;
+        int nblocks = _N/BLOCK_SIZE + (_N%BLOCK_SIZE == 0 ? 0 : 1);
+        for (int blk = 0; blk < nblocks; blk++) {
+            int blk_off = blk * BLOCK_SIZE;
+            for (int i = 0; i < BLOCK_SIZE; i++) {
+                int v = vec()[i];
+                if (v == -1)
+                    break;
+                rset.insert(static_cast<Graph::NodeID>(v));
+            }
+        }
+        return rset;
+    }
+
+private:
     int block_of(int v) const {
         return v / BLOCK_SIZE;
     }
