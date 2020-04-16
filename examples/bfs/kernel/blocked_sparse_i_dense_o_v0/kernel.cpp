@@ -19,6 +19,13 @@
 #error "Please define BFS_BLOCK_SIZE"
 #endif
 
+#if defined DEBUG
+#define pr_dbg(fmt, ...)                        \
+    bsg_printf(fmt, ##__VA_ARGS__)
+#else
+#define pr_dbg(...)
+#endif
+
 static constexpr int BLOCK_SIZE = BFS_BLOCK_SIZE;
 
 INIT_TILE_GROUP_BARRIER(bfs_r_barrier, bfs_c_barrier,
@@ -44,9 +51,9 @@ extern "C" int bfs_blocked_sparse_i_dense_o(int V, int E,
         int blk_off = blk_src_i * BLOCK_SIZE;
         memcpy(&lcl_sparse_i[0], &blocked_sparse_i[blk_off],
                BLOCK_SIZE * sizeof(blocked_sparse_i[0]));
-        bsg_printf("reading in block @ 0x%08x\n", &blocked_sparse_i[blk_off]);
+        pr_dbg("reading in block @ 0x%08x\n", &blocked_sparse_i[blk_off]);
         // does this have at least one active source?
-        bsg_printf("lcl_sparse_i[0] = %d\n", lcl_sparse_i[0]);
+        pr_dbg("lcl_sparse_i[0] = %d\n", lcl_sparse_i[0]);
         if (lcl_sparse_i[0] == -1) continue;
         // copy in blocks of the other data
         // copy in node info
@@ -56,7 +63,7 @@ extern "C" int bfs_blocked_sparse_i_dense_o(int V, int E,
         for (int src_i = 0; src_i < BLOCK_SIZE; src_i++) {            
             int src = lcl_sparse_i[src_i];
 
-            bsg_printf("blk = %d, src =%d\n", blk_src_i, src);
+            pr_dbg("blk = %d, src =%d\n", blk_src_i, src);
             
             if (src == -1) break;
             // index into local data
@@ -65,9 +72,8 @@ extern "C" int bfs_blocked_sparse_i_dense_o(int V, int E,
             const int *neighbors = &edges[lcl_nodes[src_lcl].offset];
             // degree of this source
             int dst_n = lcl_nodes[src_lcl].degree;
-            // bsg_printf("src =%d, degree = %d, neigbors = 0x%08x\n",
-            //            src, dst_n, neighbors);
-            
+            pr_dbg("src =%d, degree = %d, neigbors = 0x%08x\n",
+                   src, dst_n, neighbors);
             // for each out neighbor...
             for (int dst_i = 0; dst_i < dst_n; dst_i++) {
                 // read the dst out of dram
