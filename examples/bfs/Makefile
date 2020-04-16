@@ -40,6 +40,10 @@ CURRENT_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 ################################################################################
 
 BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/4x4_fast_n_fake
+-include $(BSG_MACHINE_PATH)/Makefile.machine.include
+
+RISCV_CCPPFLAGS += -DBSG_TILE_GROUP_X_DIM=$(CL_MANYCORE_DIM_X)
+RISCV_CCPPFLAGS += -DBSG_TILE_GROUP_Y_DIM=$(CL_MANYCORE_DIM_Y)
 
 ################################################################################
 # Define the range of versions
@@ -81,7 +85,7 @@ include $(hammerblade-helpers-dir)/libhammerblade-helpers-host.mk
 
 # Define the default kernel.cpp file. If KERNEL_DEFAULT is not defined it will
 # be set to kernel.cpp in the same directory as this Makefile.
-DEFAULT_VERSION     := blocked_sparse_i_dense_o_v0
+DEFAULT_VERSION     := sparse_i_dense_o_v0
 KERNEL_DEFAULT      := kernel/$(DEFAULT_VERSION)/kernel.cpp
 
 ################################################################################
