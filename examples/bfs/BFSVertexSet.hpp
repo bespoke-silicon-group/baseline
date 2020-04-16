@@ -30,7 +30,16 @@ public:
     size_t bytes() const { return sizeof(_vec[0]) * _N; }
     hb_mc_eva_t dev() const { return _dev; }
 
+    const std::vector<int> & vec() const { return _vec; }
     std::vector<int> & vec() { return _vec; }
+
+    std::set<Graph::NodeID> set() {
+        _set = set_from_vec();
+        return _set;
+    }
+
+protected:
+    virtual std::set<Graph::NodeID> set_from_vec() const = 0;
 
 protected:
     HammerBlade::Ptr _hb;

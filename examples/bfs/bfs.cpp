@@ -36,12 +36,17 @@
 #include <BFSDenseVertexSet.hpp>
 #include <BFSSparseVertexSet.hpp>
 #include <BFSBlockedSparseVertexSet.hpp>
+#include <algorithm>
 #include "bfs.hpp"
 #include "bfs-common.hpp"
 
 using namespace hammerblade::host;
 using namespace graph_tools;
 
+namespace {
+    std::set<Graph::NodeID> visited_correct;
+    std::set<Graph::NodeID> active_o_correct;
+}
 
 int kernel_run (int argc, char **argv) {
         int rc;
@@ -73,7 +78,13 @@ int kernel_run (int argc, char **argv) {
 
         int traversed  = 0;
         int iterations = 1; // test on the second iteration
+
         bfs.run(g.node_with_max_degree(), iterations+1, forward);
+        // get the correct answer
+        visited_correct = bfs.visited();
+        active_o_correct = bfs.active();
+
+        // we diff the number of traversed edges to count teps for one iteration
         traversed = static_cast<int>(bfs.traversed());
         bfs.run(g.node_with_max_degree(), iterations, forward);
         traversed -= static_cast<int>(bfs.traversed());
@@ -132,7 +143,65 @@ int kernel_run (int argc, char **argv) {
         app.run();
         app.finish();
 
-        return HB_MC_SUCCESS;
+        // validate the results
+        int r = HB_MC_SUCCESS;
+        auto active_o_answer = active_o_ptr->set();
+        if (active_o_correct != active_o_answer) {
+            std::set<Graph::NodeID> cda, adc;
+
+            for (auto v : active_o_correct) {
+                if (active_o_answer.find(v) == active_o_answer.end())
+                    cda.insert(v);
+            }
+
+            for (auto v : active_o_answer) {
+                if (active_o_correct.find(v) == active_o_correct.end())
+                    adc.insert(v);
+            }
+
+            std::cout << "Error: output frontier not equal" << std::endl;
+            std::cout << "Correct - Answer: {";
+            for (auto v : cda)
+                std::cout << v << ", ";
+            std::cout << "}" << std::endl;
+
+            std::cout << "Answer - Correct: {";
+            for (auto v : adc)
+                std::cout << v << ", ";
+            std::cout << "}" << std::endl;
+
+            r = HB_MC_FAIL;
+        }
+        auto visited_answer = visited_io_ptr->set();
+        if (visited_correct != visited_answer) {
+            std::cerr << "Error: output visited set not equal" << std::endl;
+            std::set<Graph::NodeID> cda, adc;
+
+            for (auto v : visited_correct) {
+                if (visited_answer.find(v) == visited_answer.end())
+                    cda.insert(v);
+            }
+
+            for (auto v : visited_answer) {
+                if (visited_correct.find(v) == visited_correct.end())
+                    adc.insert(v);
+            }
+
+            std::cout << "Error: visited set not equal" << std::endl;
+            std::cout << "Correct - Answer: {";
+            for (auto v : cda)
+                std::cout << v << ", ";
+            std::cout << "}" << std::endl;
+
+            std::cout << "Answer - Correct: {";
+            for (auto v : adc)
+                std::cout << v << ", ";
+            std::cout << "}" << std::endl;
+
+            r = HB_MC_FAIL;
+        }
+
+        return r;
 }
 
 #ifdef COSIM
