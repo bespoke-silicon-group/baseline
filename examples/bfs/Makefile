@@ -50,6 +50,7 @@ VERSIONS += sparse_i_dense_o_v0
 VERSIONS += sparse_i_dense_o_v1
 VERSIONS += dense_i_dense_o_v0
 VERSIONS += dense_i_dense_o_v1
+VERSIONS += blocked_sparse_i_dense_o_v0
 
 ################################################################################
 # Define any sources that should be used compiled during kernel compilation,
@@ -78,14 +79,18 @@ include $(hammerblade-helpers-dir)/libhammerblade-helpers-host.mk
 
 # Define the default kernel.cpp file. If KERNEL_DEFAULT is not defined it will
 # be set to kernel.cpp in the same directory as this Makefile.
-DEFAULT_VERSION     := sparse_i_dense_o_v0
+DEFAULT_VERSION     := blocked_sparse_i_dense_o_v0
 KERNEL_DEFAULT      := kernel/$(DEFAULT_VERSION)/kernel.cpp
+
+# block size
+BFS_BLOCK_SIZE  := 8
+RISCV_CCPPFLAGS += -DBFS_BLOCK_SIZE=$(BFS_BLOCK_SIZE)
+CXXFLAGS        += -DBFS_BLOCK_SIZE=$(BFS_BLOCK_SIZE)
 
 ################################################################################
 # Include the kernel build rules (This must be included after KERNEL_*LIBRARIES,
 # KERNEL_DEFAULT, KERNEL_INCLUDES, etc)
 ################################################################################
-
 -include $(FRAGMENTS_PATH)/kernel/cudalite.mk
 
 ################################################################################
