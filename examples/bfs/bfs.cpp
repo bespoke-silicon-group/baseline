@@ -104,7 +104,7 @@ int kernel_run (int argc, char **argv) {
         } else if (strcmp(test_name, "blocked_sparse_i_dense_o_v0") == 0) {
                 bfsg_ptr = new BFSCSRGraph<node_data_t>(g);
                 active_i_ptr =
-                        new BFSBlockedSparseVertexSet<BFS_BLOCK_SIZE> (g.num_nodes(), bfs.active());
+                        new BFSBlockedSparseVertexSet<8> (g.num_nodes(), bfs.active());
                 kernel_name += "blocked_sparse_i_dense_o";
         }
 

@@ -82,11 +82,6 @@ include $(hammerblade-helpers-dir)/libhammerblade-helpers-host.mk
 DEFAULT_VERSION     := blocked_sparse_i_dense_o_v0
 KERNEL_DEFAULT      := kernel/$(DEFAULT_VERSION)/kernel.cpp
 
-# block size
-BFS_BLOCK_SIZE  := 8
-RISCV_CCPPFLAGS += -DBFS_BLOCK_SIZE=$(BFS_BLOCK_SIZE)
-CXXFLAGS        += -DBFS_BLOCK_SIZE=$(BFS_BLOCK_SIZE)
-
 ################################################################################
 # Include the kernel build rules (This must be included after KERNEL_*LIBRARIES,
 # KERNEL_DEFAULT, KERNEL_INCLUDES, etc)
