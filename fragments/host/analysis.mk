@@ -56,16 +56,16 @@ graphs: blood_abstract.png blood_detailed.png
 %/graphs: %/blood_abstract.png %/blood_detailed.png ;
 
 blood_detailed.png: vanilla_operation_trace.csv vanilla_stats.csv
-	python3 $(BSG_MANYCORE_DIR)/software/py/blood_graph.py --input vanilla_operation_trace.csv --timing-stats vanilla_stats.csv --generate-key
+	python3 $(BSG_MANYCORE_DIR)/software/py/blood_graph.py --trace vanilla_operation_trace.csv --stats vanilla_stats.csv --generate-key
 
 blood_abstract.png: vanilla_operation_trace.csv vanilla_stats.csv
-	python3 $(BSG_MANYCORE_DIR)/software/py/blood_graph.py --input vanilla_operation_trace.csv --timing-stats vanilla_stats.csv --generate-key --abstract
+	python3 $(BSG_MANYCORE_DIR)/software/py/blood_graph.py --trace vanilla_operation_trace.csv --stats vanilla_stats.csv --generate-key --abstract
 
 %/blood_detailed.png: %/vanilla_operation_trace.csv %/vanilla_stats.csv
-	cd $(dir $<) &&  python3 $(BSG_MANYCORE_DIR)/software/py/blood_graph.py --input vanilla_operation_trace.csv --timing-stats vanilla_stats.csv --generate-key
+	cd $(dir $<) &&  python3 $(BSG_MANYCORE_DIR)/software/py/blood_graph.py --trace vanilla_operation_trace.csv --stats vanilla_stats.csv --generate-key
 
 %/blood_abstract.png: %/vanilla_operation_trace.csv %/vanilla_stats.csv
-	cd $(dir $<) &&  python3 $(BSG_MANYCORE_DIR)/software/py/blood_graph.py --input vanilla_operation_trace.csv --timing-stats vanilla_stats.csv --generate-key --abstract
+	cd $(dir $<) &&  python3 $(BSG_MANYCORE_DIR)/software/py/blood_graph.py --trace vanilla_operation_trace.csv --stats vanilla_stats.csv --generate-key --abstract
 
 _HELP_STRING += "    pc_stats | kernel/<version>/pc_stats :\n"
 _HELP_STRING += "        - Run the Program Counter Histogram utility on the output of\n"
