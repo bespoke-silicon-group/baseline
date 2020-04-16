@@ -106,6 +106,16 @@ int kernel_run (int argc, char **argv) {
                 active_i_ptr =
                         new BFSBlockedSparseVertexSet<8> (g.num_nodes(), bfs.active());
                 kernel_name += "blocked_sparse_i_dense_o";
+        } else if (strcmp(test_name, "blocked_sparse_i_dense_o_v1") == 0) {
+                bfsg_ptr = new BFSCSRGraph<node_data_t>(g);
+                active_i_ptr =
+                        new BFSBlockedSparseVertexSet<16> (g.num_nodes(), bfs.active());
+                kernel_name += "blocked_sparse_i_dense_o";
+        } else if (strcmp(test_name, "blocked_sparse_i_dense_o_v2") == 0) {
+                bfsg_ptr = new BFSCSRGraph<node_data_t>(g);
+                active_i_ptr =
+                        new BFSBlockedSparseVertexSet<32> (g.num_nodes(), bfs.active());
+                kernel_name += "blocked_sparse_i_dense_o";
         }
 
         active_o_ptr = new BFSDenseVertexSet(g.num_nodes(), {});
