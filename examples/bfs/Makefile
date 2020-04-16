@@ -51,6 +51,8 @@ VERSIONS += sparse_i_dense_o_v1
 VERSIONS += dense_i_dense_o_v0
 VERSIONS += dense_i_dense_o_v1
 VERSIONS += blocked_sparse_i_dense_o_v0
+VERSIONS += blocked_sparse_i_dense_o_v1
+VERSIONS += blocked_sparse_i_dense_o_v2
 
 ################################################################################
 # Define any sources that should be used compiled during kernel compilation,
