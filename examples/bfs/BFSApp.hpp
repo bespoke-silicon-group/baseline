@@ -23,6 +23,17 @@ public:
 
     void run() {
         _hb->sync_write();
+
+        std::cout << kernel_name() << "("
+                  << graph()->num_nodes() << ","
+                  << graph()->num_edges() << ","
+                  << std::hex << graph()->nodes_dev() << ","
+                  << std::hex << graph()->edges_dev() << ","
+                  << std::hex << _active_i->dev() << ","
+                  << std::hex << _active_o->dev() << ","
+                  << std::hex << _visited_io->dev() << ")"
+                  << std::dec << std::endl;
+
         _hb->push_job(kernel_name(),
                       graph()->num_nodes(),
                       graph()->num_edges(),
