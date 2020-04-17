@@ -8,12 +8,12 @@ class BFSCSRGraph : public BFSGraph {
 public:
     BFSCSRGraph(Graph &g) : BFSGraph(g) {}
 
-private:
-    void build_edges() {
+protected:
+    virtual void build_edges() {
         for (Graph::NodeID e = 0; e < _g.num_edges(); e++)
             _ed.push_back(static_cast<int>(_g.get_neighbors()[e]));
     }
-    void build_nodes();
+    virtual void build_nodes();
 
 public:
     void build() {
@@ -32,7 +32,8 @@ public:
 
     size_t node_bytes() const { return sizeof(_nd[0]) * _nd.size(); }
     size_t edge_bytes() const { return sizeof(_ed[0]) * _ed.size(); }
-private:
+
+protected:
     std::vector<NodeData> _nd;
     std::vector<int> _ed;
 };
