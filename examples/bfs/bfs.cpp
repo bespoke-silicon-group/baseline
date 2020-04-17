@@ -32,6 +32,7 @@
 #include <HammerBlade.hpp>
 #include <Graph.hpp>
 #include <BFSCSRGraph.hpp>
+#include <BFSBlockedCSRGraph.hpp>
 #include <BFSApp.hpp>
 #include <BFSDenseVertexSet.hpp>
 #include <BFSSparseVertexSet.hpp>
@@ -127,6 +128,11 @@ int kernel_run (int argc, char **argv) {
                 active_i_ptr =
                         new BFSBlockedSparseVertexSet<32> (g.num_nodes(), bfs.active());
                 kernel_name += "blocked_sparse_i_dense_o";
+        } else if (strcmp(test_name, "blocked_edge_sparse_i_dense_o_v0") == 0) {
+                bfsg_ptr = new BFSBlockedCSRGraph<16,16>(g);
+                active_i_ptr =
+                        new BFSBlockedSparseVertexSet<16> (g.num_nodes(), bfs.active());
+                kernel_name += "blocked_edge_sparse_i_dense_o";
         }
 
         active_o_ptr = new BFSDenseVertexSet(g.num_nodes(), {});
