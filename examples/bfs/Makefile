@@ -57,6 +57,8 @@ VERSIONS += dense_i_dense_o_v1
 VERSIONS += blocked_sparse_i_dense_o_v0
 VERSIONS += blocked_sparse_i_dense_o_v1
 VERSIONS += blocked_sparse_i_dense_o_v2
+VERSIONS += blocked_dense_i_dense_o_v0
+VERSIONS += blocked_dense_i_dense_o_v1
 
 ################################################################################
 # Define any sources that should be used compiled during kernel compilation,
@@ -85,7 +87,7 @@ include $(hammerblade-helpers-dir)/libhammerblade-helpers-host.mk
 
 # Define the default kernel.cpp file. If KERNEL_DEFAULT is not defined it will
 # be set to kernel.cpp in the same directory as this Makefile.
-DEFAULT_VERSION     := sparse_i_dense_o_v0
+DEFAULT_VERSION     := blocked_dense_i_dense_o_v0
 KERNEL_DEFAULT      := kernel/$(DEFAULT_VERSION)/kernel.cpp
 
 ################################################################################
