@@ -62,6 +62,10 @@ VERSIONS += blocked_dense_i_dense_o_v1
 VERSIONS += blocked_edge_sparse_i_dense_o_v0
 VERSIONS += blocked_edge_sparse_i_dense_o_v1
 VERSIONS += blocked_edge_sparse_i_dense_o_v2
+VERSIONS += blocked_dense_i_dense_o_v2
+VERSIONS += blocked_dense_i_dense_o_old_v0
+VERSIONS += blocked_dense_i_dense_o_old_v1
+VERSIONS += blocked_edge_dense_i_dense_o_v0
 
 ################################################################################
 # Define any sources that should be used compiled during kernel compilation,
