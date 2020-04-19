@@ -134,6 +134,16 @@ int kernel_run (int argc, char **argv) {
                 active_i_ptr =
                         new BFSBlockedSparseVertexSet<16> (g.num_nodes(), bfs.active());
                 kernel_name += "blocked_edge_sparse_i_dense_o";
+        } else if (strcmp(test_name, "blocked_edge_sparse_i_dense_o_v1") == 0) {
+                bfsg_ptr = new BFSBlockedCSRGraph<16,32>(g);
+                active_i_ptr =
+                        new BFSBlockedSparseVertexSet<16> (g.num_nodes(), bfs.active());
+                kernel_name += "blocked_edge_sparse_i_dense_o";
+        } else if (strcmp(test_name, "blocked_edge_sparse_i_dense_o_v2") == 0) {
+                bfsg_ptr = new BFSBlockedCSRGraph<16,64>(g);
+                active_i_ptr =
+                        new BFSBlockedSparseVertexSet<16> (g.num_nodes(), bfs.active());
+                kernel_name += "blocked_edge_sparse_i_dense_o";
         } else if (strcmp(test_name, "blocked_dense_i_dense_o_v0") == 0
                    || strcmp(test_name, "blocked_dense_i_dense_o_v1") == 0) {
                 bfsg_ptr = new BFSCSRGraph<node_data_t>(t);
