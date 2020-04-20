@@ -22,7 +22,9 @@ public:
     std::string & kernel_name() { return _kernel_name; }
 
     void run() {
+        _hb->freeze_tiles();
         _hb->sync_write();
+        _hb->unfreeze_tiles();
 
         std::cout << kernel_name() << "("
                   << graph()->num_nodes() << ","
@@ -78,7 +80,10 @@ public:
 
     void finish() {
         read();
+        _hb->freeze_tiles();
         _hb->sync_read();
+        _hb->unfreeze_tiles();
+
         for (int i = 0; i < _bfs_g->num_nodes(); i++) {
             std::cout << "active_o[" << i << "] = " << _active_o->vec()[i] << std::endl;
         }
