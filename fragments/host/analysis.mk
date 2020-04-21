@@ -72,10 +72,10 @@ _HELP_STRING += "        - Run the Program Counter Histogram utility on the outp
 _HELP_STRING += "          $(HOST_TARGET).cosim run on the [default | <version>] kernel to \n"
 _HELP_STRING += "          generate the Program Counter Histogram\n"
 pc_stats: vanilla_operation_trace.csv
-	python3 $(BSG_MANYCORE_DIR)/software/py/vanilla_pc_histogram.py --tile --input $<
+	python3 $(BSG_MANYCORE_DIR)/software/py/vanilla_pc_histogram.py --tile --trace $<
 
 %/pc_stats: %/vanilla_operation_trace.csv
-	cd $(dir $<) && python3 $(BSG_MANYCORE_DIR)/software/py/vanilla_pc_histogram.py --tile --input $(notdir $<)
+	cd $(dir $<) && python3 $(BSG_MANYCORE_DIR)/software/py/vanilla_pc_histogram.py --tile --trace $(notdir $<)
 
 analysis.clean:
 	rm -rf vanilla_stats.csv vanilla_operation_trace.csv
