@@ -1,6 +1,7 @@
 #pragma once
 #include <bfs-common.hpp>
-#include <string.h>
+#include <cstring>
+#include <hammerblade_vanilla_memcpy.hpp>
 
 //#define DEBUG
 #if defined DEBUG
@@ -28,8 +29,9 @@ namespace bfs {
         for (int blk_src_i = bsg_id; blk_src_i < blk_src_n; blk_src_i += bsg_tiles_X*bsg_tiles_Y) {
             // copy in this block of the frontier
             int blk_src_base = blk_src_i * BLOCK_SIZE;
-            memcpy(&lcl_sparse_i[0], &blocked_sparse_i[blk_src_base],
-                   sizeof(lcl_sparse_i));
+            hammerblade::vanilla::memcpy<BLOCK_SIZE>(&lcl_sparse_i[0],
+                                                     &blocked_sparse_i[blk_src_base],
+                                                     sizeof(lcl_sparse_i));
 
             pr_dbg("reading in block @ 0x%08x\n", &blocked_sparse_i[blk_src_base]);
             // does this have at least one active source?
@@ -38,8 +40,9 @@ namespace bfs {
             if (lcl_sparse_i[0] == -1) continue;
             // copy in blocks of the other data
             // copy in node info
-            memcpy(&lcl_nodes[0], &nodes[blk_src_base],
-                   sizeof(lcl_nodes));
+            hammerblade::vanilla::memcpy<BLOCK_SIZE>(&lcl_nodes[0],
+                                                     &nodes[blk_src_base],
+                                                     sizeof(lcl_nodes));
 
             // location of the first edge block
             int blk_edge_base = lcl_nodes[0].offset;
@@ -57,7 +60,9 @@ namespace bfs {
                 continue;
 
             // load in the first block of edges
-            memcpy(&lcl_edges[0], &edges[blk_edge_base], sizeof(lcl_edges));
+            hammerblade::vanilla::memcpy<EDGE_BLOCK_SIZE>(&lcl_edges[0],
+                                                          &edges[blk_edge_base],
+                                                          sizeof(lcl_edges));
 
             for (int src_i = 0; src_i < BLOCK_SIZE; src_i++) {
                 int src = lcl_sparse_i[src_i];
@@ -87,7 +92,9 @@ namespace bfs {
                             * (dst_lcl / EDGE_BLOCK_SIZE);
                         // update dst_lcl
                         dst_lcl = dst_lcl % EDGE_BLOCK_SIZE;
-                        memcpy(&lcl_edges[0], &edges[blk_edge_base], sizeof(lcl_edges));
+                        hammerblade::vanilla::memcpy<EDGE_BLOCK_SIZE>(&lcl_edges[0],
+                                                                      &edges[blk_edge_base],
+                                                                      sizeof(lcl_edges));
                     }
 
                     // proceed with update

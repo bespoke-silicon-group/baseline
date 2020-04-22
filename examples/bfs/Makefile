@@ -80,18 +80,20 @@ VERSIONS += blocked_edge_sparse_i_dense_o_v4
 #
 # Use KERNEL_INCLUDES to specify the path to directories that contain headers.
 ################################################################################
+hammerblade-helpers-dir := $(_REPO_ROOT)/../hammerblade-helpers
+include $(hammerblade-helpers-dir)/libhammerblade-helpers-device.mk
 
 # C Libraries
-KERNEL_CLIBRARIES   += $(wildcard $(_REPO_ROOT)/cuda_extras/device/*.c)
+KERNEL_CLIBRARIES   +=
 # C++ Libraries
-KERNEL_CXXLIBRARIES += $(wildcard $(_REPO_ROOT)/cuda_extras/device/*.cpp)
+KERNEL_CXXLIBRARIES +=
+KERNEL_CXXLIBRARIES += $(libhammerblade-helpers-device-interface-sources)
+RISCV_CCPPFLAGS     += $(libhammerblade-helpers-device-interface-cxxflags)
 
 KERNEL_INCLUDES     += -I$(CURRENT_PATH)/kernel/include
 
 graphtools-dir := $(_REPO_ROOT)/../graph-tools
 include $(graphtools-dir)/libgraphtools.mk
-
-hammerblade-helpers-dir := $(_REPO_ROOT)/../hammerblade-helpers
 include $(hammerblade-helpers-dir)/libhammerblade-helpers-host.mk
 
 # Define the default kernel.cpp file. If KERNEL_DEFAULT is not defined it will
