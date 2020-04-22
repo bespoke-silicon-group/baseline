@@ -15,7 +15,7 @@ extern "C" int fast_memcpy(long int *dst, const long int *src, long int length) 
         bsg_tile_group_barrier(&r_barrier, &c_barrier);
         bsg_cuda_print_stat_kernel_start();
 
-        fast_memcpy<256, 32>(dst, src, length);
+        fast_memcpy<256>(dst, src, length);
         
         bsg_tile_group_barrier(&r_barrier, &c_barrier);
         bsg_cuda_print_stat_kernel_end();

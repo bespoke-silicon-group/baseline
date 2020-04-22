@@ -46,9 +46,21 @@ BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/timing_v0_8_4
 # Kernel versions. See kernel/README.md for more information.  Version names do
 # not need to use v* and can be any string
 VERSIONS += baseline
+VERSIONS += blocked_unrolled_32
+VERSIONS += blocked_unrolled_64
+VERSIONS += blocked_unrolled_128
+VERSIONS += blocked_unrolled_256
 VERSIONS += blocked_32
+VERSIONS += blocked_64
 VERSIONS += blocked_128
 VERSIONS += blocked_256
+VERSIONS += faster_blocked_256
+VERSIONS += faster_blocked_32
+VERSIONS += faster_blocked_64
+VERSIONS += faster_blocked_128
+VERSIONS += faster_blocked_256
+VERSIONS += baseline_interleave
+VERSIONS += baseline_faster_interleave
 
 ################################################################################
 # Define any sources that should be used compiled during kernel compilation,
