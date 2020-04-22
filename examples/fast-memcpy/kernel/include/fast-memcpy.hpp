@@ -13,6 +13,22 @@ namespace {
         void block_memcpy_unrolled(long int *dst, const long int *src)
         {
         }
+
+        template <>
+        void block_memcpy<32, 32>(long int *dst, const long int *src)
+        {
+                static constexpr int CACHE_LINE_WORDS = 32;
+                for (int i = 0; i < 4; i++) {
+                        dst[0 + i*8] = src[0 + i*8];
+                        dst[1 + i*8] = src[1 + i*8];
+                        dst[2 + i*8] = src[2 + i*8];
+                        dst[3 + i*8] = src[3 + i*8];
+                        dst[4 + i*8] = src[4 + i*8];
+                        dst[5 + i*8] = src[5 + i*8];
+                        dst[6 + i*8] = src[6 + i*8];
+                        dst[7 + i*8] = src[7 + i*8];
+                }
+        }
         
         template <>
         void block_memcpy<128, 32>(long int *dst, const long int *src)
@@ -43,7 +59,7 @@ namespace {
                         dst[i + 6 * CACHE_LINE_WORDS] = src[i + 6 * CACHE_LINE_WORDS];
                         dst[i + 7 * CACHE_LINE_WORDS] = src[i + 7 * CACHE_LINE_WORDS];
                 }
-        }
+        }        
 
         template <int BLOCK_SIZE, int CACHE_LINE_WORDS>
         void fast_memcpy(long int *dst, const long int *src, long int length)
