@@ -42,18 +42,18 @@ _HELP_STRING += "        - Disassemble RISC-V binary of the [default | <version>
 _HELP_STRING += "    stats | kernel/<version>/stats :\n"
 _HELP_STRING += "        - Run the Vanilla Stats Parser on the output of $(HOST_TARGET).cosim\n"
 _HELP_STRING += "          run on the [default | <version>] kernel to generate statistics\n"
-stats: vanilla_stats.csv
-	python3 $(BSG_MANYCORE_DIR)/software/py/vanilla_stats_parser.py --tile --tile_group
+stats: vanilla_stats.csv vcache_stats.csv
+	python3 $(BSG_MANYCORE_DIR)/software/py/vanilla_stats_parser.py --vanilla vanilla_stats.csv --vcache vcache_stats.csv --tile --tile_group --per_vcache
 
-%/stats: %/vanilla_stats.csv
-	cd $(dir $<) && python3 $(BSG_MANYCORE_DIR)/software/py/vanilla_stats_parser.py --tile --tile_group
+%/stats: %/vanilla_stats.csv %/vcache_stats.csv
+	cd $(dir $<) && python3 $(BSG_MANYCORE_DIR)/software/py/vanilla_stats_parser.py --vanilla vanilla_stats.csv --vcache vcache_stats.csv --tile --tile_group --per_vcache
 
 _HELP_STRING += "    graphs | kernel/<version>/graphs :\n"
 _HELP_STRING += "        - Run the Operation Trace Parser on the output of $(HOST_TARGET).cosim\n"
 _HELP_STRING += "          run on the [default | <version>] kernel to generate the\n"
 _HELP_STRING += "          abstract and detailed profiling graphs\n"
-graphs: blood_abstract.png blood_detailed.png
-%/graphs: %/blood_abstract.png %/blood_detailed.png ;
+graphs: blood_abstract.png blood_detailed.png vcache_stall_abstract.png vcache_stall_detailed.png
+%/graphs: %/blood_abstract.png %/blood_detailed.png %/vcache_stall_abstract.png %/vcache_stall_detailed.png;
 
 blood_detailed.png: vanilla_operation_trace.csv vanilla_stats.csv
 	python3 $(BSG_MANYCORE_DIR)/software/py/blood_graph.py --trace vanilla_operation_trace.csv --stats vanilla_stats.csv --generate-key
@@ -61,11 +61,25 @@ blood_detailed.png: vanilla_operation_trace.csv vanilla_stats.csv
 blood_abstract.png: vanilla_operation_trace.csv vanilla_stats.csv
 	python3 $(BSG_MANYCORE_DIR)/software/py/blood_graph.py --trace vanilla_operation_trace.csv --stats vanilla_stats.csv --generate-key --abstract
 
+vcache_stall_detailed.png: vcache_operation_trace.csv vcache_stats.csv
+	python3 $(BSG_MANYCORE_DIR)/software/py/vcache_stall_graph.py --trace vcache_operation_trace.csv --stats vcache_stats.csv --generate-key
+
+vcache_stall_abstract.png: vcache_operation_trace.csv vcache_stats.csv
+	python3 $(BSG_MANYCORE_DIR)/software/py/vcache_stall_graph.py --trace vcache_operation_trace.csv --stats vcache_stats.csv --generate-key --abstract
+
+
 %/blood_detailed.png: %/vanilla_operation_trace.csv %/vanilla_stats.csv
 	cd $(dir $<) &&  python3 $(BSG_MANYCORE_DIR)/software/py/blood_graph.py --trace vanilla_operation_trace.csv --stats vanilla_stats.csv --generate-key
 
 %/blood_abstract.png: %/vanilla_operation_trace.csv %/vanilla_stats.csv
 	cd $(dir $<) &&  python3 $(BSG_MANYCORE_DIR)/software/py/blood_graph.py --trace vanilla_operation_trace.csv --stats vanilla_stats.csv --generate-key --abstract
+
+%/vcache_stall_detailed.png: %/vcache_operation_trace.csv %/vcache_stats.csv
+	cd $(dir $<) &&  python3 $(BSG_MANYCORE_DIR)/software/py/vcache_stall_graph.py --trace vcache_operation_trace.csv --stats vcache_stats.csv --generate-key
+
+%/vcache_stall_abstract.png: %/vcache_operation_trace.csv %/vcache_stats.csv
+	cd $(dir $<) &&  python3 $(BSG_MANYCORE_DIR)/software/py/vcache_stall_graph.py --trace vcache_operation_trace.csv --stats vcache_stats.csv --generate-key --abstract
+
 
 _HELP_STRING += "    pc_stats | kernel/<version>/pc_stats :\n"
 _HELP_STRING += "        - Run the Program Counter Histogram utility on the output of\n"
@@ -83,9 +97,10 @@ analysis.clean:
 	rm -rf *.dis
 	rm -rf stats pc_stats
 	rm -rf blood_abstract.png blood_detailed.png
+	rm -rf vcache_stall_abstract.png vcache_stall_detailed.png
 	rm -rf key_abstract.png key_detailed.png
 
-.PRECIOUS: %.png %/blood_detailed.png %/blood_abstract.png
+.PRECIOUS: %.png %/blood_detailed.png %/blood_abstract.png %/vcache_stall_abstract.png %/vcache_stall_detailed.png
 
 
 _HELP_STRING += "\n"

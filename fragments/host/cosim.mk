@@ -67,8 +67,9 @@ $(VERSIONS): %: kernel/%/$(HOST_TARGET).cosim.log
 # run. They are aliases for running $(HOST_TARGET).cosim.log. We use empty an
 # make recipe for aliases for reasons described here:
 # https://www.gnu.org/software/make/manual/html_node/Empty-Recipes.html
-ALIASES = vanilla_stats.csv vcache_stats.csv vanilla_operation_trace.csv
-vanilla_operation_trace.csv: SIM_ARGS += +trace
+ALIASES = vanilla_stats.csv vcache_stats.csv \
+	vanilla_operation_trace.csv vcache_operation_trace.csv
+vanilla_operation_trace.csv vcache_operation_trace.csv: SIM_ARGS += +trace
 $(ALIASES): $(HOST_TARGET).cosim.log ;
 $(HOST_TARGET).cosim.log: kernel.riscv $(HOST_TARGET).cosim 
 	./$(HOST_TARGET).cosim +ntb_random_seed_automatic +rad $(SIM_ARGS) \
