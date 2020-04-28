@@ -52,8 +52,8 @@ RISCV_CCPPFLAGS += -DBSG_TILE_GROUP_Y_DIM=$(CL_MANYCORE_DIM_Y)
 # not need to use v* and can be any string
 VERSIONS += sparse_i_dense_o
 VERSIONS += sparse_i_dense_o_precompute_degree_colocated
-VERSIONS += dense_i_dense_o_v0
-VERSIONS += dense_i_dense_o_v1
+VERSIONS += dense_i_dense_o
+VERSIONS += dense_i_dense_o_precompute_degree_colocated
 VERSIONS += blocked_sparse_i_dense_o_v0
 VERSIONS += blocked_sparse_i_dense_o_v1
 VERSIONS += blocked_sparse_i_dense_o_v2

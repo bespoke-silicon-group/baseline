@@ -107,11 +107,11 @@ int kernel_run (int argc, char **argv) {
                 bfsg_ptr = new BFSCSRGraph<node_data_t>(g);
                 active_i_ptr = new BFSSparseVertexSet(g.num_nodes(), bfs.active());
                 kernel_name += "sparse_i_dense_o";
-        } else if (strcmp(test_name, "dense_i_dense_o_v0") == 0) {
+        } else if (strcmp(test_name, "dense_i_dense_o") == 0) {
                 bfsg_ptr = new BFSCSRGraph<int>(t);
                 active_i_ptr = new BFSDenseVertexSet(g.num_nodes(), bfs.active());
                 kernel_name += "dense_i_dense_o";
-        } else if (strcmp(test_name, "dense_i_dense_o_v1") == 0) {
+        } else if (strcmp(test_name, "dense_i_dense_o_precompute_degree_colocated") == 0) {
                 bfsg_ptr = new BFSCSRGraph<node_data_t>(t);
                 active_i_ptr = new BFSDenseVertexSet(g.num_nodes(), bfs.active());
                 kernel_name += "dense_i_dense_o";
