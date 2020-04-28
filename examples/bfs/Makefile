@@ -50,24 +50,33 @@ RISCV_CCPPFLAGS += -DBSG_TILE_GROUP_Y_DIM=$(CL_MANYCORE_DIM_Y)
 ################################################################################
 # Kernel versions. See kernel/README.md for more information.  Version names do
 # not need to use v* and can be any string
+
+# top-down: baseline
 VERSIONS += sparse_i_dense_o
 VERSIONS += sparse_i_dense_o_precompute_degree_colocated
+# bottom-up: baseline
 VERSIONS += dense_i_dense_o
 VERSIONS += dense_i_dense_o_precompute_degree_colocated
+# top-down: blocking on vertices
 VERSIONS += blocked_sparse_i_dense_o_vbsize8
 VERSIONS += blocked_sparse_i_dense_o_vbsize16
 VERSIONS += blocked_sparse_i_dense_o_vbsize32
+# bottom-up: blocking on vertices
 VERSIONS += blocked_dense_i_dense_o_vbsize16
 VERSIONS += blocked_dense_i_dense_o_vbsize32
 VERSIONS += blocked_dense_i_dense_o_vbsize64
+# top-down: blocking on vertices and edges
 VERSIONS += blocked_edge_sparse_i_dense_o_vbsize16_ebsize16
 VERSIONS += blocked_edge_sparse_i_dense_o_vbsize16_ebsize32
 VERSIONS += blocked_edge_sparse_i_dense_o_vbsize16_ebsize64
 VERSIONS += blocked_edge_sparse_i_dense_o_vbsize32_ebsize64
 VERSIONS += blocked_edge_sparse_i_dense_o_vbsize64_ebsize128
+# top-down: blocking on vertices and edges with prefetching
 VERSIONS += blocked_edge_sparse_i_dense_o_prefetch_vbsize32_ebsize64
+# bottom-up: blocking on vertices, coalesce updates to visited
 VERSIONS += blocked_dense_i_dense_o_coalesce_dense_o_vbsize16
 VERSIONS += blocked_dense_i_dense_o_coalesce_dense_o_vbsize32
+# bottom-up: blocking on vertices and edges
 VERSIONS += blocked_edge_dense_i_dense_o_vbsize16_ebsize16
 
 ################################################################################
