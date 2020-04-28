@@ -130,29 +130,29 @@ int kernel_run (int argc, char **argv) {
                 active_i_ptr =
                         new BFSBlockedSparseVertexSet<32> (g.num_nodes(), bfs.active());
                 kernel_name += "blocked_sparse_i_dense_o";
-        } else if (strcmp(test_name, "blocked_edge_sparse_i_dense_o_v0") == 0) {
+        } else if (strcmp(test_name, "blocked_edge_sparse_i_dense_o_vbsize16_ebsize16") == 0) {
                 bfsg_ptr = new BFSBlockedCSRGraph<16,16>(g);
                 active_i_ptr =
                         new BFSBlockedSparseVertexSet<16> (g.num_nodes(), bfs.active());
                 kernel_name += "blocked_edge_sparse_i_dense_o";
-        } else if (strcmp(test_name, "blocked_edge_sparse_i_dense_o_v1") == 0) {
+        } else if (strcmp(test_name, "blocked_edge_sparse_i_dense_o_vbsize16_ebsize32") == 0) {
                 bfsg_ptr = new BFSBlockedCSRGraph<16,32>(g);
                 active_i_ptr =
                         new BFSBlockedSparseVertexSet<16> (g.num_nodes(), bfs.active());
                 kernel_name += "blocked_edge_sparse_i_dense_o";
-        } else if (strcmp(test_name, "blocked_edge_sparse_i_dense_o_v2") == 0) {
+        } else if (strcmp(test_name, "blocked_edge_sparse_i_dense_o_vbsize16_ebsize64") == 0) {
                 bfsg_ptr = new BFSBlockedCSRGraph<16,64>(g);
                 active_i_ptr =
                         new BFSBlockedSparseVertexSet<16> (g.num_nodes(), bfs.active());
                 kernel_name += "blocked_edge_sparse_i_dense_o";
 
-        } else if (strcmp(test_name, "blocked_edge_sparse_i_dense_o_v3") == 0) {
+        } else if (strcmp(test_name, "blocked_edge_sparse_i_dense_o_vbsize32_ebsize64") == 0) {
                 bfsg_ptr = new BFSBlockedCSRGraph<32,64>(g);
                 active_i_ptr =
                         new BFSBlockedSparseVertexSet<32> (g.num_nodes(), bfs.active());
                 kernel_name += "blocked_edge_sparse_i_dense_o";
 
-        } else if (strcmp(test_name, "blocked_edge_sparse_i_dense_o_v4") == 0) {
+        } else if (strcmp(test_name, "blocked_edge_sparse_i_dense_o_vbsize64_ebsize128") == 0) {
                 bfsg_ptr = new BFSBlockedCSRGraph<64,128>(g);
                 active_i_ptr =
                         new BFSBlockedSparseVertexSet<64> (g.num_nodes(), bfs.active());
