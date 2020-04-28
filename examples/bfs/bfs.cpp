@@ -99,11 +99,11 @@ int kernel_run (int argc, char **argv) {
         BFSVertexSet::Ptr active_i_ptr, active_o_ptr, visited_io_ptr;
         std::string kernel_name = "bfs_";
 
-        if (strcmp(test_name, "sparse_i_dense_o_v0") == 0) {
+        if (strcmp(test_name, "sparse_i_dense_o") == 0) {
                 bfsg_ptr = new BFSCSRGraph<int>(g);
                 active_i_ptr = new BFSSparseVertexSet(g.num_nodes(), bfs.active());
                 kernel_name += "sparse_i_dense_o";
-        } else if (strcmp(test_name, "sparse_i_dense_o_v1") == 0) {
+        } else if (strcmp(test_name, "sparse_i_dense_o_precompute_degree_colocated") == 0) {
                 bfsg_ptr = new BFSCSRGraph<node_data_t>(g);
                 active_i_ptr = new BFSSparseVertexSet(g.num_nodes(), bfs.active());
                 kernel_name += "sparse_i_dense_o";

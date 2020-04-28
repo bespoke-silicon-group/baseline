@@ -50,8 +50,8 @@ RISCV_CCPPFLAGS += -DBSG_TILE_GROUP_Y_DIM=$(CL_MANYCORE_DIM_Y)
 ################################################################################
 # Kernel versions. See kernel/README.md for more information.  Version names do
 # not need to use v* and can be any string
-VERSIONS += sparse_i_dense_o_v0
-VERSIONS += sparse_i_dense_o_v1
+VERSIONS += sparse_i_dense_o
+VERSIONS += sparse_i_dense_o_precompute_degree_colocated
 VERSIONS += dense_i_dense_o_v0
 VERSIONS += dense_i_dense_o_v1
 VERSIONS += blocked_sparse_i_dense_o_v0
