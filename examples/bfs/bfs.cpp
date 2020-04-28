@@ -172,12 +172,12 @@ int kernel_run (int argc, char **argv) {
                         new BFSDenseVertexSet (g.num_nodes(), bfs.active());
                 kernel_name += "blocked_edge_dense_i_dense_o";
 
-        } else if (strcmp(test_name, "blocked_dense_i_dense_o_old_v0") == 0
-                   || strcmp(test_name, "blocked_dense_i_dense_o_old_v1") == 0) {
+        } else if (strcmp(test_name, "blocked_dense_i_dense_o_coalesce_dense_o_v0") == 0
+                   || strcmp(test_name, "blocked_dense_i_dense_o_coalesce_dense_o_v1") == 0) {
                 bfsg_ptr = new BFSCSRGraph<node_data_t>(t);
                 active_i_ptr =
                         new BFSDenseVertexSet (g.num_nodes(), bfs.active());
-                kernel_name += "blocked_dense_i_dense_o_old";
+                kernel_name += "blocked_dense_i_dense_o_coalesce_dense_o";
         }
 
         active_o_ptr = new BFSDenseVertexSet(g.num_nodes(), {});

@@ -11,13 +11,13 @@
 #define bsg_tiles_Y BSG_TILE_GROUP_Y_DIM
 #include <bsg_manycore.h>
 #include <bsg_tile_group_barrier.h>
-#include <bfs/blocked_dense_i_dense_o_old.hpp>
+#include <bfs/blocked_dense_i_dense_o_coalesce_dense_o.hpp>
 
 INIT_TILE_GROUP_BARRIER(bfs_r_barrier, bfs_c_barrier,
                         0, bsg_tiles_X-1,
                         0, bsg_tiles_Y-1);
 
-extern "C" int bfs_blocked_dense_i_dense_o_old(int V, int E, const node_data_t *rnodes, const int *redges,
+extern "C" int bfs_blocked_dense_i_dense_o_coalesce_dense_o(int V, int E, const node_data_t *rnodes, const int *redges,
                                            int *dense_i,
                                            int *dense_o,
                                            int *visited_io)
@@ -25,7 +25,7 @@ extern "C" int bfs_blocked_dense_i_dense_o_old(int V, int E, const node_data_t *
     bsg_tile_group_barrier(&bfs_r_barrier, &bfs_c_barrier);
     bsg_cuda_print_stat_kernel_start();
 
-    bfs::bfs_blocked_dense_i_dense_o_old<16>(V, E, rnodes, redges, dense_i, dense_o, visited_io);
+    bfs::bfs_blocked_dense_i_dense_o_coalesce_dense_o<32>(V, E, rnodes, redges, dense_i, dense_o, visited_io);
 
     bsg_tile_group_barrier(&bfs_r_barrier, &bfs_c_barrier);
     bsg_cuda_print_stat_kernel_end();

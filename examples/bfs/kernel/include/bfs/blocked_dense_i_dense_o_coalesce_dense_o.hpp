@@ -11,12 +11,12 @@
 
 namespace bfs {
     template <int BLOCK_SIZE>
-    int bfs_blocked_dense_i_dense_o_old(int V, int E,
-                                        const node_data_t *rnodes,
-                                        const int *redges,
-                                        int *dense_i,
-                                        int *dense_o,
-                                        int *visited_io)
+    int bfs_blocked_dense_i_dense_o_coalesce_dense_o(int V, int E,
+                                                     const node_data_t *rnodes,
+                                                     const int *redges,
+                                                     int *dense_i,
+                                                     int *dense_o,
+                                                     int *visited_io)
     {
         node_data_t lcl_nodes [BLOCK_SIZE];
         int lcl_dense_o       [BLOCK_SIZE];
