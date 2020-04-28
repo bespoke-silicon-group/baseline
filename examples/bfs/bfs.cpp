@@ -166,7 +166,7 @@ int kernel_run (int argc, char **argv) {
                         new BFSDenseVertexSet (g.num_nodes(), bfs.active());
                 kernel_name += "blocked_dense_i_dense_o";
 
-        } else if (strcmp(test_name, "blocked_edge_dense_i_dense_o_v0") == 0) {
+        } else if (strcmp(test_name, "blocked_edge_dense_i_dense_o_vbsize16_ebsize16") == 0) {
                 bfsg_ptr = new BFSBlockedCSRGraph<16,16>(t);
                 active_i_ptr =
                         new BFSDenseVertexSet (g.num_nodes(), bfs.active());

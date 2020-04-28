@@ -65,7 +65,7 @@ VERSIONS += blocked_edge_sparse_i_dense_o_v1
 VERSIONS += blocked_edge_sparse_i_dense_o_v2
 VERSIONS += blocked_dense_i_dense_o_coalesce_dense_o_v0
 VERSIONS += blocked_dense_i_dense_o_coalesce_dense_o_v1
-VERSIONS += blocked_edge_dense_i_dense_o_v0
+VERSIONS += blocked_edge_dense_i_dense_o_vbsize16_ebsize16
 VERSIONS += blocked_edge_sparse_i_dense_o_v3
 VERSIONS += blocked_edge_sparse_i_dense_o_v4
 
