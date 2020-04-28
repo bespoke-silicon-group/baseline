@@ -155,7 +155,8 @@ int kernel_run (int argc, char **argv) {
                         new BFSBlockedSparseVertexSet<16> (g.num_nodes(), bfs.active());
                 kernel_name += "blocked_edge_sparse_i_dense_o";
 
-        } else if (strcmp(test_name, "blocked_edge_sparse_i_dense_o_vbsize32_ebsize64") == 0) {
+        } else if (strcmp(test_name, "blocked_edge_sparse_i_dense_o_vbsize32_ebsize64") == 0 ||
+                   strcmp(test_name, "blocked_edge_sparse_i_dense_o_prefetch_vbsize32_ebsize64") == 0) {
                 bfsg_ptr = new BFSBlockedCSRGraph<32,64>(g);
                 active_i_ptr =
                         new BFSBlockedSparseVertexSet<32> (g.num_nodes(), bfs.active());
