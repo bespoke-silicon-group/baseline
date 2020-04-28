@@ -103,43 +103,52 @@ int kernel_run (int argc, char **argv) {
                 bfsg_ptr = new BFSCSRGraph<int>(g);
                 active_i_ptr = new BFSSparseVertexSet(g.num_nodes(), bfs.active());
                 kernel_name += "sparse_i_dense_o";
+
         } else if (strcmp(test_name, "sparse_i_dense_o_precompute_degree_colocated") == 0) {
                 bfsg_ptr = new BFSCSRGraph<node_data_t>(g);
                 active_i_ptr = new BFSSparseVertexSet(g.num_nodes(), bfs.active());
                 kernel_name += "sparse_i_dense_o";
+
         } else if (strcmp(test_name, "dense_i_dense_o") == 0) {
                 bfsg_ptr = new BFSCSRGraph<int>(t);
                 active_i_ptr = new BFSDenseVertexSet(g.num_nodes(), bfs.active());
                 kernel_name += "dense_i_dense_o";
+
         } else if (strcmp(test_name, "dense_i_dense_o_precompute_degree_colocated") == 0) {
                 bfsg_ptr = new BFSCSRGraph<node_data_t>(t);
                 active_i_ptr = new BFSDenseVertexSet(g.num_nodes(), bfs.active());
                 kernel_name += "dense_i_dense_o";
+
         } else if (strcmp(test_name, "blocked_sparse_i_dense_o_vbsize8") == 0) {
                 bfsg_ptr = new BFSCSRGraph<node_data_t>(g);
                 active_i_ptr =
                         new BFSBlockedSparseVertexSet<8> (g.num_nodes(), bfs.active());
                 kernel_name += "blocked_sparse_i_dense_o";
+
         } else if (strcmp(test_name, "blocked_sparse_i_dense_o_vbsize16") == 0) {
                 bfsg_ptr = new BFSCSRGraph<node_data_t>(g);
                 active_i_ptr =
                         new BFSBlockedSparseVertexSet<16> (g.num_nodes(), bfs.active());
                 kernel_name += "blocked_sparse_i_dense_o";
+
         } else if (strcmp(test_name, "blocked_sparse_i_dense_o_vbsize32") == 0) {
                 bfsg_ptr = new BFSCSRGraph<node_data_t>(g);
                 active_i_ptr =
                         new BFSBlockedSparseVertexSet<32> (g.num_nodes(), bfs.active());
                 kernel_name += "blocked_sparse_i_dense_o";
+
         } else if (strcmp(test_name, "blocked_edge_sparse_i_dense_o_vbsize16_ebsize16") == 0) {
                 bfsg_ptr = new BFSBlockedCSRGraph<16,16>(g);
                 active_i_ptr =
                         new BFSBlockedSparseVertexSet<16> (g.num_nodes(), bfs.active());
                 kernel_name += "blocked_edge_sparse_i_dense_o";
+
         } else if (strcmp(test_name, "blocked_edge_sparse_i_dense_o_vbsize16_ebsize32") == 0) {
                 bfsg_ptr = new BFSBlockedCSRGraph<16,32>(g);
                 active_i_ptr =
                         new BFSBlockedSparseVertexSet<16> (g.num_nodes(), bfs.active());
                 kernel_name += "blocked_edge_sparse_i_dense_o";
+
         } else if (strcmp(test_name, "blocked_edge_sparse_i_dense_o_vbsize16_ebsize64") == 0) {
                 bfsg_ptr = new BFSBlockedCSRGraph<16,64>(g);
                 active_i_ptr =
