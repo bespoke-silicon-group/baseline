@@ -67,6 +67,7 @@ VERSIONS += blocked_edge_sparse_i_dense_o_vbsize32_ebsize64
 VERSIONS += blocked_edge_sparse_i_dense_o_vbsize64_ebsize128
 # top-down: blocking on vertices and edges with prefetching
 VERSIONS += blocked_edge_sparse_i_dense_o_prefetch_vbsize32_ebsize64
+VERSIONS += blocked_edge_sparse_i_dense_o_prefetch_vbsize64_ebsize128
 # bottom-up: baseline
 VERSIONS += dense_i_dense_o
 VERSIONS += dense_i_dense_o_precompute_degree_colocated
