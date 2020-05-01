@@ -1,14 +1,16 @@
 
-#define BSG_TILE_GROUP_X_DIM 4
-#define BSG_TILE_GROUP_Y_DIM 4
+#define BSG_TILE_GROUP_X_DIM 16
+#define BSG_TILE_GROUP_Y_DIM 8
 #define bsg_tiles_X BSG_TILE_GROUP_X_DIM
 #define bsg_tiles_Y BSG_TILE_GROUP_Y_DIM
 #include <bsg_manycore.h>
-#include <bsg_tile_group_barrier.h>
-INIT_TILE_GROUP_BARRIER(r_barrier, c_barrier, 0, bsg_tiles_X-1, 0, bsg_tiles_Y-1);
+#include <bsg_tile_group_barrier.hpp>
+bsg_barrier<bsg_tiles_X, bsg_tiles_Y> barrier;
 
 #include <pr_pull.hpp>
 #include <cstring>
+
+#define DEBUG
 
 #ifdef DEBUG
 #define pr_dbg(fmt, ...)                        \
@@ -17,25 +19,21 @@ INIT_TILE_GROUP_BARRIER(r_barrier, c_barrier, 0, bsg_tiles_X-1, 0, bsg_tiles_Y-1
 #define pr_dbg(fmt, ...)
 #endif
 
-//TODO: get rid of these/use these as params instead of globals
-__attribute__((section(".dram"))) double  * __restrict old_rank;
-__attribute__((section(".dram"))) double  * __restrict new_rank;
-__attribute__((section(".dram"))) int  * __restrict out_degree;
-__attribute__((section(".dram"))) double  * __restrict contrib;
-__attribute__((section(".dram"))) double  * __restrict error;
-__attribute__((section(".dram"))) int  * __restrict generated_tmp_vector_2;
 //keep these:
 __attribute__((section(".dram"))) float damp;
 __attribute__((section(".dram"))) float beta_score;
 
 template <typename APPLY_FUNC > int edgeset_apply_pull_serial(int *in_indices , int *in_neighbors, int * new_rank, int * contrib, APPLY_FUNC apply_func, int V, int E)
 {
-    for ( int d=0; d < V; d++) {
+  int start, end;
+  local_range(V, &start, &end);
+  pr_dbg("serial func %i start: %i end %i \n", bsg_id, start, end);
+  for ( int d=start; d < end; d++) {
     for(int s = in_indices[d]; s < in_indices[d+1]; s++) {
       apply_func( in_neighbors[s], d , new_rank, contrib);
     } //end of loop on in neighbors
   } //end of outer for loop
-  bsg_tile_group_barrier(&r_barrier, &c_barrier);
+  //barrier.sync();
   return 0;
 } //end of edgeset apply function
 
@@ -77,7 +75,7 @@ struct old_rank_generated_vector_op_apply_func_0
 };
 struct computeContrib
 {
-  void operator() (int v, int * old_rank, int * out_degree)
+  void operator() (int v, int * contrib, int * old_rank, int * out_degree)
   {
     contrib[v] = (old_rank[v] / out_degree[v]);
   };
@@ -116,7 +114,7 @@ extern "C" int  __attribute__ ((noinline)) old_rank_generated_vector_op_apply_fu
 	for (int d = start; d < end; d++) {
 	   old_rank_generated_vector_op_apply_func_0()(d, old_rank, E);
 	}
-	bsg_tile_group_barrier(&r_barrier, &c_barrier);
+  barrier.sync();
 	return 0;
 }
 extern "C" int  __attribute__ ((noinline)) new_rank_generated_vector_op_apply_func_1_kernel(int V, int E, int block_size_x) {
@@ -129,7 +127,7 @@ extern "C" int  __attribute__ ((noinline)) new_rank_generated_vector_op_apply_fu
 			break;
 		}
 	}
-	bsg_tile_group_barrier(&r_barrier, &c_barrier);
+  barrier.sync();
 	return 0;
 }
 extern "C" int  __attribute__ ((noinline)) generated_vector_op_apply_func_3_kernel(int V, int E, int block_size_x) {
@@ -142,7 +140,7 @@ extern "C" int  __attribute__ ((noinline)) generated_vector_op_apply_func_3_kern
 			break;
 		}
 	}
-	bsg_tile_group_barrier(&r_barrier, &c_barrier);
+  barrier.sync();
 	return 0;
 }
 extern "C" int  __attribute__ ((noinline)) contrib_generated_vector_op_apply_func_4_kernel(int V, int E, int block_size_x) {
@@ -155,7 +153,7 @@ extern "C" int  __attribute__ ((noinline)) contrib_generated_vector_op_apply_fun
 			break;
 		}
 	}
-	bsg_tile_group_barrier(&r_barrier, &c_barrier);
+  barrier.sync();
 	return 0;
 }
 extern "C" int  __attribute__ ((noinline)) error_generated_vector_op_apply_func_5_kernel(int V, int E, int block_size_x) {
@@ -168,7 +166,7 @@ extern "C" int  __attribute__ ((noinline)) error_generated_vector_op_apply_func_
 			break;
 		}
 	}
-	bsg_tile_group_barrier(&r_barrier, &c_barrier);
+  barrier.sync();
 	return 0;
 }
 extern "C" int  __attribute__ ((noinline)) reset_kernel(int V, int E, int block_size_x) {
@@ -181,28 +179,38 @@ extern "C" int  __attribute__ ((noinline)) reset_kernel(int V, int E, int block_
 			break;
 		}
 	}
-	bsg_tile_group_barrier(&r_barrier, &c_barrier);
+  barrier.sync();
 	return 0;
 }
-extern "C" int  __attribute__ ((noinline)) computeContrib_kernel(int * old_rank, int * out_degree, int V) {
+extern "C" int  __attribute__ ((noinline)) computeContrib_kernel(int * contrib, int * old_rank, int * out_degree, int V) {
+  bsg_cuda_print_stat_start(2);
   int start, end;
   local_range(V, &start, &end);
+  pr_dbg("compute contrib start: %i, end: %i, id: %i\n", start, end, bsg_id);
 	for (int d = start; d < end; d++) {
-		computeContrib()(d, old_rank, out_degree);
+		computeContrib()(d, contrib, old_rank, out_degree);
 	}
-	bsg_tile_group_barrier(&r_barrier, &c_barrier);
+  bsg_cuda_print_stat_end(2);
+  barrier.sync();
 	return 0;
 }
 extern "C" int __attribute__ ((noinline)) edgeset_apply_pull_serial_call(int *out_indices, int *out_neighbors, int * new_rank, int * contrib, int V, int E) {
+  barrier.sync();
+  bsg_cuda_print_stat_start(3);
 	edgeset_apply_pull_serial(out_indices, out_neighbors, new_rank, contrib, updateEdge(), V, E);
+  bsg_cuda_print_stat_end(3);
+  barrier.sync();
 	return 0;
 }
 extern "C" int  __attribute__ ((noinline)) updateVertex_kernel(int * old_rank, int *new_rank, int * error, int V, int E) {
+  bsg_cuda_print_stat_start(1);
   int start, end;
   local_range(V, &start, &end);
+  pr_dbg("update vertex start: %i, end: %i, id: %i\n", start, end, bsg_id);
 	for (int d = start; d < end; d++) {
 			updateVertex()(d, old_rank, new_rank, error);
 	}
-	bsg_tile_group_barrier(&r_barrier, &c_barrier);
+  bsg_cuda_print_stat_end(1);
+  barrier.sync();
 	return 0;
 }
