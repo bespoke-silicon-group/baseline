@@ -93,7 +93,7 @@ int kernel_run (int argc, char **argv) {
         }
 
         int traversed  = 0;
-        Graph::NodeID root = g.node_with_max_degree();
+        Graph::NodeID root = g.node_with_avg_degree();
 
         bfs.run(root, iteration+1, forward);
         // get the correct answer
