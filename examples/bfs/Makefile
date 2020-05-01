@@ -52,35 +52,58 @@ RISCV_CCPPFLAGS += -DBSG_TILE_GROUP_Y_DIM=$(CL_MANYCORE_DIM_Y)
 # not need to use v* and can be any string
 
 # top-down: baseline
-VERSIONS += sparse_i_dense_o
-VERSIONS += sparse_i_dense_o_precompute_degree_colocated
-VERSIONS += sparse_i_dense_o_rmw_coalesce
+BASE_VERSIONS += sparse_i_dense_o
+BASE_VERSIONS += sparse_i_dense_o_precompute_degree_colocated
+BASE_VERSIONS += sparse_i_dense_o_rmw_coalesce
 # top-down: blocking on vertices
-VERSIONS += blocked_sparse_i_dense_o_vbsize8
-VERSIONS += blocked_sparse_i_dense_o_vbsize16
-VERSIONS += blocked_sparse_i_dense_o_vbsize32
+BASE_VERSIONS += blocked_sparse_i_dense_o_vbsize8
+BASE_VERSIONS += blocked_sparse_i_dense_o_vbsize16
+BASE_VERSIONS += blocked_sparse_i_dense_o_vbsize32
 # top-down: blocking on vertices and edges
-VERSIONS += blocked_edge_sparse_i_dense_o_vbsize16_ebsize16
-VERSIONS += blocked_edge_sparse_i_dense_o_vbsize16_ebsize32
-VERSIONS += blocked_edge_sparse_i_dense_o_vbsize16_ebsize64
-VERSIONS += blocked_edge_sparse_i_dense_o_vbsize32_ebsize64
-VERSIONS += blocked_edge_sparse_i_dense_o_vbsize64_ebsize128
+BASE_VERSIONS += blocked_edge_sparse_i_dense_o_vbsize16_ebsize16
+BASE_VERSIONS += blocked_edge_sparse_i_dense_o_vbsize16_ebsize32
+BASE_VERSIONS += blocked_edge_sparse_i_dense_o_vbsize16_ebsize64
+BASE_VERSIONS += blocked_edge_sparse_i_dense_o_vbsize32_ebsize64
+BASE_VERSIONS += blocked_edge_sparse_i_dense_o_vbsize64_ebsize128
 # top-down: blocking on vertices and edges with prefetching
-VERSIONS += blocked_edge_sparse_i_dense_o_prefetch_vbsize32_ebsize64
-VERSIONS += blocked_edge_sparse_i_dense_o_prefetch_vbsize64_ebsize128
+BASE_VERSIONS += blocked_edge_sparse_i_dense_o_prefetch_vbsize32_ebsize64
+BASE_VERSIONS += blocked_edge_sparse_i_dense_o_prefetch_vbsize64_ebsize128
+BASE_VERSIONS += blocked_edge_sparse_i_dense_o_prefetch_rmw_coalesce_vbsize32_ebsize32_rmwbsize32
+
 # bottom-up: baseline
-VERSIONS += dense_i_dense_o
-VERSIONS += dense_i_dense_o_precompute_degree_colocated
+BASE_VERSIONS += dense_i_dense_o
+BASE_VERSIONS += dense_i_dense_o_precompute_degree_colocated
 # bottom-up: blocking on vertices
-VERSIONS += blocked_dense_i_dense_o_vbsize16
-VERSIONS += blocked_dense_i_dense_o_vbsize32
-VERSIONS += blocked_dense_i_dense_o_vbsize64
+BASE_VERSIONS += blocked_dense_i_dense_o_vbsize16
+BASE_VERSIONS += blocked_dense_i_dense_o_vbsize32
+BASE_VERSIONS += blocked_dense_i_dense_o_vbsize64
 # bottom-up: blocking on vertices, coalesce updates to visited
-VERSIONS += blocked_dense_i_dense_o_coalesce_dense_o_vbsize16
-VERSIONS += blocked_dense_i_dense_o_coalesce_dense_o_vbsize32
+BASE_VERSIONS += blocked_dense_i_dense_o_coalesce_dense_o_vbsize16
+BASE_VERSIONS += blocked_dense_i_dense_o_coalesce_dense_o_vbsize32
 # bottom-up: blocking on vertices and edges
-VERSIONS += blocked_edge_dense_i_dense_o_vbsize16_ebsize16
-VERSIONS += blocked_edge_sparse_i_dense_o_prefetch_rmw_coalesce_vbsize32_ebsize32_rmwbsize32
+BASE_VERSIONS += blocked_edge_dense_i_dense_o_vbsize16_ebsize16
+
+ITERATIONS := 0 1 2
+
+# create the versions from the iterations
+v-from-basev-and-iter = $1-iteration-$2
+basev-from-v          = $(word 1,$(subst -iteration-, ,$1))
+iter-from-v           = $(word 2,$(subst -iteration-, ,$1))
+
+VERSIONS := $(foreach i,$(ITERATIONS),$(foreach v,$(BASE_VERSIONS),\
+	$(call v-from-basev-and-iter,$v,$i)))
+
+VERSION-DIRS := $(foreach v,$(VERSIONS),kernel/$v)
+
+.PHONY: $(VERSION-DIRS)
+$(VERSION-DIRS):
+	cp -r $(call basev-from-v,$@) $@
+
+.PHONY: versions bleach-versions
+versions: $(VERSION-DIRS)
+bleach-versions:
+	rm -rf $(VERSION-DIRS)
+>>>>>>> adds support for running same kernel, different iterations, in parallel
 
 ################################################################################
 # Define any sources that should be used compiled during kernel compilation,

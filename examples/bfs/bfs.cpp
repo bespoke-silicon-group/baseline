@@ -58,7 +58,20 @@ int kernel_run (int argc, char **argv) {
         bin_path = args.path;
         test_name = args.name;
 
+        char *iter_s;
+        int iteration = 0;
+
+        for (char *c = &test_name[0]; *c != 0; ++c) {
+            if (*c == '-') {
+                *c = 0;
+                iter_s = c + 1 + strlen("iteration-");
+                iteration = atoi(iter_s);
+                break;
+            }
+        }
+
         std::cout << "test_name = " << std::string(test_name) << std::endl;
+        std::cout << "iteration = " iteration << std::endl;
 
         // the app
         BFSApp app(args.path);
@@ -80,16 +93,16 @@ int kernel_run (int argc, char **argv) {
         }
 
         int traversed  = 0;
-        int iterations = 1; // test on the second iteration
+        Graph::NodeID root = g.node_with_max_degree();
 
-        bfs.run(g.node_with_max_degree(), iterations+1, forward);
+        bfs.run(root, iteration+1, forward);
         // get the correct answer
         visited_correct = bfs.visited();
         active_o_correct = bfs.active();
 
         // we diff the number of traversed edges to count teps for one iteration
         traversed = static_cast<int>(bfs.traversed());
-        bfs.run(g.node_with_max_degree(), iterations, forward);
+        bfs.run(root, iteration, forward);
         traversed -= static_cast<int>(bfs.traversed());
 
         std::cout << "traversing " << traversed << " edges" << std::endl;
