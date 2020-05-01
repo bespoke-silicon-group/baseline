@@ -71,7 +71,7 @@ int kernel_run (int argc, char **argv) {
         }
 
         std::cout << "test_name = " << std::string(test_name) << std::endl;
-        std::cout << "iteration = " iteration << std::endl;
+        std::cout << "iteration = " << iteration << std::endl;
 
         // the app
         BFSApp app(args.path);
