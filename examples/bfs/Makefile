@@ -54,6 +54,7 @@ RISCV_CCPPFLAGS += -DBSG_TILE_GROUP_Y_DIM=$(CL_MANYCORE_DIM_Y)
 # top-down: baseline
 VERSIONS += sparse_i_dense_o
 VERSIONS += sparse_i_dense_o_precompute_degree_colocated
+VERSIONS += sparse_i_dense_o_rmw_coalesce
 # top-down: blocking on vertices
 VERSIONS += blocked_sparse_i_dense_o_vbsize8
 VERSIONS += blocked_sparse_i_dense_o_vbsize16
