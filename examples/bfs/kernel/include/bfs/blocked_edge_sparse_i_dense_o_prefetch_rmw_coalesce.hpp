@@ -19,10 +19,10 @@ namespace bfs {
         int v;
     } rmw_t;
 
-    int bfs_sido_rmw(rmw_t *__restrict rmw,
-                     int rmw_n,
-                     int *__restrict dense_o,
-                     int *__restrict visited_io)
+    static int bfs_sido_rmw(rmw_t *__restrict rmw,
+                            int rmw_n,
+                            int *__restrict dense_o,
+                            int *__restrict visited_io)
     {
         // r
         for (int rmw_i = 0; rmw_i < rmw_n; rmw_i+=4) {
@@ -73,12 +73,12 @@ namespace bfs {
     }
 
     template <int BLOCK_SIZE, int EDGE_BLOCK_SIZE, int RMW_BLOCK_SIZE>
-    int bfs_blocked_edge_sparse_i_dense_o_prefetch_rmw_coalesce(int V, int E,
-                                                                const node_data_t *nodes,
-                                                                const int *edges,
-                                                                int *blocked_sparse_i,
-                                                                int *dense_o,
-                                                                int *visited_io)
+    static int bfs_blocked_edge_sparse_i_dense_o_prefetch_rmw_coalesce(int V, int E,
+                                                                       const node_data_t *nodes,
+                                                                       const int *edges,
+                                                                       int *blocked_sparse_i,
+                                                                       int *dense_o,
+                                                                       int *visited_io)
     {
         node_data_t lcl_nodes [BLOCK_SIZE];
         int lcl_sparse_i      [BLOCK_SIZE];
