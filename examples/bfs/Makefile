@@ -79,6 +79,7 @@ VERSIONS += blocked_dense_i_dense_o_coalesce_dense_o_vbsize16
 VERSIONS += blocked_dense_i_dense_o_coalesce_dense_o_vbsize32
 # bottom-up: blocking on vertices and edges
 VERSIONS += blocked_edge_dense_i_dense_o_vbsize16_ebsize16
+VERSIONS += blocked_edge_sparse_i_dense_o_prefetch_rmw_coalesce_vbsize32_ebsize32_rmwbsize32
 
 ################################################################################
 # Define any sources that should be used compiled during kernel compilation,

@@ -9,7 +9,7 @@ extern "C" int bfs_blocked_edge_sparse_i_dense_o(int V, int E,
                                                  int *visited_io)
 {
     bfs_kernel_prologue();
-    bfs::bfs_blocked_edge_sparse_i_dense_o_prefetch_rmw_coalesce<32, 64>
+    bfs::bfs_blocked_edge_sparse_i_dense_o_prefetch_rmw_coalesce<32, 32, 32>
         (V, E, nodes, edges, // graph data
          blocked_sparse_i, // frontier
          dense_o, // output frontier

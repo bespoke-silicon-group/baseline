@@ -14,42 +14,65 @@
 // might want to make a blocked array class
 namespace bfs {
 
-    template <int EDGE_BLOCK_SIZE>
-    static
-    void bfs_besido_rmw_read(
-        const int *lcl_edges,
-        const int *visited_io,
-        int *lcl_visited
-        )
-    {
-        for (int dst_lcl = 0; dst_lcl < EDGE_BLOCK_SIZE; ++dst_lcl) {
-            int dst = lcl_edges[dst_lcl];
-            lcl_visited[dst_lcl] = visited_io[dst];
-        }
-    }
+    typedef struct rmw {
+        int dst;
+        int v;
+    } rmw_t;
 
-    template <int EDGE_BLOCK_SIZE>
-    static
-    void bfs_besido_rmw_modify_write(
-        const int *lcl_edges,
-        const int *lcl_visited,
-        int *visited_io,
-        int *dense_o
-        )
+    int bfs_sido_rmw(rmw_t *__restrict rmw,
+                     int rmw_n,
+                     int *__restrict dense_o,
+                     int *__restrict visited_io)
     {
-        for (int dst_lcl = 0; dst_lcl < EDGE_BLOCK_SIZE; ++dst_lcl) {
-            int dst     = lcl_edges[dst_lcl];
-            int visited = lcl_visited[dst_lcl];
-            // skip if visited
-            // or if the edge is untraversed
-            if (visited == 0) {
+        // r
+        for (int rmw_i = 0; rmw_i < rmw_n; rmw_i+=4) {
+            int dst_0 = rmw[rmw_i+0].dst;
+            int dst_1 = rmw[rmw_i+1].dst;
+            int dst_2 = rmw[rmw_i+2].dst;
+            int dst_3 = rmw[rmw_i+3].dst;
+
+            asm volatile ( "" ::: "memory");
+
+            int v_0, v_1, v_2, v_3;
+            v_0 = visited_io[dst_0];
+            if (rmw_i+1 < rmw_n) {
+                v_1 = visited_io[dst_1];
+                if (rmw_i+2 < rmw_n) {
+                    v_2 = visited_io[dst_2];
+                    if (rmw_i+3 < rmw_n) {
+                        v_3 = visited_io[dst_3];
+                    }
+                }
+            }
+
+            asm volatile ("" ::: "memory");
+
+            rmw[rmw_i+0].v = v_0;
+            if (rmw_i+1 < rmw_n) {
+                rmw[rmw_i+1].v = v_1;
+                if (rmw_i+2 < rmw_n) {
+                    rmw[rmw_i+2].v = v_2;
+                    if (rmw_i+3 < rmw_n) {
+                        rmw[rmw_i+3].v = v_3;
+                    }
+                }
+            }
+        }
+
+        // mw
+        for (int rmw_i = 0; rmw_i < rmw_n; rmw_i+=1) {
+            int dst = rmw[rmw_i].dst;
+            int v   = rmw[rmw_i].v;
+            if (v == 0) {
                 visited_io[dst] = 1;
                 dense_o[dst]    = 1;
             }
         }
+
+        return 0;
     }
 
-    template <int BLOCK_SIZE, int EDGE_BLOCK_SIZE>
+    template <int BLOCK_SIZE, int EDGE_BLOCK_SIZE, int RMW_BLOCK_SIZE>
     int bfs_blocked_edge_sparse_i_dense_o_prefetch_rmw_coalesce(int V, int E,
                                                                 const node_data_t *nodes,
                                                                 const int *edges,
@@ -60,7 +83,8 @@ namespace bfs {
         node_data_t lcl_nodes [BLOCK_SIZE];
         int lcl_sparse_i      [BLOCK_SIZE];
         int lcl_edges    [EDGE_BLOCK_SIZE];
-        int lcl_visited  [EDGE_BLOCK_SIZE];
+        rmw_t rmw         [RMW_BLOCK_SIZE];
+        int   rmw_n = 0;
 
         int blk_src_n = V/BLOCK_SIZE + (V%BLOCK_SIZE == 0 ? 0 : 1);
 
@@ -102,8 +126,6 @@ namespace bfs {
                                                           &edges[blk_edge_base],
                                                           sizeof(lcl_edges));
 
-            bfs_besido_rmw_read<EDGE_BLOCK_SIZE>(lcl_edges, visited_io, lcl_visited);
-
             for (int src_i = 0; src_i < BLOCK_SIZE; src_i++) {
                 int src = lcl_sparse_i[src_i];
                 pr_dbg("src = %d\n", src);
@@ -135,26 +157,26 @@ namespace bfs {
                         // load in data
                         hammerblade::vanilla::load_multistride<EDGE_BLOCK_SIZE>
                             (&lcl_edges[0], &edges[blk_edge_base]);
-
-                        // clear the lcl visited array
-                        bfs_besido_rmw_read<EDGE_BLOCK_SIZE>
-                            (lcl_edges, visited_io, lcl_visited);
-
                     }
 
                     // proceed with update
                     int dst = lcl_edges[dst_lcl];
                     pr_dbg("traversing (%d,%d)\n", src, dst);
 
-                    if (lcl_visited[dst_lcl] == 1)
-                        continue;
+                    // coalesce RMWs
+                    rmw[rmw_n++].dst = lcl_edges[dst_lcl];
 
-                    visited_io[dst] = 1;
-                    dense_o[dst]    = 1;
+                    // do perform RMWs if we have enough of them
+                    if (rmw_n == RMW_BLOCK_SIZE) {
+                        bfs_sido_rmw(rmw, rmw_n, dense_o, visited_io);
+                        rmw_n = 0;
+                    }
                 }
             }
-
         }
+
+        // flush remaining RMWs
+        bfs_sido_rmw(rmw, rmw_n, dense_o, visited_io);
 
         return 0;
     }
