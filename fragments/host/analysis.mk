@@ -33,6 +33,7 @@ _REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 ################################################################################
 # Analysis rules 
 ################################################################################
+_MISSING_VCACHE_TRACE_STRING := "Warning: vcache operation trace not found, skipping vcache stall graph generation."
 _HELP_STRING := "Rules from analysis.mk\n"
 _HELP_STRING += "    kernel.dis | kernel/<version>/kernel.dis :\n"
 _HELP_STRING += "        - Disassemble RISC-V binary of the [default | <version>] kernel\n"
@@ -62,10 +63,14 @@ blood_abstract.png: vanilla_operation_trace.csv vanilla_stats.csv
 	python3 $(BSG_MANYCORE_DIR)/software/py/blood_graph.py --trace vanilla_operation_trace.csv --stats vanilla_stats.csv --generate-key --abstract
 
 vcache_stall_detailed.png: vcache_operation_trace.csv vcache_stats.csv
-	python3 $(BSG_MANYCORE_DIR)/software/py/vcache_stall_graph.py --trace vcache_operation_trace.csv --stats vcache_stats.csv --generate-key
+	( test -s vcache_operation_trace.csv && \
+	python3 $(BSG_MANYCORE_DIR)/software/py/vcache_stall_graph.py --trace vcache_operation_trace.csv --stats vcache_stats.csv --generate-key ) || \
+	{ echo $(_MISSING_VCACHE_TRACE_STRING); exit 0; }
 
 vcache_stall_abstract.png: vcache_operation_trace.csv vcache_stats.csv
-	python3 $(BSG_MANYCORE_DIR)/software/py/vcache_stall_graph.py --trace vcache_operation_trace.csv --stats vcache_stats.csv --generate-key --abstract
+	( test -s vcache_operation_trace.csv && \
+	python3 $(BSG_MANYCORE_DIR)/software/py/vcache_stall_graph.py --trace vcache_operation_trace.csv --stats vcache_stats.csv --generate-key --abstract ) || \
+	{ echo $(_MISSING_VCACHE_TRACE_STRING); exit 0; }
 
 
 %/blood_detailed.png: %/vanilla_operation_trace.csv %/vanilla_stats.csv
@@ -75,10 +80,14 @@ vcache_stall_abstract.png: vcache_operation_trace.csv vcache_stats.csv
 	cd $(dir $<) &&  python3 $(BSG_MANYCORE_DIR)/software/py/blood_graph.py --trace vanilla_operation_trace.csv --stats vanilla_stats.csv --generate-key --abstract
 
 %/vcache_stall_detailed.png: %/vcache_operation_trace.csv %/vcache_stats.csv
-	cd $(dir $<) &&  python3 $(BSG_MANYCORE_DIR)/software/py/vcache_stall_graph.py --trace vcache_operation_trace.csv --stats vcache_stats.csv --generate-key
+	( cd $(dir $<) && test -s vcache_operation_trace.csv && \
+	python3 $(BSG_MANYCORE_DIR)/software/py/vcache_stall_graph.py --trace vcache_operation_trace.csv --stats vcache_stats.csv --generate-key ) || \
+	{ echo $(_MISSING_VCACHE_TRACE_STRING); exit 0; }
 
 %/vcache_stall_abstract.png: %/vcache_operation_trace.csv %/vcache_stats.csv
-	cd $(dir $<) &&  python3 $(BSG_MANYCORE_DIR)/software/py/vcache_stall_graph.py --trace vcache_operation_trace.csv --stats vcache_stats.csv --generate-key --abstract
+	( cd $(dir $<) && test -s vcache_operation_trace.csv && \
+	python3 $(BSG_MANYCORE_DIR)/software/py/vcache_stall_graph.py --trace vcache_operation_trace.csv --stats vcache_stats.csv --generate-key --abstract ) || \
+	{ echo $(_MISSING_VCACHE_TRACE_STRING); exit 0; }
 
 
 _HELP_STRING += "    pc_stats | kernel/<version>/pc_stats :\n"
@@ -93,12 +102,14 @@ pc_stats: vanilla_operation_trace.csv
 
 analysis.clean:
 	rm -rf vanilla_stats.csv vanilla_operation_trace.csv
+	rm -rf vcache_stats.csv vcache_operation_trace.csv
 	rm -rf vanilla.log vcache_non_blocking_stats.log vcache_blocking_stats.log
 	rm -rf *.dis
 	rm -rf stats pc_stats
 	rm -rf blood_abstract.png blood_detailed.png
-	rm -rf vcache_stall_abstract.png vcache_stall_detailed.png
 	rm -rf key_abstract.png key_detailed.png
+	rm -rf vcache_stall_abstract.png vcache_stall_detailed.png
+	rm -rf vcache_key_abstract.png vcachekey_detailed.png
 
 .PRECIOUS: %.png %/blood_detailed.png %/blood_abstract.png %/vcache_stall_abstract.png %/vcache_stall_detailed.png
 
