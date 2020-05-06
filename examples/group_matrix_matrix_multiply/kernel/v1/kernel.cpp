@@ -1,20 +1,24 @@
 /*
- * This kernel performs matrix multiplication.
- *
+ * Blocked matrix-matrix multiplication using tile group
+ * shared memory.
  */
 
-// TG_DIM_X and TG_DIM_Y must be defined
-// before bsg_manycore.h and bsg_tile_group_barrier.h are
-// included. bsg_tiles_X and bsg_tiles_Y must also be defined for
-// legacy reasons, but they are deprecated.
-#define bsg_tiles_X 4
-#define bsg_tiles_Y 4
+
+// Template parameters
+// We use this parameters to call the templatized kernel
+// from the C-level kernel. bsg_tiles_X/Y must also be defined
+// for legacy reasons, but they are deprecated.
+#define TEMPLATE_TG_DIM_X 4
+#define TEMPLATE_TG_DIM_Y 4
+#define bsg_tiles_X TEMPLATE_TG_DIM_X
+#define bsg_tiles_Y TEMPLATE_TG_DIM_Y
+
+
 #include <bsg_manycore.h>
 #include <bsg_tile_group_barrier.hpp>
 #include <cstdint>
 #include <matrix_multiply.hpp>
 
-#define BLOCK_WIDTH 4
 
 // I <3 Hacks! Since bsg_manycore_arch.h can't handle the awesomeness
 // of C++ templates I wrote this temporary replacement.
@@ -30,6 +34,13 @@
             )                                                           \
                                                            )
 #endif
+
+
+
+
+
+
+#define BLOCK_WIDTH 4
 
 bsg_barrier<bsg_tiles_X, bsg_tiles_Y> barrier;
 
@@ -150,9 +161,11 @@ extern "C" {
                 int rc;
 
                 bsg_cuda_print_stat_kernel_start();
-                rc = matrix_multiply_group_shared_mem<bsg_tiles_X, bsg_tiles_Y> (A, B, C,
-                                                                                 A_HEIGHT, A_WIDTH, B_WIDTH,
-                                                                                 block_size_y, block_size_x);
+                rc = matrix_multiply_group_shared_mem<TEMPLATE_TG_DIM_X, \
+                                                       TEMPLATE_TG_DIM_Y > 
+                                                         (A, B, C,
+                                                          A_HEIGHT, A_WIDTH, B_WIDTH,
+                                                          block_size_y, block_size_x);
 
                 barrier.sync();
 
