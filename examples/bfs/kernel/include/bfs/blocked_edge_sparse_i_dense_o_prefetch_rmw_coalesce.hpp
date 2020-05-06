@@ -25,15 +25,19 @@ namespace bfs {
                             int *__restrict visited_io)
     {
         // r
-        for (int rmw_i = 0; rmw_i < rmw_n; rmw_i+=4) {
+        for (int rmw_i = 0; rmw_i < rmw_n; rmw_i+=6) {
             int dst_0 = rmw[rmw_i+0].dst;
             int dst_1 = rmw[rmw_i+1].dst;
             int dst_2 = rmw[rmw_i+2].dst;
             int dst_3 = rmw[rmw_i+3].dst;
+            int dst_4 = rmw[rmw_i+4].dst;
+            int dst_5 = rmw[rmw_i+5].dst;
 
             asm volatile ( "" ::: "memory");
 
             int v_0, v_1, v_2, v_3;
+            int v_4, v_5, v_6, v_7;
+
             v_0 = visited_io[dst_0];
             if (rmw_i+1 < rmw_n) {
                 v_1 = visited_io[dst_1];
@@ -41,6 +45,12 @@ namespace bfs {
                     v_2 = visited_io[dst_2];
                     if (rmw_i+3 < rmw_n) {
                         v_3 = visited_io[dst_3];
+                        if (rmw_i+4 < rmw_n) {
+                            v_4 = visited_io[dst_4];
+                            if (rmw_i+5 < rmw_n) {
+                                v_5 = visited_io[dst_5];
+                            }
+                        }
                     }
                 }
             }
@@ -54,6 +64,12 @@ namespace bfs {
                     rmw[rmw_i+2].v = v_2;
                     if (rmw_i+3 < rmw_n) {
                         rmw[rmw_i+3].v = v_3;
+                        if (rmw_i+4 < rmw_n) {
+                            rmw[rmw_i+4].v = v_4;
+                            if (rmw_i+5 < rmw_n) {
+                                rmw[rmw_i+5].v = v_5;
+                            }
+                        }
                     }
                 }
             }
