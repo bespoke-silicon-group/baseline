@@ -1,6 +1,7 @@
 /*
  * Blocked matrix-matrix multiplication using tile group
  * shared memory.
+ * Templatized block_size_x/y, i.e. the workload of each tile group.
  */
 
 
@@ -10,6 +11,8 @@
 // for legacy reasons, but they are deprecated.
 #define TEMPLATE_TG_DIM_X 4
 #define TEMPLATE_TG_DIM_Y 4
+#define TEMPLATE_BLOCK_SIZE_X 4
+#define TEMPLATE_BLOCK_SIZE_Y 4
 #define bsg_tiles_X TEMPLATE_TG_DIM_X
 #define bsg_tiles_Y TEMPLATE_TG_DIM_Y
 
@@ -123,32 +126,31 @@ void __attribute__ ((noinline)) subblock_shmem_matrix_mul_transposed (TA *A, TB 
 	return;
 }
 
-template <int TG_DIM_X, int TG_DIM_Y, typename TA, typename TB, typename TC>
+template <int TG_DIM_X, int TG_DIM_Y, int BLOCK_SIZE_X, int BLOCK_SIZE_Y, typename TA, typename TB, typename TC>
 int __attribute__ ((noinline)) matrix_multiply_group_shared_mem(TA *A, TB *B, TC *C, 
-                                                                 uint32_t M, uint32_t N, uint32_t P, 
-                                                                 uint32_t block_size_y, uint32_t block_size_x) {
+                                                                 uint32_t M, uint32_t N, uint32_t P) { 
 
 	// declare tile-group shared memory
-	bsg_tile_group_shared_mem (TA, sh_A, (block_size_y * BLOCK_WIDTH));
-	bsg_tile_group_shared_mem (TA, sh_B, (BLOCK_WIDTH * block_size_x));
-	bsg_tile_group_shared_mem (TA, sh_C, (block_size_y * block_size_x));
+	bsg_tile_group_shared_mem (TA, sh_A, (BLOCK_SIZE_Y * BLOCK_WIDTH));
+	bsg_tile_group_shared_mem (TA, sh_B, (BLOCK_WIDTH * BLOCK_SIZE_X));
+	bsg_tile_group_shared_mem (TA, sh_C, (BLOCK_SIZE_Y * BLOCK_SIZE_X));
 
 	uint32_t num_blocks = N / BLOCK_WIDTH;	// *** Must divide evenly ***
 
 	for (uint32_t block_num = 0; block_num < num_blocks; block_num ++) { 
 
-		memcpy_block_to_shmem<TG_DIM_X, TG_DIM_Y> (A, sh_A, M, N, block_size_y, BLOCK_WIDTH, __bsg_tile_group_id_y, block_num);
+		memcpy_block_to_shmem<TG_DIM_X, TG_DIM_Y> (A, sh_A, M, N, BLOCK_SIZE_Y, BLOCK_WIDTH, __bsg_tile_group_id_y, block_num);
  
-		memcpy_block_to_shmem_transposed<TG_DIM_X, TG_DIM_Y> (B, sh_B, N, P, BLOCK_WIDTH, block_size_x, block_num, __bsg_tile_group_id_x);
+		memcpy_block_to_shmem_transposed<TG_DIM_X, TG_DIM_Y> (B, sh_B, N, P, BLOCK_WIDTH, BLOCK_SIZE_X, block_num, __bsg_tile_group_id_x);
 
                 barrier.sync();
 		
-		subblock_shmem_matrix_mul_transposed<TG_DIM_X, TG_DIM_Y> (sh_A, sh_B, sh_C, M, N, P, block_size_y, block_size_x, block_num);
+		subblock_shmem_matrix_mul_transposed<TG_DIM_X, TG_DIM_Y> (sh_A, sh_B, sh_C, M, N, P, BLOCK_SIZE_Y, BLOCK_SIZE_X, block_num);
 		
                 barrier.sync();
 	}
 
-	memcpy_shmem_to_block<TG_DIM_X, TG_DIM_Y> (C, sh_C, M, P, block_size_y, block_size_x, __bsg_tile_group_id_y, __bsg_tile_group_id_x); 
+	memcpy_shmem_to_block<TG_DIM_X, TG_DIM_Y> (C, sh_C, M, P, BLOCK_SIZE_Y, BLOCK_SIZE_X, __bsg_tile_group_id_y, __bsg_tile_group_id_x); 
 
 	return 0;
 }
@@ -161,11 +163,12 @@ extern "C" {
                 int rc;
 
                 bsg_cuda_print_stat_kernel_start();
-                rc = matrix_multiply_group_shared_mem<TEMPLATE_TG_DIM_X, \
-                                                       TEMPLATE_TG_DIM_Y > 
+                rc = matrix_multiply_group_shared_mem<TEMPLATE_TG_DIM_X,     \
+                                                      TEMPLATE_TG_DIM_Y,     \
+                                                      TEMPLATE_BLOCK_SIZE_X, \
+                                                      TEMPLATE_BLOCK_SIZE_Y > 
                                                          (A, B, C,
-                                                          A_HEIGHT, A_WIDTH, B_WIDTH,
-                                                          block_size_y, block_size_x);
+                                                          A_HEIGHT, A_WIDTH, B_WIDTH);
 
                 barrier.sync();
                 bsg_cuda_print_stat_kernel_end();
