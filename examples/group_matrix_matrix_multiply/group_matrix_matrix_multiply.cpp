@@ -33,13 +33,13 @@
  */
 
 // Matrix sizes:
-#define A_HEIGHT 32
-#define A_WIDTH  64
+#define A_HEIGHT 4        // M
+#define A_WIDTH  4        // N
 #define B_HEIGHT A_WIDTH
-#define B_WIDTH  16
+#define B_WIDTH  4        // P
 #define C_HEIGHT A_HEIGHT
 #define C_WIDTH  B_WIDTH
-#define NUM_ITER 4
+#define NUM_ITER 1
 
 // Host Matrix multiplication code (to compare results)
 template <typename TA, typename TB, typename TC>
@@ -105,9 +105,9 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
         uint32_t block_size_y = 0;
         hb_mc_dimension_t tg_dim = { .x = 0, .y = 0 };
         if(!strcmp("v0", test_name) || !strcmp("v1", test_name)){
-                block_size_x = 4;
-                block_size_y = 4;
-                tg_dim = { .x = 2, .y = 2 };
+                block_size_x = C_WIDTH;
+                block_size_y = C_HEIGHT;
+                tg_dim = { .x = 4, .y = 4 };
         } else {
                 bsg_pr_test_err("Invalid version provided!.\n");
                 return HB_MC_INVALID;
@@ -156,7 +156,7 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
 
         // Initialize device, load binary and unfreeze tiles.
         hb_mc_device_t device;
-        rc = hb_mc_device_init(&device, test_name, 0);
+        rc = hb_mc_device_init_custom_dimensions(&device, test_name, 0, tg_dim);
         if (rc != HB_MC_SUCCESS) {
                 bsg_pr_test_err("failed to initialize device.\n");
                 return rc;

@@ -39,7 +39,7 @@ CURRENT_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 # is set in environment.mk) uses the same machine as in bsg_replicant.
 ################################################################################
 
-BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/timing_v0_8_4
+BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/4x4_fast_n_fake
 
 ################################################################################
 # Define the range of versions

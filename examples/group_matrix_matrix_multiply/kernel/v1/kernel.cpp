@@ -3,18 +3,15 @@
  *
  */
 
-// BSG_TILE_GROUP_X_DIM and BSG_TILE_GROUP_Y_DIM must be defined
+// TG_DIM_X and TG_DIM_Y must be defined
 // before bsg_manycore.h and bsg_tile_group_barrier.h are
 // included. bsg_tiles_X and bsg_tiles_Y must also be defined for
 // legacy reasons, but they are deprecated.
-#define BSG_TILE_GROUP_X_DIM 2
-#define BSG_TILE_GROUP_Y_DIM 2
-#define bsg_tiles_X BSG_TILE_GROUP_X_DIM
-#define bsg_tiles_Y BSG_TILE_GROUP_Y_DIM
+#define bsg_tiles_X 4
+#define bsg_tiles_Y 4
 #include <bsg_manycore.h>
-#include <bsg_tile_group_barrier.h>
+#include <bsg_tile_group_barrier.hpp>
 #include <cstdint>
-
 #include <matrix_multiply.hpp>
 
 #define BLOCK_WIDTH 4
@@ -34,19 +31,17 @@
                                                            )
 #endif
 
-INIT_TILE_GROUP_BARRIER(r_barrier, c_barrier,
-                        0, BSG_TILE_GROUP_X_DIM-1,
-                        0, BSG_TILE_GROUP_Y_DIM-1);
+bsg_barrier<bsg_tiles_X, bsg_tiles_Y> barrier;
 
 
-template <typename T>
+template <int TG_DIM_X, int TG_DIM_Y, typename T>
 void __attribute__ ((noinline)) memcpy_block_to_shmem (T *A, T *dst, uint32_t M, uint32_t N, uint32_t block_size_y, uint32_t block_size_x, uint32_t sub_block_y, uint32_t sub_block_x) { 
 
 	uint32_t start_y = sub_block_y * block_size_y;
 	uint32_t start_x = sub_block_x * block_size_x;
 	
-	for (uint32_t iter_y = __bsg_y; iter_y < block_size_y; iter_y += BSG_TILE_GROUP_Y_DIM) { 
-		for (uint32_t iter_x = __bsg_x; iter_x < block_size_x; iter_x += BSG_TILE_GROUP_X_DIM) { 
+	for (uint32_t iter_y = __bsg_y; iter_y < block_size_y; iter_y += TG_DIM_Y) { 
+		for (uint32_t iter_x = __bsg_x; iter_x < block_size_x; iter_x += TG_DIM_X) { 
 			// dst[iter_y][iter_x] <-- A[iter_y + start_y][iter_x + start_x]
 			bsg_tile_group_shared_store (T, dst, (iter_y * block_size_x + iter_x), A[((iter_y + start_y) * N + iter_x + start_x)]);
 		}
@@ -54,14 +49,14 @@ void __attribute__ ((noinline)) memcpy_block_to_shmem (T *A, T *dst, uint32_t M,
 	return; 
 }
 
-template <typename T>
+template <int TG_DIM_X, int TG_DIM_Y, typename T>
 void __attribute__ ((noinline)) memcpy_block_to_shmem_transposed (T *A, T *dst, uint32_t M, uint32_t N, uint32_t block_size_y, uint32_t block_size_x, uint32_t sub_block_y, uint32_t sub_block_x) { 
 
 	uint32_t start_y = sub_block_y * block_size_y;
 	uint32_t start_x = sub_block_x * block_size_x;
 	
-	for (uint32_t iter_y = __bsg_y; iter_y < block_size_y; iter_y += BSG_TILE_GROUP_Y_DIM) { 
-		for (uint32_t iter_x = __bsg_x; iter_x < block_size_x; iter_x += BSG_TILE_GROUP_X_DIM) { 
+	for (uint32_t iter_y = __bsg_y; iter_y < block_size_y; iter_y += TG_DIM_Y) { 
+		for (uint32_t iter_x = __bsg_x; iter_x < block_size_x; iter_x += TG_DIM_X) { 
 			// dst[iter_x][iter_y] <-- A[iter_y + start_y][iter_x + start_x]
 			bsg_tile_group_shared_store (T, dst, (iter_x * block_size_y + iter_y), A[((iter_y + start_y) * N + iter_x + start_x)]);
 		}
@@ -69,14 +64,14 @@ void __attribute__ ((noinline)) memcpy_block_to_shmem_transposed (T *A, T *dst, 
 	return; 
 }
 
-template <typename T>
+template <int TG_DIM_X, int TG_DIM_Y, typename T>
 void __attribute__ ((noinline)) memcpy_shmem_to_block (T *A, T *src, uint32_t M, uint32_t N, uint32_t block_size_y, uint32_t block_size_x, uint32_t sub_block_y, uint32_t sub_block_x) { 
 
 	uint32_t start_y = sub_block_y * block_size_y;
 	uint32_t start_x = sub_block_x * block_size_x;
 	
-	for (uint32_t iter_y = __bsg_y; iter_y < block_size_y; iter_y += BSG_TILE_GROUP_Y_DIM) { 
-		for (uint32_t iter_x = __bsg_x; iter_x < block_size_x; iter_x += BSG_TILE_GROUP_X_DIM) { 
+	for (uint32_t iter_y = __bsg_y; iter_y < block_size_y; iter_y += TG_DIM_Y) { 
+		for (uint32_t iter_x = __bsg_x; iter_x < block_size_x; iter_x += TG_DIM_X) { 
 			// A[iter_y + start_y][iter_x + start_x] <-- src[iter_y][iter_x]
 			bsg_tile_group_shared_load (T, src, (iter_y * block_size_x + iter_x), A[((iter_y + start_y) * N + iter_x + start_x)]);
 		}
@@ -85,11 +80,11 @@ void __attribute__ ((noinline)) memcpy_shmem_to_block (T *A, T *src, uint32_t M,
 }
 
 
-template <typename TA, typename TB, typename TC>
+template <int TG_DIM_X, int TG_DIM_Y, typename TA, typename TB, typename TC>
 void __attribute__ ((noinline)) subblock_shmem_matrix_mul_transposed (TA *A, TB *B, TC *C, uint32_t M, uint32_t N, uint32_t P, uint32_t block_size_y, uint32_t block_size_x, uint32_t block_num) { 
 
-	for (uint32_t iter_y = __bsg_y; iter_y < block_size_y; iter_y += BSG_TILE_GROUP_Y_DIM) { 
-		for (uint32_t iter_x = __bsg_x; iter_x < block_size_x; iter_x += BSG_TILE_GROUP_X_DIM) { 
+	for (uint32_t iter_y = __bsg_y; iter_y < block_size_y; iter_y += TG_DIM_Y) { 
+		for (uint32_t iter_x = __bsg_x; iter_x < block_size_x; iter_x += TG_DIM_X) { 
 
 			TC sum = static_cast<TC>(0); 
 			TA lc_A;
@@ -117,7 +112,7 @@ void __attribute__ ((noinline)) subblock_shmem_matrix_mul_transposed (TA *A, TB 
 	return;
 }
 
-template <typename TA, typename TB, typename TC>
+template <int TG_DIM_X, int TG_DIM_Y, typename TA, typename TB, typename TC>
 int __attribute__ ((noinline)) matrix_multiply_group_shared_mem(TA *A, TB *B, TC *C, 
                                                                  uint32_t M, uint32_t N, uint32_t P, 
                                                                  uint32_t block_size_y, uint32_t block_size_x) {
@@ -131,18 +126,18 @@ int __attribute__ ((noinline)) matrix_multiply_group_shared_mem(TA *A, TB *B, TC
 
 	for (uint32_t block_num = 0; block_num < num_blocks; block_num ++) { 
 
-		memcpy_block_to_shmem (       A, sh_A, M, N, block_size_y, BLOCK_WIDTH, __bsg_tile_group_id_y, block_num);
+		memcpy_block_to_shmem<TG_DIM_X, TG_DIM_Y> (A, sh_A, M, N, block_size_y, BLOCK_WIDTH, __bsg_tile_group_id_y, block_num);
  
-		memcpy_block_to_shmem_transposed (B, sh_B, N, P, BLOCK_WIDTH, block_size_x, block_num, __bsg_tile_group_id_x);
+		memcpy_block_to_shmem_transposed<TG_DIM_X, TG_DIM_Y> (B, sh_B, N, P, BLOCK_WIDTH, block_size_x, block_num, __bsg_tile_group_id_x);
 
-		bsg_tile_group_barrier (&r_barrier, &c_barrier);
+                barrier.sync();
 		
-		subblock_shmem_matrix_mul_transposed (sh_A, sh_B, sh_C, M, N, P, block_size_y, block_size_x, block_num);
+		subblock_shmem_matrix_mul_transposed<TG_DIM_X, TG_DIM_Y> (sh_A, sh_B, sh_C, M, N, P, block_size_y, block_size_x, block_num);
 		
-		bsg_tile_group_barrier (&r_barrier, &c_barrier); 
+                barrier.sync();
 	}
 
-	memcpy_shmem_to_block (C, sh_C, M, P, block_size_y, block_size_x, __bsg_tile_group_id_y, __bsg_tile_group_id_x); 
+	memcpy_shmem_to_block<TG_DIM_X, TG_DIM_Y> (C, sh_C, M, P, block_size_y, block_size_x, __bsg_tile_group_id_y, __bsg_tile_group_id_x); 
 
 	return 0;
 }
@@ -155,14 +150,11 @@ extern "C" {
                 int rc;
 
                 bsg_cuda_print_stat_kernel_start();
-                bsg_cuda_print_stat_start(0);
-                rc = matrix_multiply_group_shared_mem(A, B, C,
-                                                      A_HEIGHT, A_WIDTH, B_WIDTH,
-                                                      block_size_y, block_size_x);
-                bsg_cuda_print_stat_end(0);
+                rc = matrix_multiply_group_shared_mem<bsg_tiles_X, bsg_tiles_Y> (A, B, C,
+                                                                                 A_HEIGHT, A_WIDTH, B_WIDTH,
+                                                                                 block_size_y, block_size_x);
 
-                bsg_tile_group_barrier(&r_barrier, &c_barrier);
-                bsg_cuda_print_stat_kernel_end();
+                barrier.sync();
 
                 return rc;
         }
