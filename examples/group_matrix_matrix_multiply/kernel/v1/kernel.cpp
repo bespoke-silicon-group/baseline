@@ -41,7 +41,7 @@
 
 
 
-#define BLOCK_WIDTH 4
+#define BLOCK_WIDTH 16
 
 bsg_barrier<bsg_tiles_X, bsg_tiles_Y> barrier;
 

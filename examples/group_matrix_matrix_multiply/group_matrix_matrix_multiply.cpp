@@ -33,10 +33,10 @@
  */
 
 // Matrix sizes:
-#define A_HEIGHT 8        // M
-#define A_WIDTH  8        // N
+#define A_HEIGHT 16        // M
+#define A_WIDTH  16        // N
 #define B_HEIGHT A_WIDTH
-#define B_WIDTH  8        // P
+#define B_WIDTH  16        // P
 #define C_HEIGHT A_HEIGHT
 #define C_WIDTH  B_WIDTH
 #define NUM_ITER 1
@@ -105,7 +105,9 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
         uint32_t block_size_y = 0;
         hb_mc_dimension_t tg_dim = { .x = 0, .y = 0 };
         if(!strcmp("v0", test_name) || !strcmp("v1", test_name) || 
-           !strcmp("v2", test_name) || !strcmp("v3", test_name)){
+           !strcmp("v2", test_name) || !strcmp("v3", test_name) || 
+           !strcmp("v4", test_name) || !strcmp("v5", test_name) || 
+           !strcmp("v6", test_name) || !strcmp("v7", test_name)){
                 block_size_x = C_WIDTH;
                 block_size_y = C_HEIGHT;
                 tg_dim = { .x = 4, .y = 4 };

@@ -34,6 +34,7 @@ int  __attribute__ ((noinline)) matrix_multiply_group(TA *A, TB *B, TC *C,
         for (uint32_t iter_y = start_y + __bsg_y; iter_y < end_y; iter_y += TG_DIM_Y) {
                 for (uint32_t iter_x = start_x + __bsg_x; iter_x < end_x; iter_x += TG_DIM_X) {
                         TC sum = static_cast<TC>(0);
+                        #pragma GCC unroll 16
                         for (uint32_t k = 0; k < A_WIDTH; k ++) {
                                 sum += A[iter_y * A_WIDTH + k] * B[k * B_WIDTH + iter_x];
                         }
