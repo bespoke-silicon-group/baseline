@@ -94,11 +94,23 @@ namespace bfs {
             const int *neighbors = &edges[offsets[src]];
             int dst_n = degree(src, V, E, offsets, edges);
 
-            for (int dst_i = 0; dst_i < dst_n; dst_i++) {
-                int dst = neighbors[dst_i];
-                rmw[rmw_n++].dst = dst;
+            for (int dst_i = 0; dst_i < dst_n; dst_i += 2) {
+                int dst_0, dst_1;
+
+                dst_0 = neighbors[dst_i+0];
+                if (dst_i+1 < dst_n) {
+                    dst_1 = neighbors[dst_i+1];
+                }
+
+                asm volatile ("" ::: "memory");
+
+                rmw[rmw_n++].dst = dst_0;
+                if (dst_i+1 < dst_n) {
+                    rmw[rmw_n++].dst = dst_1;
+                }
+
                 // check if we are at capacity for RMW
-                if (rmw_n == BLOCK_SIZE) {
+                if (rmw_n + 1 >= BLOCK_SIZE) {
                     bfs_sido_rmw(rmw, rmw_n, dense_o, visited_io);
                     rmw_n = 0;
                 }
