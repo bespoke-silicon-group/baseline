@@ -2,6 +2,8 @@
  * Blocked matrix-matrix multiplication using tile group
  * shared memory.
  * Templatized BLOCK_SIZE_X/y, i.e. the workload of each tile group.
+ * Using TileGroupStripedArray templatized C++ library for tile group
+ * shared memory instead of the C-level macros.
  */
 
 
@@ -21,6 +23,7 @@
 
 #include <bsg_manycore.h>
 #include <bsg_tile_group_barrier.hpp>
+#include "bsg_striped_array.hpp"
 #include <cstdint>
 #include <matrix_multiply.hpp>
 
@@ -42,7 +45,20 @@
 
 
 
+
+using namespace bsg_manycore;
+
+
 bsg_barrier<bsg_tiles_X, bsg_tiles_Y> barrier;
+
+//using Array = TileGroupStripedArray<struct foo, 16, bsg_tiles_X, bsg_tiles_Y, 2>;
+template <int TG_DIM_X, int TG_DIM_Y, int BLOCK_SIZE_X, int BLOCK_SIZE_Y, int BLOCK_WIDTH, typename TA>
+using SharedArray_A = TileGroupStripedArray<TA, (BLOCK_SIZE_Y * BLOCK_WIDTH ), TG_DIM_X, TG_DIM_Y, 1>;
+template <int TG_DIM_X, int TG_DIM_Y, int BLOCK_SIZE_X, int BLOCK_SIZE_Y, int BLOCK_WIDTH, typename TA>
+using SharedArray_B = TileGroupStripedArray<TA, (BLOCK_WIDTH  * BLOCK_SIZE_X), TG_DIM_X, TG_DIM_Y, 1>;
+template <int TG_DIM_X, int TG_DIM_Y, int BLOCK_SIZE_X, int BLOCK_SIZE_Y, int BLOCK_WIDTH, typename TA>
+using SharedArray_C = TileGroupStripedArray<TA, (BLOCK_SIZE_Y * BLOCK_SIZE_X), TG_DIM_X, TG_DIM_Y, 1>;
+
 
 
 template <int TG_DIM_X, int TG_DIM_Y, int BLOCK_SIZE_X, int BLOCK_SIZE_Y, typename T>
@@ -123,6 +139,7 @@ void __attribute__ ((noinline)) subblock_shmem_matrix_mul_transposed (TA *A, TB 
 	return;
 }
 
+
 template <int TG_DIM_X, int TG_DIM_Y, int BLOCK_SIZE_X, int BLOCK_SIZE_Y, int BLOCK_WIDTH, typename TA, typename TB, typename TC>
 int __attribute__ ((noinline)) matrix_multiply_group_shared_mem(TA *A, TB *B, TC *C, 
                                                                  uint32_t M, uint32_t N, uint32_t P) { 
@@ -131,6 +148,8 @@ int __attribute__ ((noinline)) matrix_multiply_group_shared_mem(TA *A, TB *B, TC
 	bsg_tile_group_shared_mem (TA, sh_A, (BLOCK_SIZE_Y * BLOCK_WIDTH));
 	bsg_tile_group_shared_mem (TA, sh_B, (BLOCK_WIDTH * BLOCK_SIZE_X));
 	bsg_tile_group_shared_mem (TA, sh_C, (BLOCK_SIZE_Y * BLOCK_SIZE_X));
+
+
 
 	uint32_t num_blocks = N / BLOCK_WIDTH;	// *** Must divide evenly ***
 

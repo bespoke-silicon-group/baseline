@@ -105,7 +105,7 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
         uint32_t block_size_y = 0;
         hb_mc_dimension_t tg_dim = { .x = 0, .y = 0 };
         if(!strcmp("v0", test_name) || !strcmp("v1", test_name) || 
-           !strcmp("v2", test_name)){
+           !strcmp("v2", test_name) || !strcmp("v3", test_name)){
                 block_size_x = C_WIDTH;
                 block_size_y = C_HEIGHT;
                 tg_dim = { .x = 4, .y = 4 };

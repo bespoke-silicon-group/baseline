@@ -8,8 +8,9 @@
 // We use this parameters to call the templatized kernel
 // from the C-level kernel. bsg_tiles_X/Y must also be defined
 // for legacy reasons, but they are deprecated.
-#define TEMPLATE_TG_DIM_X 4
-#define TEMPLATE_TG_DIM_Y 4
+#define TEMPLATE_TG_DIM_X 4            // Tile group X dimension
+#define TEMPLATE_TG_DIM_Y 4            // Tile group Y dimension
+
 #define bsg_tiles_X TEMPLATE_TG_DIM_X
 #define bsg_tiles_Y TEMPLATE_TG_DIM_Y
 
