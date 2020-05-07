@@ -22,26 +22,54 @@ namespace bfs {
         int v;
     } rmw_t;
 
-    static
-    int bfs_sido_rmw(rmw_t *rmw, int rmw_n, int *dense_o, int *visited_io)
+    static int bfs_sido_rmw(rmw_t *__restrict rmw,
+                            int rmw_n,
+                            int *__restrict dense_o,
+                            int *__restrict visited_io)
     {
-        // read
-#pragma GCC unroll 32
-        for (int rmw_i = 0; rmw_i < rmw_n; rmw_i++) {
-            int dst = rmw[rmw_i].dst;
-            rmw[rmw_i].v = visited_io[dst];
+        // r
+        for (int rmw_i = 0; rmw_i < rmw_n; rmw_i+=4) {
+            int dst_0 = rmw[rmw_i+0].dst;
+            int dst_1 = rmw[rmw_i+1].dst;
+            int dst_2 = rmw[rmw_i+2].dst;
+            int dst_3 = rmw[rmw_i+3].dst;
+
+            asm volatile ( "" ::: "memory");
+
+            int v_0, v_1, v_2, v_3;
+            v_0 = visited_io[dst_0];
+            if (rmw_i+1 < rmw_n) {
+                v_1 = visited_io[dst_1];
+                if (rmw_i+2 < rmw_n) {
+                    v_2 = visited_io[dst_2];
+                    if (rmw_i+3 < rmw_n) {
+                        v_3 = visited_io[dst_3];
+                    }
+                }
+            }
+
+            asm volatile ("" ::: "memory");
+
+            rmw[rmw_i+0].v = v_0;
+            if (rmw_i+1 < rmw_n) {
+                rmw[rmw_i+1].v = v_1;
+                if (rmw_i+2 < rmw_n) {
+                    rmw[rmw_i+2].v = v_2;
+                    if (rmw_i+3 < rmw_n) {
+                        rmw[rmw_i+3].v = v_3;
+                    }
+                }
+            }
         }
 
-        // modify-write
-        for (int rmw_i = 0; rmw_i < rmw_n; rmw_i++) {
-            int dst     = rmw[rmw_i].dst;
-            int visited = rmw[rmw_i].v;
-            // skip if visited
-            if (visited == 1)
-                continue;
-            // do update
-            visited_io[dst] = 1;
-            dense_o[dst] = 1;
+        // mw
+        for (int rmw_i = 0; rmw_i < rmw_n; rmw_i+=1) {
+            int dst = rmw[rmw_i].dst;
+            int v   = rmw[rmw_i].v;
+            if (v == 0) {
+                visited_io[dst] = 1;
+                dense_o[dst]    = 1;
+            }
         }
 
         return 0;
@@ -66,7 +94,6 @@ namespace bfs {
             const int *neighbors = &edges[offsets[src]];
             int dst_n = degree(src, V, E, offsets, edges);
 
-#pragma GCC unroll 32
             for (int dst_i = 0; dst_i < dst_n; dst_i++) {
                 int dst = neighbors[dst_i];
                 rmw[rmw_n++].dst = dst;
