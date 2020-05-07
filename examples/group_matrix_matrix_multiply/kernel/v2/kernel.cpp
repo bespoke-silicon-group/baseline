@@ -11,9 +11,9 @@
 // for legacy reasons, but they are deprecated.
 #define TEMPLATE_TG_DIM_X 4            // Tile group X dimension
 #define TEMPLATE_TG_DIM_Y 4            // Tile group Y dimension
-#define TEMPLATE_BLOCK_SIZE_X 16       // Tile group's block size (X)
-#define TEMPLATE_BLOCK_SIZE_Y 16       // Tile group's block size (Y)
-#define TEMPLATE_BLOCK_WIDTH  16       // Algorithm's blocking factor
+#define TEMPLATE_BLOCK_SIZE_X 32       // Tile group's block size (X)
+#define TEMPLATE_BLOCK_SIZE_Y 32       // Tile group's block size (Y)
+#define TEMPLATE_BLOCK_WIDTH  32       // Algorithm's blocking factor
 
 #define bsg_tiles_X TEMPLATE_TG_DIM_X
 #define bsg_tiles_Y TEMPLATE_TG_DIM_Y

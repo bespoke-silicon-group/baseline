@@ -33,10 +33,10 @@
  */
 
 // Matrix sizes:
-#define A_HEIGHT 16        // M
-#define A_WIDTH  16        // N
+#define A_HEIGHT 32        // M
+#define A_WIDTH  32        // N
 #define B_HEIGHT A_WIDTH
-#define B_WIDTH  16        // P
+#define B_WIDTH  32        // P
 #define C_HEIGHT A_HEIGHT
 #define C_WIDTH  B_WIDTH
 #define NUM_ITER 1
