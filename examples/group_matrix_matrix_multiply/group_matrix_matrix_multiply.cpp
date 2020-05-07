@@ -33,10 +33,10 @@
  */
 
 // Matrix sizes:
-#define A_HEIGHT 4        // M
-#define A_WIDTH  4        // N
+#define A_HEIGHT 8        // M
+#define A_WIDTH  8        // N
 #define B_HEIGHT A_WIDTH
-#define B_WIDTH  4        // P
+#define B_WIDTH  8        // P
 #define C_HEIGHT A_HEIGHT
 #define C_WIDTH  B_WIDTH
 #define NUM_ITER 1
@@ -113,8 +113,8 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
                 bsg_pr_test_err("Invalid version provided!.\n");
                 return HB_MC_INVALID;
         }
-        hb_mc_dimension_t grid_dim = { .x = (B_WIDTH + block_size_x - 1) / block_size_x,
-                                       .y = (A_HEIGHT + block_size_y - 1) / block_size_y };
+        hb_mc_dimension_t grid_dim = { .x = (C_WIDTH + block_size_x - 1) / block_size_x,
+                                       .y = (C_HEIGHT + block_size_y - 1) / block_size_y };
 
         // Initialize the random number generators
         std::numeric_limits<int8_t> lim; // Used to get INT_MIN and INT_MAX in C++

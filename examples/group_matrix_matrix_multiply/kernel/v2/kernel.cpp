@@ -11,8 +11,8 @@
 // for legacy reasons, but they are deprecated.
 #define TEMPLATE_TG_DIM_X 4            // Tile group X dimension
 #define TEMPLATE_TG_DIM_Y 4            // Tile group Y dimension
-#define TEMPLATE_BLOCK_SIZE_X 4        // Tile group's block size (X)
-#define TEMPLATE_BLOCK_SIZE_Y 4        // Tile group's block size (Y)
+#define TEMPLATE_BLOCK_SIZE_X 8        // Tile group's block size (X)
+#define TEMPLATE_BLOCK_SIZE_Y 8        // Tile group's block size (Y)
 #define TEMPLATE_BLOCK_WIDTH  4        // Algorithm's blocking factor
 
 #define bsg_tiles_X TEMPLATE_TG_DIM_X
@@ -139,7 +139,7 @@ int __attribute__ ((noinline)) matrix_multiply_group_shared_mem(TA *A, TB *B, TC
 		memcpy_block_to_shmem<TG_DIM_X, TG_DIM_Y, BLOCK_WIDTH, BLOCK_SIZE_Y>
                                      (A, sh_A, M, N, __bsg_tile_group_id_y, block_num);
  
-		memcpy_block_to_shmem_transposed<TG_DIM_X, TG_DIM_Y, BLOCK_WIDTH, BLOCK_SIZE_X>
+		memcpy_block_to_shmem_transposed<TG_DIM_X, TG_DIM_Y, BLOCK_SIZE_X, BLOCK_WIDTH>
                                                 (B, sh_B, N, P, block_num, __bsg_tile_group_id_x);
 
                 barrier.sync();
