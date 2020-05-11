@@ -14,13 +14,13 @@ int launch(int argc, char * argv[]){
   std::string ucode_path = input.getRISCVFile();
 
   int version = 0;
-  if(ucode_path.find("iteration-0") != std::string::npos) {
-    version = 0;
-  } else if(ucode_path.find("iteration-1") != std::string::npos) {
-    version = 1; 
-  } else if(ucode_path.find("iteration-2") != std::string::npos) {
-    version = 2;
-  }
+  std::string iterstrbase = "iteration-";
+  auto pos = ucode_path.find(iterstrbase);
+  auto iterstr = ucode_path.substr(pos + iterstrbase.size(), std::string::npos);
+  std::stringstream ss(iterstr);
+  ss >> version;
+  std::cerr << "version : " << version << std::endl;
+
 
   std::cerr << "load microcode" << std::endl;
   hammerblade::builtin_loadMicroCodeFromFile(ucode_path);
@@ -41,7 +41,9 @@ int launch(int argc, char * argv[]){
   next_frontier_dev.copyToDevice(zeros.data(), zeros.size());
 
   std::string frontier_v = frontier_f + "." + std::to_string(version);
+  std::cerr << "reading frontier from " << frontier_v << std::endl;
   std::string parent_v = parent_f + "." + std::to_string(version);
+  std::cerr << "reading parent from " << parent_v << std::endl;
 
   std::cerr << "Try to insert val to parent" << std::endl;
   int * file_frontier = hammerblade::builtin_loadFrontierFromFile(frontier_v.c_str());

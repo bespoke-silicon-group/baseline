@@ -33,9 +33,13 @@ CURRENT_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 GRAPHIT_PATH := $(_REPO_ROOT)/../graphit
 -include $(_REPO_ROOT)/environment.mk
 
-GRAPH_PATH := $(GRAPHIT_PATH)/test/graphs/graph500.16.16.el
-FRONTIER_PATH := $(GRAPHIT_PATH)/test/graphs/bfs_frontier_iter.16.16.txt
-PARENT_PATH := $(GRAPHIT_PATH)/test/graphs/bfs_parent_iter.16.16.txt
+# GRAPH_PATH := $(GRAPHIT_PATH)/test/graphs/graph500.10.16.el
+# FRONTIER_PATH := $(GRAPHIT_PATH)/test/graphs/bfs_frontier_iter.10.16.txt
+# PARENT_PATH := $(GRAPHIT_PATH)/test/graphs/bfs_parent_iter.10.16.txt
+
+GRAPH_PATH := $(GRAPHIT_PATH)/test/graphs/graph500.20.16.el
+FRONTIER_PATH := $(GRAPHIT_PATH)/test/graphs/bfs_frontier_iter.20.16.txt
+PARENT_PATH := $(GRAPHIT_PATH)/test/graphs/bfs_parent_iter.20.16.txt
 
 ################################################################################
 # Define BSG_MACHINE_PATH, the location of the Makefile.machine.include file
@@ -43,8 +47,8 @@ PARENT_PATH := $(GRAPHIT_PATH)/test/graphs/bfs_parent_iter.16.16.txt
 # is set in environment.mk) uses the same machine as in bsg_replicant.
 ################################################################################
 
-BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/4x4_fast_n_fake
-# BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/timing_v0_16_8
+#BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/16x8_fast_n_fake
+BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/timing_v0_16_8
 
 
 ################################################################################
@@ -57,7 +61,8 @@ BASE_VERSIONS += v0
 BASE_VERSIONS += edge-aware-incl
 BASE_VERSIONS += v0-incl
 
-ITERATIONS := 0 1 2
+ITERATIONS := 1 2 3 4 5 6 7 8 9 10 11 12
+#ITERATIONS := 1 2 3 4 5 6
 
 v-from-basev-and-iter = $1-iteration-$2
 basev-from-v          = $(word 1,$(subst -iteration-, ,$1))
@@ -174,6 +179,12 @@ _HELP_STRING += "        - Launch indpendent cosimulation executions of each ker
 _HELP_STRING += "          When execution finishes, it generates the analysis products for \n"
 _HELP_STRING += "          each kernel in each respective kernel/version_name/ directory\n"
 analysis: $(foreach v,$(VERSIONS), kernel/$v/stats)
+
+run-all: $(foreach v,$(VERSIONS), kernel/$v/bfs_pull_benchmark.cosim.log)
+.PHONY: run-all
+
+build-all: $(foreach v,$(VERSIONS), kernel/$v/kernel.riscv)
+.PHONY: build-all
 
 _HELP_STRING += "    all: \n"
 _HELP_STRING += "        - Launch both the default and analysis target\n"
