@@ -33,9 +33,13 @@ CURRENT_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 GRAPHIT_PATH := $(_REPO_ROOT)/../graphit
 -include $(_REPO_ROOT)/environment.mk
 
-GRAPH_PATH := $(GRAPHIT_PATH)/test/graphs/graph500.16.16.el
-FRONTIER_PATH := $(GRAPHIT_PATH)/test/graphs/bfs_frontier_iter.16.16.txt
-PARENT_PATH := $(GRAPHIT_PATH)/test/graphs/bfs_parent_iter.16.16.txt
+# GRAPH_PATH := $(GRAPHIT_PATH)/test/graphs/graph500.10.16.el
+# FRONTIER_PATH := $(GRAPHIT_PATH)/test/graphs/bfs_frontier_iter.10.16.txt
+# PARENT_PATH := $(GRAPHIT_PATH)/test/graphs/bfs_parent_iter.10.16.txt
+
+GRAPH_PATH := $(GRAPHIT_PATH)/test/graphs/graph500.20.16.el
+FRONTIER_PATH := $(GRAPHIT_PATH)/test/graphs/bfs_frontier_iter.20.16.txt
+PARENT_PATH := $(GRAPHIT_PATH)/test/graphs/bfs_parent_iter.20.16.txt
 
 ################################################################################
 # Define BSG_MACHINE_PATH, the location of the Makefile.machine.include file
@@ -43,7 +47,7 @@ PARENT_PATH := $(GRAPHIT_PATH)/test/graphs/bfs_parent_iter.16.16.txt
 # is set in environment.mk) uses the same machine as in bsg_replicant.
 ################################################################################
 
-# BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/4x4_fast_n_fake
+# BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/16x8_fast_n_fake
 BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/timing_v0_16_8
 
 
@@ -54,7 +58,7 @@ BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/timing_v0_16_8
 # not need to use v* and can be any string
 BASE_VERSIONS += v0 edge-aware
 
-ITERATIONS := 0 1 2
+ITERATIONS :=  1 2 3 4 5 6 7 8 9 10 11 12
 
 v-from-basev-and-iter = $1-iteration-$2
 basev-from-v          = $(word 1,$(subst -iteration-, ,$1))
@@ -140,7 +144,7 @@ kernel/%/$(HOST_TARGET).cosim.log: kernel/%/kernel.riscv $(HOST_TARGET).cosim
 	cd $(EXEC_PATH) && \
 	$(CURRENT_PATH)/$(HOST_TARGET).cosim +ntb_random_seed_automatic \
 		+vpdfile+$(HOST_TARGET).vpd \
-		+c_args="$(KERNEL_PATH)/kernel.riscv $(_VERSION) -g $(GRAPH_PATH) -f $(FRONTIER_PATH) -p $(PARENT_PATH)" | tee $(notdir $@)
+		+c_args="$(KERNEL_PATH)/kernel.riscv $(_VERSION) -g $(GRAPH_PATH) -f $(FRONTIER_PATH) -p $(PARENT_PATH)" 2>&1 | tee $(notdir $@)
 
 ################################################################################
 # Define the clean rules. clean calls the makefile-specific cleans, whereas
@@ -170,7 +174,11 @@ _HELP_STRING += "    analysis: \n"
 _HELP_STRING += "        - Launch indpendent cosimulation executions of each kernel version.\n"
 _HELP_STRING += "          When execution finishes, it generates the analysis products for \n"
 _HELP_STRING += "          each kernel in each respective kernel/version_name/ directory\n"
-analysis: $(foreach v,$(VERSIONS), kernel/$v/stats)
+analysis:  $(foreach v,$(VERSIONS), kernel/$v/stats)
+run-all:   $(foreach v,$(VERSIONS), kernel/$v/$(HOST_TARGET).cosim.log)
+build-all: $(foreach v,$(VERSIONS), kernel/$v/kernel.riscv)
+
+.PHONY: build-all run-all
 
 _HELP_STRING += "    all: \n"
 _HELP_STRING += "        - Launch both the default and analysis target\n"
