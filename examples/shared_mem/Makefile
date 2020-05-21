@@ -46,7 +46,7 @@ BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/4x4_blocking_vcache_f1_model
 ################################################################################
 # Kernel versions. See kernel/README.md for more information.  Version names do
 # not need to use v* and can be any string
-VERSIONS = v0
+VERSIONS = v0 v1 v2
 
 ################################################################################
 # Define any sources that should be used compiled during kernel compilation,
