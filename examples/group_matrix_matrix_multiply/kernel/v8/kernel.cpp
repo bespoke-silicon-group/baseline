@@ -2,7 +2,7 @@
  * Blocked matrix-matrix multiplication using tile group
  * shared memory.
  * Templatized BLOCK_SIZE_X/y, i.e. the workload of each tile group.
- * Innter multiplication loop unrolled by a factor of 4
+ * Innter multiplication loop unrolled by a factor of 16
  */
 
 
@@ -49,6 +49,7 @@ bsg_barrier<bsg_tiles_X, bsg_tiles_Y> barrier;
 template <int TG_DIM_X, int TG_DIM_Y, int BLOCK_SIZE_X, int BLOCK_SIZE_Y, typename T>
 void __attribute__ ((noinline)) memcpy_block_to_shmem (T *A, T *dst, uint32_t M, uint32_t N, uint32_t sub_block_y, uint32_t sub_block_x) { 
 
+	bsg_cuda_print_stat_start(1);
 	uint32_t start_y = sub_block_y * BLOCK_SIZE_Y;
 	uint32_t start_x = sub_block_x * BLOCK_SIZE_X;
 	
@@ -58,12 +59,14 @@ void __attribute__ ((noinline)) memcpy_block_to_shmem (T *A, T *dst, uint32_t M,
 			bsg_tile_group_shared_store (T, dst, (iter_y * BLOCK_SIZE_X + iter_x), A[((iter_y + start_y) * N + iter_x + start_x)]);
 		}
 	}
+	bsg_cuda_print_stat_end(1);
 	return; 
 }
 
 template <int TG_DIM_X, int TG_DIM_Y, int BLOCK_SIZE_X, int BLOCK_SIZE_Y, typename T>
 void __attribute__ ((noinline)) memcpy_block_to_shmem_transposed (T *A, T *dst, uint32_t M, uint32_t N, uint32_t sub_block_y, uint32_t sub_block_x) { 
 
+	bsg_cuda_print_stat_start(2);
 	uint32_t start_y = sub_block_y * BLOCK_SIZE_Y;
 	uint32_t start_x = sub_block_x * BLOCK_SIZE_X;
 	
@@ -73,12 +76,14 @@ void __attribute__ ((noinline)) memcpy_block_to_shmem_transposed (T *A, T *dst, 
 			bsg_tile_group_shared_store (T, dst, (iter_x * BLOCK_SIZE_Y + iter_y), A[((iter_y + start_y) * N + iter_x + start_x)]);
 		}
 	}
+	bsg_cuda_print_stat_end(2);
 	return; 
 }
 
 template <int TG_DIM_X, int TG_DIM_Y, int BLOCK_SIZE_X, int BLOCK_SIZE_Y, typename T>
 void __attribute__ ((noinline)) memcpy_shmem_to_block (T *A, T *src, uint32_t M, uint32_t N, uint32_t sub_block_y, uint32_t sub_block_x) { 
 
+	bsg_cuda_print_stat_start(3);
 	uint32_t start_y = sub_block_y * BLOCK_SIZE_Y;
 	uint32_t start_x = sub_block_x * BLOCK_SIZE_X;
 	
@@ -88,6 +93,7 @@ void __attribute__ ((noinline)) memcpy_shmem_to_block (T *A, T *src, uint32_t M,
 			bsg_tile_group_shared_load (T, src, (iter_y * BLOCK_SIZE_X + iter_x), A[((iter_y + start_y) * N + iter_x + start_x)]);
 		}
 	}
+	bsg_cuda_print_stat_end(3);
 	return; 
 }
 
@@ -95,6 +101,7 @@ void __attribute__ ((noinline)) memcpy_shmem_to_block (T *A, T *src, uint32_t M,
 template <int TG_DIM_X, int TG_DIM_Y, int BLOCK_SIZE_X, int BLOCK_SIZE_Y, int BLOCK_WIDTH, typename TA, typename TB, typename TC>
 void __attribute__ ((noinline)) subblock_shmem_matrix_mul_transposed (TA *A, TB *B, TC *C, uint32_t M, uint32_t N, uint32_t P, uint32_t block_num) { 
 
+	bsg_cuda_print_stat_start(4);
 	for (uint32_t iter_y = __bsg_y; iter_y < BLOCK_SIZE_Y; iter_y += TG_DIM_Y) { 
 		for (uint32_t iter_x = __bsg_x; iter_x < BLOCK_SIZE_X; iter_x += TG_DIM_X) { 
 
@@ -102,7 +109,7 @@ void __attribute__ ((noinline)) subblock_shmem_matrix_mul_transposed (TA *A, TB 
 			TA lc_A;
                         TB lc_B;
                         TC lc_C;
-                        #pragma GCC unroll 8
+                        #pragma GCC unroll 32
 			for (uint32_t k = 0; k < BLOCK_WIDTH; k ++) { 
 				// lc_A <-- A[iter_y][iter_x]
 				bsg_tile_group_shared_load (TA, A, (iter_y * BLOCK_WIDTH + k), lc_A); 
@@ -122,6 +129,7 @@ void __attribute__ ((noinline)) subblock_shmem_matrix_mul_transposed (TA *A, TB 
 			} 
 		}
 	}
+	bsg_cuda_print_stat_end(4);
 	return;
 }
 

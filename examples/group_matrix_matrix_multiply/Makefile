@@ -39,14 +39,14 @@ CURRENT_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 # is set in environment.mk) uses the same machine as in bsg_replicant.
 ################################################################################
 
-BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/4x4_fast_n_fake
+BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/4x4_blocking_vcache_f1_model
 
 ################################################################################
 # Define the range of versions
 ################################################################################
 # Kernel versions. See kernel/README.md for more information.  Version names do
 # not need to use v* and can be any string
-VERSIONS = v0 v1 v2 v3 v4 v5 v6 v7
+VERSIONS = v0 v1 v2 v3 v4 v5 v6 v7 v8
 
 ################################################################################
 # Define any sources that should be used compiled during kernel compilation,

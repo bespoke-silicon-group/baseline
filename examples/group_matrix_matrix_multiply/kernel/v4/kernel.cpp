@@ -2,7 +2,7 @@
  * Blocked matrix-matrix multiplication using tile group
  * shared memory.
  * Templatized BLOCK_SIZE_X/y, i.e. the workload of each tile group.
- * Innter multiplication loop unrolled by a factor of 4
+ * Innter multiplication loop unrolled by a factor of 2
  */
 
 
@@ -13,7 +13,7 @@
 #define TEMPLATE_TG_DIM_X 4            // Tile group X dimension
 #define TEMPLATE_TG_DIM_Y 4            // Tile group Y dimension
 #define TEMPLATE_BLOCK_SIZE_X 32       // Tile group's block size (X)
-#define TEMPLATE_BLOCK_SIZE_Y 32       // Tile group's block size (Y)
+#define TEMPLATE_BLOCK_SIZE_Y 64       // Tile group's block size (Y)
 #define TEMPLATE_BLOCK_WIDTH  32       // Algorithm's blocking factor
 
 #define bsg_tiles_X TEMPLATE_TG_DIM_X
@@ -102,7 +102,8 @@ void __attribute__ ((noinline)) subblock_shmem_matrix_mul_transposed (TA *A, TB 
 			TA lc_A;
                         TB lc_B;
                         TC lc_C;
-                        #pragma GCC unroll 4
+
+                        #pragma GCC unroll 2
 			for (uint32_t k = 0; k < BLOCK_WIDTH; k ++) { 
 				// lc_A <-- A[iter_y][iter_x]
 				bsg_tile_group_shared_load (TA, A, (iter_y * BLOCK_WIDTH + k), lc_A); 
