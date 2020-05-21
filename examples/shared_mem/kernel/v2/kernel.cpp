@@ -1,5 +1,7 @@
 /*
  * This kernel performs load and store to tile group shared memory.
+ * Templatized matrix dimensions.
+ * Using striped array.
  */
 
 // BSG_TILE_GROUP_X_DIM and BSG_TILE_GROUP_Y_DIM must be defined
@@ -8,12 +10,15 @@
 // legacy reasons, but they are deprecated.
 #define TEMPLATE_TG_DIM_X 4
 #define TEMPLATE_TG_DIM_Y 4
+#define TEMPLATE_HEIGHT   4
+#define TEMPLATE_WIDTH    4
 
 #define bsg_tiles_X TEMPLATE_TG_DIM_X
 #define bsg_tiles_Y TEMPLATE_TG_DIM_Y
 #include <bsg_manycore.h>
 #include <bsg_tile_group_barrier.hpp>
 #include <cstdint>
+#include "bsg_striped_array.hpp"
 #include <shared_mem.hpp>
 
 // I <3 Hacks! Since bsg_manycore_arch.h can't handle the awesomeness
@@ -31,23 +36,24 @@
                                                            )
 #endif
 
-
+using namespace bsg_manycore;
 
 
 bsg_barrier<bsg_tiles_X, bsg_tiles_Y> barrier;
 
 
-template <int TG_DIM_X, int TG_DIM_Y, typename T>
-int  __attribute__ ((noinline)) shared_mem_load_store(T *A, T *R,
-                                                      uint32_t HEIGHT, uint32_t WIDTH) {
 
 
+template <int TG_DIM_X, int TG_DIM_Y, int HEIGHT, int WIDTH, typename T>
+int  __attribute__ ((noinline)) shared_mem_load_store(T *A, T *R) {
 
-	bsg_tile_group_shared_mem (T, sh_A, (HEIGHT * WIDTH));
+
+        TileGroupStripedArray<T, (HEIGHT * WIDTH), TG_DIM_X, TG_DIM_Y, 1> sh_A;
+
 
         for (int y = bsg_y; y < HEIGHT; y += TG_DIM_Y) {
             for (int x = bsg_x; x < WIDTH; x += TG_DIM_X) {
-                bsg_tile_group_shared_store (T, sh_A, (y * WIDTH + x), A[y * WIDTH + x]);
+                sh_A[y * WIDTH + x] = A[y * WIDTH + x];
             }
         }
 
@@ -55,7 +61,7 @@ int  __attribute__ ((noinline)) shared_mem_load_store(T *A, T *R,
 
         for (int y = bsg_y; y < HEIGHT; y += TG_DIM_Y) {
             for (int x = bsg_x; x < WIDTH; x += TG_DIM_X) {
-                bsg_tile_group_shared_load (T, sh_A, (y * WIDTH + x), R[y * WIDTH + x]);
+                R[y * WIDTH + x] = sh_A[y * WIDTH + x];
             }
         }
 
@@ -73,8 +79,10 @@ extern "C" {
                       uint32_t HEIGHT, uint32_t WIDTH) {
                 int rc;
                 bsg_cuda_print_stat_kernel_start();
-                rc = shared_mem_load_store<TEMPLATE_TG_DIM_X, TEMPLATE_TG_DIM_Y> (A, R,
-                                                                                  HEIGHT, WIDTH);
+                rc = shared_mem_load_store<TEMPLATE_TG_DIM_X,
+                                           TEMPLATE_TG_DIM_Y,
+                                           TEMPLATE_HEIGHT,
+                                           TEMPLATE_WIDTH> (A, R);
 
                 barrier.sync();
 

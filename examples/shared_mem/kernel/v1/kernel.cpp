@@ -1,5 +1,6 @@
 /*
  * This kernel performs load and store to tile group shared memory.
+ * Templatized matrix dimensions.
  */
 
 // BSG_TILE_GROUP_X_DIM and BSG_TILE_GROUP_Y_DIM must be defined
@@ -8,6 +9,8 @@
 // legacy reasons, but they are deprecated.
 #define TEMPLATE_TG_DIM_X 4
 #define TEMPLATE_TG_DIM_Y 4
+#define TEMPLATE_HEIGHT   4
+#define TEMPLATE_WIDTH    4
 
 #define bsg_tiles_X TEMPLATE_TG_DIM_X
 #define bsg_tiles_Y TEMPLATE_TG_DIM_Y
@@ -37,9 +40,8 @@
 bsg_barrier<bsg_tiles_X, bsg_tiles_Y> barrier;
 
 
-template <int TG_DIM_X, int TG_DIM_Y, typename T>
-int  __attribute__ ((noinline)) shared_mem_load_store(T *A, T *R,
-                                                      uint32_t HEIGHT, uint32_t WIDTH) {
+template <int TG_DIM_X, int TG_DIM_Y, int HEIGHT, int WIDTH, typename T>
+int  __attribute__ ((noinline)) shared_mem_load_store(T *A, T *R) {
 
 
 
@@ -73,8 +75,11 @@ extern "C" {
                       uint32_t HEIGHT, uint32_t WIDTH) {
                 int rc;
                 bsg_cuda_print_stat_kernel_start();
-                rc = shared_mem_load_store<TEMPLATE_TG_DIM_X, TEMPLATE_TG_DIM_Y> (A, R,
-                                                                                  HEIGHT, WIDTH);
+                rc = shared_mem_load_store<TEMPLATE_TG_DIM_X,
+                                           TEMPLATE_TG_DIM_Y,
+                                           TEMPLATE_HEIGHT,
+                                           TEMPLATE_WIDTH> (A, R);
+
 
                 barrier.sync();
 
