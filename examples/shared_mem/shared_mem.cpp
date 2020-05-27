@@ -36,20 +36,6 @@
 #define WIDTH  32
 #define NUM_ITER 1
 
-// Host Matrix multiplication code (to compare results)
-template <typename TA, typename TB, typename TC>
-void matrix_mult (TA *A, TB *B, TC *C, uint64_t M, uint64_t N, uint64_t P) {
-        for (uint64_t y = 0; y < M; y ++) {
-                for (uint64_t x = 0; x < P; x ++) {
-                        TC res = 0.0f;
-                        for (uint64_t k = 0; k < N; k++) {
-                                res += A[y * N + k] * B[k * P + x];
-                        }
-                        C[y * P + x] = res;
-                }
-        }
-        return;
-}
 
 // Compute the sum of squared error between matricies A and B (M x N)
 template <typename T>
