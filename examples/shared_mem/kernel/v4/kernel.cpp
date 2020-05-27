@@ -2,6 +2,7 @@
  * This kernel performs load and store to tile group shared memory.
  * Templatized matrix dimensions.
  * Using striped array.
+ * Stride = 4
  */
 
 // BSG_TILE_GROUP_X_DIM and BSG_TILE_GROUP_Y_DIM must be defined
@@ -48,7 +49,7 @@ template <int TG_DIM_X, int TG_DIM_Y, int HEIGHT, int WIDTH, typename T>
 int  __attribute__ ((noinline)) shared_mem_load_store(T *A, T *R) {
 
 
-        TileGroupStripedArray<T, (HEIGHT * WIDTH), TG_DIM_X, TG_DIM_Y, 1> sh_A;
+        TileGroupStripedArray<T, (HEIGHT * WIDTH), TG_DIM_X, TG_DIM_Y, 4> sh_A;
 
 
         for (int y = bsg_y; y < HEIGHT; y += TG_DIM_Y) {

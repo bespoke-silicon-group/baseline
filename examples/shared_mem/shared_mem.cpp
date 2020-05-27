@@ -32,8 +32,8 @@
  */
 
 // Matrix sizes:
-#define HEIGHT 4
-#define WIDTH  4
+#define HEIGHT 32
+#define WIDTH  32
 #define NUM_ITER 1
 
 // Host Matrix multiplication code (to compare results)

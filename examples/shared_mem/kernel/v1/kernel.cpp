@@ -9,8 +9,8 @@
 // legacy reasons, but they are deprecated.
 #define TEMPLATE_TG_DIM_X 4
 #define TEMPLATE_TG_DIM_Y 4
-#define TEMPLATE_HEIGHT   4
-#define TEMPLATE_WIDTH    4
+#define TEMPLATE_HEIGHT   32
+#define TEMPLATE_WIDTH    32
 
 #define bsg_tiles_X TEMPLATE_TG_DIM_X
 #define bsg_tiles_Y TEMPLATE_TG_DIM_Y
