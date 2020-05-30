@@ -1,14 +1,15 @@
 /*
  * This kernel performs load and store to tile group shared memory.
- * 2x1 tile group
+ * 4x4 tile group.
+ * Unrolled inner loop.
  */
 
 // BSG_TILE_GROUP_X_DIM and BSG_TILE_GROUP_Y_DIM must be defined
 // before bsg_manycore.h and bsg_tile_group_barrier.h are
 // included. bsg_tiles_X and bsg_tiles_Y must also be defined for
 // legacy reasons, but they are deprecated.
-#define TEMPLATE_TG_DIM_X 2
-#define TEMPLATE_TG_DIM_Y 1
+#define TEMPLATE_TG_DIM_X 4
+#define TEMPLATE_TG_DIM_Y 4
 
 #define bsg_tiles_X TEMPLATE_TG_DIM_X
 #define bsg_tiles_Y TEMPLATE_TG_DIM_Y
@@ -27,6 +28,7 @@ int  __attribute__ ((noinline)) shared_mem_load(uint32_t WIDTH) {
         int lc_A[WIDTH];
 
 
+        #pragma GCC unroll 32
         for (int i = 0; i < WIDTH; i ++) {
             bsg_tile_group_shared_load (int, sh_A, i, lc_A[i]);
         }

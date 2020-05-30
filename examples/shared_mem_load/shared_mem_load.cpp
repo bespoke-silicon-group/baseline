@@ -32,7 +32,7 @@
  */
 
 // Memory sizes:
-#define WIDTH  32
+#define WIDTH  64
 #define NUM_ITER 1
 
 // Compute the sum of squared error between matricies A and B (M x N)
@@ -81,42 +81,19 @@ int kernel_shared_mem_load (int argc, char **argv) {
         // Define tg_dim_x/y: number of tiles in each tile group
         // Calculate grid_dim_x/y: number of tile groups needed based on block_size_x/y
         hb_mc_dimension_t tg_dim = { .x = 0, .y = 0 };
-        if(!strcmp("v0", test_name) || !strcmp("v1", test_name) || 
-           !strcmp("v2", test_name) || !strcmp("v3", test_name) || 
-           !strcmp("v4", test_name) || !strcmp("v5", test_name) || 
-           !strcmp("v6", test_name) || !strcmp("v7", test_name) ||
-           !strcmp("v8", test_name)){
+        if(!strcmp("v0", test_name)  || !strcmp("v1", test_name)  || 
+           !strcmp("v2", test_name)  || !strcmp("v3", test_name)  || 
+           !strcmp("v4", test_name)  || !strcmp("v5", test_name)  || 
+           !strcmp("v6", test_name)  || !strcmp("v7", test_name)  ||
+           !strcmp("v8", test_name)  || !strcmp("v9", test_name)  ||
+           !strcmp("v10", test_name) || !strcmp("v11", test_name) ||
+           !strcmp("v12", test_name) || !strcmp("v13", test_name)){
                 tg_dim = { .x = 4, .y = 4 };
         } else {
                 bsg_pr_test_err("Invalid version provided!.\n");
                 return HB_MC_INVALID;
         }
         hb_mc_dimension_t grid_dim = { .x = 1, .y = 1}; 
-
-//        // Initialize the random number generators
-//        std::numeric_limits<int8_t> lim; // Used to get INT_MIN and INT_MAX in C++
-//        std::default_random_engine generator;
-//        generator.seed(42);
-//        std::uniform_real_distribution<float> distribution(lim.min(),lim.max());
-//
-//        // Allocate A, B, BT, C and R (result) on the host
-//        float A[HEIGHT * WIDTH];
-//        float R[HEIGHT * WIDTH];
-//
-//        // Generate random numbers. Since the Manycore can't handle infinities,
-//        // subnormal numbers, or NANs, filter those out.
-//        auto res = distribution(generator);
-//
-//        for (uint64_t i = 0; i < HEIGHT * WIDTH; i++) {
-//                do{
-//                        res = distribution(generator);
-//                }while(!std::isnormal(res) ||
-//                       !std::isfinite(res) ||
-//                       std::isnan(res));
-//
-//                A[i] = static_cast<float>(res);
-//                R[i] = 0;
-//        }
 
 
         // Initialize device, load binary and unfreeze tiles.
@@ -134,39 +111,6 @@ int kernel_shared_mem_load (int argc, char **argv) {
                 bsg_pr_test_err("failed to initialize program.\n");
                 return rc;
         }
-
-
-//        // Allocate memory on the device for A and R. Since sizeof(float) ==
-//        // sizeof(int32_t) > sizeof(int16_t) > sizeof(int8_t) we'll reuse the
-//        // same buffers for each test (if multiple tests are conducted)
-//        eva_t A_device, R_device;
-//
-//        // Allocate A on the device
-//        rc = hb_mc_device_malloc(&device, HEIGHT * WIDTH * sizeof(float), &A_device);
-//        if (rc != HB_MC_SUCCESS) {
-//                bsg_pr_test_err("failed to allocate memory on device.\n");
-//                return rc;
-//        }
-//
-//        // Allocate R on the device
-//        rc = hb_mc_device_malloc(&device, HEIGHT * WIDTH * sizeof(float), &R_device);
-//        if (rc != HB_MC_SUCCESS) {
-//                bsg_pr_test_err("failed to allocate memory on device.\n");
-//                return rc;
-//        }
-//
-//
-//
-//        // Copy A from host onto device DRAM.
-//        void *dst = (void *) ((intptr_t) A_device);
-//        void *src = (void *) &A[0];
-//        rc = hb_mc_device_memcpy (&device, dst, src,
-//                                  (HEIGHT * WIDTH) * sizeof(A[0]),
-//                                  HB_MC_MEMCPY_TO_DEVICE);
-//        if (rc != HB_MC_SUCCESS) {
-//                bsg_pr_test_err("failed to copy memory to device.\n");
-//                return rc;
-//        }
 
 
 
@@ -188,16 +132,6 @@ int kernel_shared_mem_load (int argc, char **argv) {
                 return rc;
         }
 
-//        // Copy result matrix back from device DRAM into host memory.
-//        src = (void *) ((intptr_t) R_device);
-//        dst = (void *) &R[0];
-//        rc = hb_mc_device_memcpy (&device, dst, src,
-//                                  (HEIGHT * WIDTH) * sizeof(float),
-//                                  HB_MC_MEMCPY_TO_HOST);
-//        if (rc != HB_MC_SUCCESS) {
-//                bsg_pr_test_err("failed to copy memory from device.\n");
-//                return rc;
-//        }
 
         // Freeze the tiles and memory manager cleanup.
         rc = hb_mc_device_finish(&device);
@@ -206,16 +140,6 @@ int kernel_shared_mem_load (int argc, char **argv) {
                 return rc;
         }
 
-//        // Compare the known-correct matrix (R) and the result matrix (C)
-//        float max = 0.1;
-//        double sse = matrix_sse(A, R, HEIGHT, WIDTH);
-//
-//        if (std::isnan(sse) || sse > max) {
-//                bsg_pr_test_info(BSG_RED("Matrix Mismatch. SSE: %f\n"), sse);
-//                return HB_MC_FAIL;
-//        }
-//
-//        bsg_pr_test_info(BSG_GREEN("Matrix Match.\n"));
         return HB_MC_SUCCESS;
 }
 

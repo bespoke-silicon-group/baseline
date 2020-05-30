@@ -1,6 +1,6 @@
 /*
  * This kernel performs load and store to tile group shared memory.
- * 2x1 tile group
+ * 2x2 tile group.
  */
 
 // BSG_TILE_GROUP_X_DIM and BSG_TILE_GROUP_Y_DIM must be defined
@@ -8,7 +8,7 @@
 // included. bsg_tiles_X and bsg_tiles_Y must also be defined for
 // legacy reasons, but they are deprecated.
 #define TEMPLATE_TG_DIM_X 2
-#define TEMPLATE_TG_DIM_Y 1
+#define TEMPLATE_TG_DIM_Y 2
 
 #define bsg_tiles_X TEMPLATE_TG_DIM_X
 #define bsg_tiles_Y TEMPLATE_TG_DIM_Y
