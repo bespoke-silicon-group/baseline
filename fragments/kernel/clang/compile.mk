@@ -38,5 +38,7 @@ $(LLVM_DIR):
 %.rvo: %.bc.s
 	$(RISCV_GCC) $(RISCV_GCC_OPTS) $(OPT_LEVEL) -c $< -o $@
 
+.PRECIOUS: %.bc %.bc.s
+
 kernel.compile.clean:
-	rm -rf *.rvo *.gcc.log *.rva *.a
+	rm -rf *.rvo *.clang.log *.rva *.a
