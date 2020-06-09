@@ -25,20 +25,20 @@ $(LLVM_DIR):
 
 # Emit -O0 so that loads to consecutive memory locations aren't combined
 # Opt can run optimizations in any order, so it doesn't matter
-%.bc: %.c $(LLVM_DIR) $(RUNTIME_FNS)
-	$(LLVM_CLANG) $(CLANG_RISCV_CFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -c -emit-llvm $< -o $@ |& tee $*.clang.log
+%.ll: %.c $(LLVM_DIR) $(RUNTIME_FNS)
+	$(LLVM_CLANG) $(CLANG_RISCV_CFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -emit-llvm -c -S $< -o $@ |& tee $*.clang.log
 
 # do the same for C++ sources
-%.bc: %.cpp $(LLVM_DIR) $(RUNTIME_FNS)
+%.ll: %.cpp $(LLVM_DIR) $(RUNTIME_FNS)
 	$(LLVM_CLANGXX) $(CLANG_TARGET_OPTS) $(CLANG_RISCV_CXXFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -c -emit-llvm  $< -o $@ |& tee $*.clang.log
 
-%.bc.s: %.bc
+%.ll.s: %.ll
 	$(LLVM_LLC) $(LLC_TARGET_OPTS) $< -o $@
 
-%.rvo: %.bc.s
+%.rvo: %.ll.s
 	$(RISCV_GCC) $(RISCV_GCC_OPTS) $(OPT_LEVEL) -c $< -o $@
 
-.PRECIOUS: %.bc %.bc.s
+.PRECIOUS: %.ll %.ll.s
 
 kernel.compile.clean:
-	rm -rf *.rvo *.clang.log *.rva *.a *.bc *.bc.s
+	rm -rf *.rvo *.clang.log *.rva *.a *.ll *.ll.s
