@@ -17,7 +17,7 @@ CLANG_TARGET_OPTS ?= --target=riscv32 -march=$(ARCH_OP) -mabi=$(ABI)
 LLC_TARGET_OPTS ?= -march=riscv32 -mcpu=$(CPU_OP)
 
 #some flags are not supported by clang, so redefine the cxx flags here
-CLANG_RISCV_CXXFLAGS := -std=c++11 -stdlib=libstdc++ $(OPT_LEVEL) $(DEBUG_FLAGS) -static -ffast-math -fno-common -ffp-contract=off 
+CLANG_RISCV_CXXFLAGS := -v -std=c++11 -stdlib=libstdc++ $(OPT_LEVEL) $(DEBUG_FLAGS) -static -ffast-math -fno-common -ffp-contract=off 
 CLANG_RISCV_CFLAGS := $(OPT_LEVEL) $(DEBUG_FLAGS) -static -ffast-math -fno-common -ffp-contract=off 
 
 $(LLVM_DIR):
@@ -33,7 +33,7 @@ $(LLVM_DIR):
 	$(LLVM_CLANGXX) $(CLANG_TARGET_OPTS) $(CLANG_RISCV_CXXFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -c -emit-llvm  $< -o $@ |& tee $*.clang.log
 
 %.bc.s: %.bc
-	$(LLVM_LLC) $(LLC_TARGET_OPS) $< -o $@
+	$(LLVM_LLC) $(LLC_TARGET_OPTS) $< -o $@
 
 %.rvo: %.bc.s
 	$(RISCV_GCC) $(RISCV_GCC_OPTS) $(OPT_LEVEL) -c $< -o $@
@@ -41,4 +41,4 @@ $(LLVM_DIR):
 .PRECIOUS: %.bc %.bc.s
 
 kernel.compile.clean:
-	rm -rf *.rvo *.clang.log *.rva *.a
+	rm -rf *.rvo *.clang.log *.rva *.a *.bc *.bc.s

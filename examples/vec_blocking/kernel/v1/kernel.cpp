@@ -1,8 +1,8 @@
 /*
  * This kernel performs vector addition. 
  * 
- * This is the 1 dimensional grid of 2 dimensional tile groups version of vector addition
- * This version assumes a 1-dimensional grid of 2-dimensional tile groups are called.
+ * This is the single 1-dimensional tile-group Vector-Vector Addition.
+ * This version assumes only a single one-dimensional tile group is called.
  */
 
 // BSG_TILE_GROUP_X_DIM and BSG_TILE_GROUP_Y_DIM must be defined
@@ -27,7 +27,7 @@ extern int bsg_printf(const char*, ...);
  */
 extern "C" {
         int  __attribute__ ((noinline)) kernel_vector_add_int(
-                      int * __restrict__ A, int * __restrict__ B, int * __restrict__ C,
+                      int *A, int *B, int *C,
                       uint32_t WIDTH,
                       uint32_t block_size_y, uint32_t block_size_x,
                       uint32_t tag, uint32_t iter) {
@@ -35,8 +35,7 @@ extern "C" {
                 int rc;
                 for(int i = 0; i <= iter; ++i){
                         bsg_cuda_print_stat_start(tag);
-                        rc = kernel_vector_add_1D_grid_2D_tile_groups(A, B, C, WIDTH,
-                                                                      block_size_x);
+                        rc = kernel_vector_add_single_1D_tile_group(A, B, C, WIDTH);
                         bsg_cuda_print_stat_end(tag);
                 }
                 bsg_cuda_print_stat_kernel_end();
@@ -45,7 +44,7 @@ extern "C" {
         }
 
         int  __attribute__ ((noinline)) kernel_vector_add_int16(
-                      int16_t *__restrict__ A, int16_t * __restrict__ B, int16_t * __restrict__ C,
+                      int16_t *A, int16_t *B, int16_t *C,
                       uint32_t WIDTH,
                       uint32_t block_size_y, uint32_t block_size_x,
                       uint32_t tag, uint32_t iter) {
@@ -53,8 +52,7 @@ extern "C" {
                 int rc;
                 for(int i = 0; i <= iter; ++i){
                         bsg_cuda_print_stat_start(tag);
-                        rc = kernel_vector_add_1D_grid_2D_tile_groups(A, B, C, WIDTH,
-                                                                      block_size_x);
+                        rc = kernel_vector_add_single_1D_tile_group(A, B, C, WIDTH);
                         bsg_cuda_print_stat_end(tag);
                 }
                 bsg_cuda_print_stat_kernel_end();
@@ -63,7 +61,7 @@ extern "C" {
         }
 
         int  __attribute__ ((noinline)) kernel_vector_add_int8(
-                      int8_t * __restrict__ A, int8_t * __restrict__ B, int8_t * __restrict__ C,
+                      int8_t *A, int8_t *B, int8_t *C,
                       uint32_t WIDTH,
                       uint32_t block_size_y, uint32_t block_size_x,
                       uint32_t tag, uint32_t iter) {
@@ -71,8 +69,7 @@ extern "C" {
                 int rc;
                 for(int i = 0; i <= iter; ++i){
                         bsg_cuda_print_stat_start(tag);
-                        rc = kernel_vector_add_1D_grid_2D_tile_groups(A, B, C, WIDTH,
-                                                                      block_size_x);
+                        rc = kernel_vector_add_single_1D_tile_group(A, B, C, WIDTH);
                         bsg_cuda_print_stat_end(tag);
                 }
                 bsg_cuda_print_stat_kernel_end();
@@ -81,7 +78,7 @@ extern "C" {
         }
 
         int  __attribute__ ((noinline)) kernel_vector_add_float(
-                      float * __restrict__ A, float * __restrict__ B, float * __restrict__ C,
+                      float *A, float *B, float *C,
                       uint32_t WIDTH,
                       uint32_t block_size_y, uint32_t block_size_x,
                       uint32_t tag, uint32_t iter) {
@@ -89,8 +86,7 @@ extern "C" {
                 int rc;
                 for(int i = 0; i <= iter; ++i){
                         bsg_cuda_print_stat_start(tag);
-                        rc = kernel_vector_add_1D_grid_2D_tile_groups(A, B, C, WIDTH,
-                                                                      block_size_x);
+                        rc = kernel_vector_add_single_1D_tile_group(A, B, C, WIDTH);
                         bsg_cuda_print_stat_end(tag);
                 }
                 bsg_cuda_print_stat_kernel_end();

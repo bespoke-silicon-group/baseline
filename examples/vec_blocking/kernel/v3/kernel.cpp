@@ -18,7 +18,7 @@
 INIT_TILE_GROUP_BARRIER(r_barrier, c_barrier, 0, bsg_tiles_X-1, 0, bsg_tiles_Y-1);
 
 #include <vector_add.hpp>
-#include <cstring>
+//#include <cstring>
 
 extern int bsg_printf(const char*, ...);
 
