@@ -27,7 +27,7 @@ extern int bsg_printf(const char*, ...);
  */
 extern "C" {
         int  __attribute__ ((noinline)) kernel_vector_add_int(
-                      int *A, int *B, int *C,
+                      __remote int * __restrict__ A, __remote int * __restrict__ B, __remote int * __restrict__ C,
                       uint32_t WIDTH,
                       uint32_t block_size_y, uint32_t block_size_x,
                       uint32_t tag, uint32_t iter) {
@@ -45,7 +45,7 @@ extern "C" {
         }
 
         int  __attribute__ ((noinline)) kernel_vector_add_int16(
-                      int16_t *A, int16_t *B, int16_t *C,
+                      __remote int16_t * __restrict__ A, __remote int16_t * __restrict__ B, __remote int16_t * __restrict__ C,
                       uint32_t WIDTH,
                       uint32_t block_size_y, uint32_t block_size_x,
                       uint32_t tag, uint32_t iter) {
@@ -63,7 +63,7 @@ extern "C" {
         }
 
         int  __attribute__ ((noinline)) kernel_vector_add_int8(
-                      int8_t *A, int8_t *B, int8_t *C,
+                      __remote int8_t * __restrict__ A, __remote int8_t * __restrict__ B, __remote int8_t * __restrict__ C,
                       uint32_t WIDTH,
                       uint32_t block_size_y, uint32_t block_size_x,
                       uint32_t tag, uint32_t iter) {
@@ -81,7 +81,7 @@ extern "C" {
         }
 
         int  __attribute__ ((noinline)) kernel_vector_add_float(
-                      float *A, float *B, float *C,
+                      __remote float * __restrict__ A, __remote float * __restrict__ B, __remote float * __restrict__ C,
                       uint32_t WIDTH,
                       uint32_t block_size_y, uint32_t block_size_x,
                       uint32_t tag, uint32_t iter) {

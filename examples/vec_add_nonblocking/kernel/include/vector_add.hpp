@@ -12,7 +12,7 @@
  * Do NOT use this version with larger tile groups 
  */
 template <typename TA, typename TB, typename TC>
-int __attribute__ ((noinline)) kernel_vector_add_single_tile(__remote TA __restrict__ *A, __remote TB __restrict__ *B, __remote TC __restrict__ *C,
+int __attribute__ ((noinline)) kernel_vector_add_single_tile(__remote TA * __restrict__ A, __remote TB * __restrict__ B, __remote TC * __restrict__ C,
                       uint32_t WIDTH) {
         // A single tile performs the entire vector addition
   #pragma unroll 8
@@ -33,7 +33,7 @@ int __attribute__ ((noinline)) kernel_vector_add_single_tile(__remote TA __restr
  * The code assumes a sinlge 1x1 grid of 1-dimensional tile group
  */
 template <typename TA, typename TB, typename TC>
-int __attribute__ ((noinline)) kernel_vector_add_single_1D_tile_group(__remote TA __restrict__ *A, __remote TB __restrict__ *B, __remote TC __restrict__ *C,
+int __attribute__ ((noinline)) kernel_vector_add_single_1D_tile_group(__remote TA * __restrict__ A, __remote TB * __restrict__ B, __remote TC * __restrict__ C,
                       uint32_t WIDTH) {
 
         // Vector is divided among tiles in the tile group
@@ -57,7 +57,7 @@ int __attribute__ ((noinline)) kernel_vector_add_single_1D_tile_group(__remote T
  * The code assumes a sinlge 1x1 grid of tile group
  */
 template <typename TA, typename TB, typename TC>
-int __attribute__ ((noinline)) kernel_vector_add_single_2D_tile_group(__remote TA __restrict__ *A, __remote TB __restrict__ *B, __remote TC __restrict__ *C,
+int __attribute__ ((noinline)) kernel_vector_add_single_2D_tile_group(__remote TA * __restrict__ A, __remote TB * __restrict__ B, __remote TC * __restrict__ C,
                       uint32_t WIDTH) {
 
         // Vector is divided among tiles in the tile group
@@ -84,7 +84,7 @@ int __attribute__ ((noinline)) kernel_vector_add_single_2D_tile_group(__remote T
  * for a sample of launching 2-dimensional grids.
  */
 template <typename TA, typename TB, typename TC>
-int __attribute__ ((noinline)) kernel_vector_add_1D_grid_2D_tile_groups(__remote TA __restrict__ *A, __remote TB __restrict__ *B, __remote TC __restrict__ *C,
+int __attribute__ ((noinline)) kernel_vector_add_1D_grid_2D_tile_groups(__remote TA * __restrict__ A, __remote TB * __restrict__ B, __remote TC * __restrict__ C,
                       uint32_t WIDTH, uint32_t block_size_x) {
 
         // Each tile group is responsbile for calculating block_size_x elements
