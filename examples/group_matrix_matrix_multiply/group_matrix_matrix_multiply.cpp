@@ -33,13 +33,13 @@
  */
 
 // Matrix sizes:
-#define A_HEIGHT 32
-#define A_WIDTH  64
+#define A_HEIGHT 32        // M
+#define A_WIDTH  32        // N
 #define B_HEIGHT A_WIDTH
-#define B_WIDTH  16
+#define B_WIDTH  32        // P
 #define C_HEIGHT A_HEIGHT
 #define C_WIDTH  B_WIDTH
-#define NUM_ITER 4
+#define NUM_ITER 1
 
 // Host Matrix multiplication code (to compare results)
 template <typename TA, typename TB, typename TC>
@@ -104,16 +104,19 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
         uint32_t block_size_x = 0;
         uint32_t block_size_y = 0;
         hb_mc_dimension_t tg_dim = { .x = 0, .y = 0 };
-        if(!strcmp("v0", test_name) || !strcmp("v1", test_name)){
-                block_size_x = 4;
-                block_size_y = 4;
-                tg_dim = { .x = 2, .y = 2 };
+        if(!strcmp("v0", test_name) || !strcmp("v1", test_name) || 
+           !strcmp("v2", test_name) || !strcmp("v3", test_name) || 
+           !strcmp("v4", test_name) || !strcmp("v5", test_name) || 
+           !strcmp("v6", test_name) || !strcmp("v7", test_name) ||
+           !strcmp("v8", test_name)){
+                block_size_x = C_WIDTH;
+                block_size_y = C_HEIGHT;
+                tg_dim = { .x = 4, .y = 4 };
         } else {
                 bsg_pr_test_err("Invalid version provided!.\n");
                 return HB_MC_INVALID;
         }
-        hb_mc_dimension_t grid_dim = { .x = (B_WIDTH + block_size_x - 1) / block_size_x,
-                                       .y = (A_HEIGHT + block_size_y - 1) / block_size_y };
+        hb_mc_dimension_t grid_dim = {.x = 1, .y = 1};
 
         // Initialize the random number generators
         std::numeric_limits<int8_t> lim; // Used to get INT_MIN and INT_MAX in C++
