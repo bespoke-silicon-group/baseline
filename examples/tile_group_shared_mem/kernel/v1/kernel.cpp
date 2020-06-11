@@ -1,24 +1,24 @@
-/*
- * This kernel tests hardware tile group shared memory.
- * It loads an input array into tile group shared memory
- * and stores the array back into a destination in DRAM.
- * Results are then compared against the original memory.
- */
+// This kernel uses hardware tile group shared memory
+// using bsg_shared_mem.hpp library.
+// It loads an input array into tile group shared memory
+// and stores the array back into a destination in DRAM.
+// Results are then compared against the original memory.
 
-// BSG_TILE_GROUP_X_DIM and BSG_TILE_GROUP_Y_DIM must be defined
-// before bsg_manycore.h and bsg_tile_group_barrier.h are
+// TEMPLATE_TG_DIM_X/Y must be defined before bsg_manycore.h is
 // included. bsg_tiles_X and bsg_tiles_Y must also be defined for
 // legacy reasons, but they are deprecated.
+
 #define TEMPLATE_TG_DIM_X 4
 #define TEMPLATE_TG_DIM_Y 4
 #define TEMPLATE_WIDTH    1024
-
 #define bsg_tiles_X TEMPLATE_TG_DIM_X
 #define bsg_tiles_Y TEMPLATE_TG_DIM_Y
+
 #include <bsg_manycore.h>
 #include <bsg_tile_group_barrier.hpp>
-#include <hard_shared_mem.hpp>
+#include <tile_group_shared_mem.hpp>
 #include <bsg_shared_mem.hpp>
+
 
 using namespace bsg_manycore;
 
@@ -26,11 +26,9 @@ bsg_barrier<bsg_tiles_X, bsg_tiles_Y> barrier;
 
 
 template <int TG_DIM_X, int TG_DIM_Y, int WIDTH, typename T>
-int  __attribute__ ((noinline)) hard_shared_mem_load_store(T *A, T *R) {
-
+int  __attribute__ ((noinline)) tile_group_shared_mem_load_store(T *A, T *R) {
 
     TileGroupSharedMem<T, WIDTH, TG_DIM_X, TG_DIM_Y, 8> sh_A;
-
 
     constexpr int block_size = WIDTH / (TG_DIM_X * TG_DIM_Y);
     int start = __bsg_id * block_size;
@@ -48,19 +46,17 @@ int  __attribute__ ((noinline)) hard_shared_mem_load_store(T *A, T *R) {
 
     barrier.sync();
 
-
     return 0;
 }
 
 
-
-
 extern "C" {
-        int  __attribute__ ((noinline)) kernel_hard_shared_mem(
+        int  __attribute__ ((noinline)) kernel_tile_group_shared_mem(
                       float *A, float *R) {
                 int rc;
                 bsg_cuda_print_stat_kernel_start();
-                rc = hard_shared_mem_load_store<TEMPLATE_TG_DIM_X,
+
+                rc = tile_group_shared_mem_load_store<TEMPLATE_TG_DIM_X,
                                                 TEMPLATE_TG_DIM_Y,
                                                 TEMPLATE_WIDTH>
                                                 (A, R);

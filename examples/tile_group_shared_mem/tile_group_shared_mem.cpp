@@ -25,7 +25,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "hard_shared_mem.hpp"
+#include "tile_group_shared_mem.hpp"
 
 /*
  * Runs the tile group shared memory load store test.
@@ -62,7 +62,7 @@ void matrix_print(T *A, uint64_t M, uint64_t N) {
         }
 }
 
-int kernel_hard_shared_mem (int argc, char **argv) {
+int kernel_tile_group_shared_mem (int argc, char **argv) {
 
         int rc;
         char *bin_path, *test_name;
@@ -79,11 +79,7 @@ int kernel_hard_shared_mem (int argc, char **argv) {
         // Define tg_dim_x/y: number of tiles in each tile group
         // Calculate grid_dim_x/y: number of tile groups needed based on block_size_x/y
         hb_mc_dimension_t tg_dim = { .x = 0, .y = 0 };
-        if(!strcmp("v0", test_name) || !strcmp("v1", test_name) || 
-           !strcmp("v2", test_name) || !strcmp("v3", test_name) || 
-           !strcmp("v4", test_name) || !strcmp("v5", test_name) || 
-           !strcmp("v6", test_name) || !strcmp("v7", test_name) ||
-           !strcmp("v8", test_name)){
+        if (!strcmp("v0", test_name) || !strcmp("v1", test_name)) { 
                 tg_dim = { .x = 4, .y = 4 };
         } else {
                 bsg_pr_test_err("Invalid version provided!.\n");
@@ -147,7 +143,7 @@ int kernel_hard_shared_mem (int argc, char **argv) {
 
         // Enquque grid of tile groups, pass in grid and tile group dimensions,
         // kernel name, number and list of input arguments
-        hb_mc_kernel_enqueue (&device, grid_dim, tg_dim, "kernel_hard_shared_mem", 2, cuda_argv);
+        hb_mc_kernel_enqueue (&device, grid_dim, tg_dim, "kernel_tile_group_shared_mem", 2, cuda_argv);
 
         // Launch and execute all tile groups on device and wait for all to finish.
         hb_mc_device_tile_groups_execute(&device);
@@ -174,11 +170,11 @@ int kernel_hard_shared_mem (int argc, char **argv) {
         double sse = vector_sse(A, R, WIDTH);
 
         if (std::isnan(sse) || sse > max) {
-                bsg_pr_test_info(BSG_RED("Matrix Mismatch. SSE: %f\n"), sse);
+                bsg_pr_test_info(BSG_RED("Vector Mismatch. SSE: %f\n"), sse);
                 return HB_MC_FAIL;
         }
         
-        bsg_pr_test_info(BSG_GREEN("Matrix Match.\n"));
+        bsg_pr_test_info(BSG_GREEN("Vector Match.\n"));
         return HB_MC_SUCCESS;
 }
 
@@ -197,14 +193,14 @@ void cosim_main(uint32_t *exit_code, char * args) {
         scope = svGetScopeFromName("tb");
         svSetScope(scope);
 #endif
-        int rc = kernel_hard_shared_mem(argc, argv);
+        int rc = kernel_tile_group_shared_mem(argc, argv);
         *exit_code = rc;
         bsg_pr_test_pass_fail(rc == HB_MC_SUCCESS);
         return;
 }
 #else
 int main(int argc, char ** argv) {
-        int rc = kernel_hard_shared_mem(argc, argv);
+        int rc = kernel_tile_group_shared_mem(argc, argv);
         bsg_pr_test_pass_fail(rc == HB_MC_SUCCESS);
         return rc;
 }
