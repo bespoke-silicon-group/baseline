@@ -105,10 +105,7 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
         uint32_t block_size_y = 0;
         hb_mc_dimension_t tg_dim = { .x = 0, .y = 0 };
         if(!strcmp("v0", test_name) || !strcmp("v1", test_name) || 
-           !strcmp("v2", test_name) || !strcmp("v3", test_name) || 
-           !strcmp("v4", test_name) || !strcmp("v5", test_name) || 
-           !strcmp("v6", test_name) || !strcmp("v7", test_name) ||
-           !strcmp("v8", test_name)){
+           !strcmp("v2", test_name) || !strcmp("v3", test_name)) { 
                 block_size_x = C_WIDTH;
                 block_size_y = C_HEIGHT;
                 tg_dim = { .x = 4, .y = 4 };
@@ -253,7 +250,7 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
         BSG_CUDA_CALL(hb_mc_device_finish(&device));
 
         // Compare the known-correct matrix (R) and the result matrix (C)
-        float max = 0.1;
+        float max = 1.0;
         double sse = matrix_sse(R, C, C_HEIGHT, C_WIDTH);
 
         if (std::isnan(sse) || sse > max) {

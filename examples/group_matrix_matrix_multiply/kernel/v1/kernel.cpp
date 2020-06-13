@@ -106,7 +106,8 @@ template <int TG_DIM_X, int TG_DIM_Y,
                                                                           uint32_t M,
                                                                           uint32_t N,
                                                                           uint32_t P,
-                                                                          uint32_t block_num) { 
+                                                                          uint32_t block_num,
+                                                                          uint32_t unroll_factor) { 
     
         for (uint32_t iter_y = __bsg_y; iter_y < BLOCK_SIZE_Y; iter_y += TG_DIM_Y) { 
             for (uint32_t iter_x = __bsg_x; iter_x < BLOCK_SIZE_X; iter_x += TG_DIM_X) { 
@@ -114,14 +115,62 @@ template <int TG_DIM_X, int TG_DIM_Y,
                 TA lc_A;
                 TB lc_B;
                 TC lc_C;
-                for (uint32_t k = 0; k < SUBBLOCK_SIZE; k ++) { 
-                    // lc_A <-- A[iter_y][iter_x]
-                    bsg_tile_group_shared_load (TA, A, (iter_y * SUBBLOCK_SIZE + k), lc_A); 
-                    // lc_B <-- B[iter_y][iter_x] remember, B is transposed
-                    bsg_tile_group_shared_load (TB, B, (iter_x * SUBBLOCK_SIZE + k), lc_B);
-                    sum += lc_A * lc_B;
+
+
+                // lc_A <-- A[iter_y][iter_x]
+                // lc_B <-- B[iter_y][iter_x] remember, B is transposed
+                // sum += lc_A * lc_B
+                switch(unroll_factor) {
+                    case 2:
+                        #pragma GCC unroll 2
+                        for (uint32_t k = 0; k < SUBBLOCK_SIZE; k ++) { 
+                            bsg_tile_group_shared_load (TA, A, (iter_y * SUBBLOCK_SIZE + k), lc_A); 
+                            bsg_tile_group_shared_load (TB, B, (iter_x * SUBBLOCK_SIZE + k), lc_B);
+                            sum += lc_A * lc_B;
+                        }
+                        break;
+                    case 4:
+                        #pragma GCC unroll 4
+                        for (uint32_t k = 0; k < SUBBLOCK_SIZE; k ++) { 
+                            bsg_tile_group_shared_load (TA, A, (iter_y * SUBBLOCK_SIZE + k), lc_A); 
+                            bsg_tile_group_shared_load (TB, B, (iter_x * SUBBLOCK_SIZE + k), lc_B);
+                            sum += lc_A * lc_B;
+                        }
+                        break;
+                    case 8:
+                        #pragma GCC unroll 8
+                        for (uint32_t k = 0; k < SUBBLOCK_SIZE; k ++) { 
+                            bsg_tile_group_shared_load (TA, A, (iter_y * SUBBLOCK_SIZE + k), lc_A); 
+                            bsg_tile_group_shared_load (TB, B, (iter_x * SUBBLOCK_SIZE + k), lc_B);
+                            sum += lc_A * lc_B;
+                        }
+                        break;
+                    case 16:
+                        #pragma GCC unroll 16
+                        for (uint32_t k = 0; k < SUBBLOCK_SIZE; k ++) { 
+                            bsg_tile_group_shared_load (TA, A, (iter_y * SUBBLOCK_SIZE + k), lc_A); 
+                            bsg_tile_group_shared_load (TB, B, (iter_x * SUBBLOCK_SIZE + k), lc_B);
+                            sum += lc_A * lc_B;
+                        }
+                        break;
+                    case 32:
+                        #pragma GCC unroll 32
+                        for (uint32_t k = 0; k < SUBBLOCK_SIZE; k ++) { 
+                            bsg_tile_group_shared_load (TA, A, (iter_y * SUBBLOCK_SIZE + k), lc_A); 
+                            bsg_tile_group_shared_load (TB, B, (iter_x * SUBBLOCK_SIZE + k), lc_B);
+                            sum += lc_A * lc_B;
+                        }
+                        break;
+                    default:
+                        #pragma GCC unroll 1
+                        for (uint32_t k = 0; k < SUBBLOCK_SIZE; k ++) { 
+                            bsg_tile_group_shared_load (TA, A, (iter_y * SUBBLOCK_SIZE + k), lc_A); 
+                            bsg_tile_group_shared_load (TB, B, (iter_x * SUBBLOCK_SIZE + k), lc_B);
+                            sum += lc_A * lc_B;
+                        }
+                        break;
                 }
-                
+
                 if (!block_num) { 
                     // C[iter_y][iter_x] <-- sum
                     bsg_tile_group_shared_store (TC, C, (iter_y * BLOCK_SIZE_X + iter_x), sum);
@@ -144,7 +193,8 @@ template <int TG_DIM_X, int TG_DIM_Y,
     int __attribute__ ((noinline)) group_matrix_multiply(TA *A, TB *B, TC *C, 
                                                          uint32_t M,
                                                          uint32_t N,
-                                                         uint32_t P) { 
+                                                         uint32_t P,
+                                                         uint32_t unroll_factor) { 
     
         // declare tile-group shared memory
         bsg_tile_group_shared_mem (TA, sh_A, (BLOCK_SIZE_Y * SUBBLOCK_SIZE));
@@ -177,7 +227,8 @@ template <int TG_DIM_X, int TG_DIM_Y,
                                                  BLOCK_SIZE_X, BLOCK_SIZE_Y,
                                                  SUBBLOCK_SIZE>
                                                  (sh_A, sh_B, sh_C,
-                                                  M, N, P, block_num);
+                                                  M, N, P, block_num,
+                                                  unroll_factor);
             
             barrier.sync();
         }
@@ -204,14 +255,21 @@ extern "C" {
         int rc;
         bsg_cuda_print_stat_kernel_start();
 
-        rc = group_matrix_multiply <TEMPLATE_TG_DIM_X,
-                                    TEMPLATE_TG_DIM_Y,
-                                    TEMPLATE_BLOCK_SIZE_X,
-                                    TEMPLATE_BLOCK_SIZE_Y,
-                                    TEMPLATE_SUBBLOCK_SIZE> (A, B, C,
-                                                             A_HEIGHT,
-                                                             A_WIDTH,
-                                                             B_WIDTH);
+        for (int unroll = 1; unroll <= 32; unroll *= 2) {
+            bsg_cuda_print_stat_start(unroll);
+
+            rc = group_matrix_multiply <TEMPLATE_TG_DIM_X,
+                                        TEMPLATE_TG_DIM_Y,
+                                        TEMPLATE_BLOCK_SIZE_X,
+                                        TEMPLATE_BLOCK_SIZE_Y,
+                                        TEMPLATE_SUBBLOCK_SIZE> (A, B, C,
+                                                                 A_HEIGHT,
+                                                                 A_WIDTH,
+                                                                 B_WIDTH,
+                                                                 unroll);
+
+            bsg_cuda_print_stat_end(unroll);
+        }
 
         barrier.sync();
 

@@ -18,13 +18,15 @@
 bsg_barrier<bsg_tiles_X, bsg_tiles_Y> barrier;
 
 
-template <int TG_DIM_X, int TG_DIM_Y, typename TA, typename TB, typename TC>
+template <int TG_DIM_X, int TG_DIM_Y,
+          typename TA, typename TB, typename TC>
 int  __attribute__ ((noinline)) group_matrix_multiply(TA *A, TB *B, TC *C,
                                                       uint32_t A_HEIGHT,
                                                       uint32_t A_WIDTH,
                                                       uint32_t B_WIDTH,
                                                       uint32_t block_size_y,
-                                                      uint32_t block_size_x) {
+                                                      uint32_t block_size_x,
+                                                      uint32_t unroll_factor) {
 
     uint32_t start_y = __bsg_tile_group_id_y * block_size_y;
     uint32_t start_x = __bsg_tile_group_id_x * block_size_x;
@@ -38,9 +40,46 @@ int  __attribute__ ((noinline)) group_matrix_multiply(TA *A, TB *B, TC *C,
     for (uint32_t iter_y = start_y + __bsg_y; iter_y < end_y; iter_y += TG_DIM_Y) {
         for (uint32_t iter_x = start_x + __bsg_x; iter_x < end_x; iter_x += TG_DIM_X) {
             TC sum = static_cast<TC>(0);
-            for (uint32_t k = 0; k < A_WIDTH; k ++) {
-                sum += A[iter_y * A_WIDTH + k] * B[k * B_WIDTH + iter_x];
+
+            switch(unroll_factor) {
+                case 2:
+                    #pragma GCC unroll 2
+                    for (uint32_t k = 0; k < A_WIDTH; k ++){
+                        sum += A[iter_y * A_WIDTH + k] * B[k * B_WIDTH + iter_x];
+                    }
+                    break;
+                case 4:
+                    #pragma GCC unroll 4
+                    for (uint32_t k = 0; k < A_WIDTH; k ++){
+                        sum += A[iter_y * A_WIDTH + k] * B[k * B_WIDTH + iter_x];
+                    }
+                    break;
+                case 8:
+                    #pragma GCC unroll 8
+                    for (uint32_t k = 0; k < A_WIDTH; k ++){
+                        sum += A[iter_y * A_WIDTH + k] * B[k * B_WIDTH + iter_x];
+                    }
+                    break;
+                case 16:
+                    #pragma GCC unroll 16
+                    for (uint32_t k = 0; k < A_WIDTH; k ++){
+                        sum += A[iter_y * A_WIDTH + k] * B[k * B_WIDTH + iter_x];
+                    }
+                    break;
+                case 32:
+                    #pragma GCC unroll 32
+                    for (uint32_t k = 0; k < A_WIDTH; k ++){
+                        sum += A[iter_y * A_WIDTH + k] * B[k * B_WIDTH + iter_x];
+                    }
+                    break;
+                default:
+                    #pragma GCC unroll 1
+                    for (uint32_t k = 0; k < A_WIDTH; k ++){
+                        sum += A[iter_y * A_WIDTH + k] * B[k * B_WIDTH + iter_x];
+                    }
+                    break;
             }
+
             C[iter_y * B_WIDTH + iter_x] = sum;
         }
     }
@@ -61,13 +100,20 @@ extern "C" {
         int rc;
         bsg_cuda_print_stat_kernel_start();
 
-        rc = group_matrix_multiply <TEMPLATE_TG_DIM_X,
-                                    TEMPLATE_TG_DIM_Y> (A, B, C,
-                                                        A_HEIGHT,
-                                                        A_WIDTH,
-                                                        B_WIDTH,
-                                                        block_size_y,
-                                                        block_size_x);
+        for (int unroll = 1; unroll <= 32; unroll *= 2) {
+            bsg_cuda_print_stat_start(unroll);
+
+            rc = group_matrix_multiply <TEMPLATE_TG_DIM_X,
+                                        TEMPLATE_TG_DIM_Y> (A, B, C,
+                                                            A_HEIGHT,
+                                                            A_WIDTH,
+                                                            B_WIDTH,
+                                                            block_size_y,
+                                                            block_size_x,
+                                                            unroll);
+
+            bsg_cuda_print_stat_end(unroll);
+        }
 
         barrier.sync();
 

@@ -15,48 +15,38 @@ the [kernel](kernel) directory.
 
 ### Version 0
 Naive Matrix Multiplication using DRAM-Resident data.
+To test the effect of unrolling the inner multiplication 
+loop, the kernel is executed 6 times with different 
+loop unrolling factors 1, 2, 4, 8, 16, 32. Each iteration
+is tagged with it's unrolling factor in the stats.
 
 ### Version 1
-Naive Matrix Multiplication using DRAM-Resident data.
+Blocked Matrix Multiplication using SW tile group shared memory.
+The Deprecated C version of tile group shared memory is used in this code.
 
-Optimizations:
-  - Inner multiplication loop unrolled by a factor of 32.
+To test the effect of unrolling the inner multiplication 
+loop, the kernel is executed 6 times with different 
+loop unrolling factors 1, 2, 4, 8, 16, 32. Each iteration
+is tagged with it's unrolling factor in the stats.
 
 ### Version 2
 Blocked Matrix Multiplication using SW tile group shared memory.
-The Deprecated C version of tile group shared memory is used in this code.
+The modern C++ version of tile group shared memory, bsg\_striped\_array.hpp 
+is used in this code.
+
+To test the effect of unrolling the inner multiplication 
+loop, the kernel is executed 6 times with different 
+loop unrolling factors 1, 2, 4, 8, 16, 32. Each iteration
+is tagged with it's unrolling factor in the stats.
 
 ### Version 3
-Blocked Matrix Multiplication using SW tile group shared memory.
-The Deprecated C version of tile group shared memory is used in this code.
-
-Optimizations:
-  - Inner multiplication loop unrolled by a factor of 32.
-
-### Version 4
-Blocked Matrix Multiplication using SW tile group shared memory.
-The modern C++ version of tile group shared memory, bsg\_striped\_array.hpp 
-is used in this code.
-
-### Version 5
-Blocked Matrix Multiplication using SW tile group shared memory.
-The modern C++ version of tile group shared memory, bsg\_striped\_array.hpp 
-is used in this code.
-
-Optimizations:
-  - Inner multiplication loop unrolled by a factor of 32.
-
-### Version 6
 Blocked Matrix Multiplication using HW tile group shared Memory.
 The hardware tile group shared memory, along with it's driver
 bsg\_shared\_mem.hpp is used in this code.
  
-### Version 7
-Blocked Matrix Multiplication using HW tile group shared Memory.
-The hardware tile group shared memory, along with it's driver
-bsg\_shared\_mem.hpp is used in this code.
-
-Optimizations:
-  - Inner multiplication loop unrolled by a factor of 32.
+To test the effect of unrolling the inner multiplication 
+loop, the kernel is executed 6 times with different 
+loop unrolling factors 1, 2, 4, 8, 16, 32. Each iteration
+is tagged with it's unrolling factor in the stats.
 
 
