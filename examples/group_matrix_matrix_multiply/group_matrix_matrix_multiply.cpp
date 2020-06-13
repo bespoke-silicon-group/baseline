@@ -236,7 +236,7 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
                 .size   = C_size 
         };
 
-        hb_mc_device_dma_to_host(&device, &dtoh_job, 1);
+        BSG_CUDA_CALL(hb_mc_device_dma_to_host(&device, &dtoh_job, 1));
 
         // // Copy result matrix back from device DRAM into host memory.
         // src = (void *) ((intptr_t) C_device);

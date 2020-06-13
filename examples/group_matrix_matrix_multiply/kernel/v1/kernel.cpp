@@ -12,8 +12,8 @@
 
 #define TEMPLATE_TG_DIM_X 4
 #define TEMPLATE_TG_DIM_Y 4
-#define TEMPLATE_BLOCK_SIZE_X  32
-#define TEMPLATE_BLOCK_SIZE_Y  32
+#define TEMPLATE_BLOCK_SIZE_X  64
+#define TEMPLATE_BLOCK_SIZE_Y  64
 #define TEMPLATE_SUBBLOCK_SIZE 32
 #define bsg_tiles_X TEMPLATE_TG_DIM_X
 #define bsg_tiles_Y TEMPLATE_TG_DIM_Y
@@ -255,8 +255,8 @@ extern "C" {
         int rc;
         bsg_cuda_print_stat_kernel_start();
 
-        for (int unroll = 1; unroll <= 32; unroll *= 2) {
-            bsg_cuda_print_stat_start(unroll);
+        for (int i = 0; i < 6; i++) {
+            bsg_cuda_print_stat_start(i+1);
 
             rc = group_matrix_multiply <TEMPLATE_TG_DIM_X,
                                         TEMPLATE_TG_DIM_Y,
@@ -266,9 +266,9 @@ extern "C" {
                                                                  A_HEIGHT,
                                                                  A_WIDTH,
                                                                  B_WIDTH,
-                                                                 unroll);
+                                                                 (i << 1));
 
-            bsg_cuda_print_stat_end(unroll);
+            bsg_cuda_print_stat_end(i+1);
         }
 
         barrier.sync();
