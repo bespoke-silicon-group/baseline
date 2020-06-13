@@ -27,10 +27,10 @@
 
 #include "group_matrix_matrix_multiply.hpp"
 
-/*
- * Runs the matrix multiplication on a grid of tile groups. A[M][N] * B[N][P] --> C[M][P]
- * Grid dimensions are determined by how much of a load we want for each tile group (block_size_y/x)
- */
+// This test performs paralle matrix multiplication and tests the 
+// performance of multiple optimization techniques, including 
+// using software and hardware tile group shared memory, 
+// templatization, and loop unrolling with different stripe sizes.
 
 // Matrix sizes:
 #define A_HEIGHT 32        // M
@@ -159,68 +159,65 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
 
         // Initialize device, load binary and unfreeze tiles.
         hb_mc_device_t device;
-        rc = hb_mc_device_init_custom_dimensions(&device, test_name, 0, tg_dim);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_test_err("failed to initialize device.\n");
-                return rc;
+        BSG_CUDA_CALL(hb_mc_device_init_custom_dimensions(&device, test_name, 0, tg_dim));
+
+        // if DMA is not supported just return SUCCESS 
+        if (!hb_mc_manycore_supports_dma_write(device.mc)
+            || !hb_mc_manycore_supports_dma_read(device.mc)) {
+                bsg_pr_test_info("DMA not supported for this machine: returning fail.\n");
+                return HB_MC_FAIL;
         }
 
-
-        rc = hb_mc_device_program_init(&device, bin_path,
-                                       "default_allocator", 0);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_test_err("failed to initialize program.\n");
-                return rc;
-        }
-
+        BSG_CUDA_CALL(hb_mc_device_program_init(&device, bin_path, "default_allocator", 0));
 
         // Allocate memory on the device for A, B and C. Since sizeof(float) ==
         // sizeof(int32_t) > sizeof(int16_t) > sizeof(int8_t) we'll reuse the
         // same buffers for each test (if multiple tests are conducted)
-        eva_t A_device, B_device, C_device;
+        hb_mc_eva_t A_device, B_device, C_device;
+
+        constexpr size_t A_size = A_HEIGHT * A_WIDTH * sizeof(float);
+        constexpr size_t B_size = B_HEIGHT * B_WIDTH * sizeof(float);
+        constexpr size_t C_size = C_HEIGHT * C_WIDTH * sizeof(float);
+
 
         // Allocate A on the device
-        rc = hb_mc_device_malloc(&device, A_HEIGHT * A_WIDTH * sizeof(float), &A_device);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_test_err("failed to allocate memory on device.\n");
-                return rc;
-        }
+        BSG_CUDA_CALL(hb_mc_device_malloc(&device, A_size, &A_device));
 
         // Allocate B on the device
-        rc = hb_mc_device_malloc(&device, B_HEIGHT * B_WIDTH * sizeof(float), &B_device);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_test_err("failed to allocate memory on device.\n");
-                return rc;
-        }
+        BSG_CUDA_CALL(hb_mc_device_malloc(&device, B_size, &B_device));
 
         // Allocate C on the device
-        rc = hb_mc_device_malloc(&device, C_HEIGHT * C_WIDTH * sizeof(float), &C_device);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_test_err("failed to allocate memory on device.\n");
-                return rc;
-        }
+        BSG_CUDA_CALL(hb_mc_device_malloc(&device, C_size, &C_device));
 
         // Copy A & B from host onto device DRAM.
-        void *dst = (void *) ((intptr_t) A_device);
-        void *src = (void *) &A[0];
-        rc = hb_mc_device_memcpy (&device, dst, src,
-                                  (A_HEIGHT * A_WIDTH) * sizeof(A[0]),
-                                  HB_MC_MEMCPY_TO_DEVICE);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_test_err("failed to copy memory to device.\n");
-                return rc;
-        }
+        hb_mc_dma_htod_t htod_jobs [] = {
+                {
+                        .d_addr = A_device,
+                        .h_addr = A,
+                        .size   = A_size
+                },
+                {
+                        .d_addr = B_device,
+                        .h_addr = B,
+                        .size   = B_size
+                }
+        };
+
+        BSG_CUDA_CALL(hb_mc_device_dma_to_device(&device, htod_jobs, 2));
+
+        // // Copy A & B from host onto device DRAM.
+        // void *dst = (void *) ((intptr_t) A_device);
+        // void *src = (void *) &A[0];
+        // BSG_CUDA_CALL(hb_mc_device_memcpy (&device, dst, src,
+        //                                    (A_HEIGHT * A_WIDTH) * sizeof(A[0]),
+        //                                    HB_MC_MEMCPY_TO_DEVICE));
 
 
-        dst = (void *) ((intptr_t) B_device);
-        src = (void *) &B[0];
-        rc = hb_mc_device_memcpy (&device, dst, src,
-                                  (B_HEIGHT * B_WIDTH) * sizeof(B[0]),
-                                  HB_MC_MEMCPY_TO_DEVICE);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_test_err("failed to copy memory to device.\n");
-                return rc;
-        }
+        // dst = (void *) ((intptr_t) B_device);
+        // src = (void *) &B[0];
+        // BSG_CUDA_CALL(hb_mc_device_memcpy (&device, dst, src,
+        //                                    (B_HEIGHT * B_WIDTH) * sizeof(B[0]),
+        //                                    HB_MC_MEMCPY_TO_DEVICE));
 
         // Prepare list of input arguments for kernel.
         uint32_t cuda_argv[8] = {A_device, B_device, C_device,
@@ -229,36 +226,31 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
 
         // Enquque grid of tile groups, pass in grid and tile group dimensions,
         // kernel name, number and list of input arguments
-        rc = hb_mc_kernel_enqueue (&device, grid_dim, tg_dim, "kernel_matrix_multiply", 8, cuda_argv);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_test_err("failed to initialize grid.\n");
-                return rc;
-        }
+        BSG_CUDA_CALL(hb_mc_kernel_enqueue (&device, grid_dim, tg_dim,
+                                            "kernel_matrix_multiply", 8, cuda_argv))
 
         // Launch and execute all tile groups on device and wait for all to finish.
-        rc = hb_mc_device_tile_groups_execute(&device);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_test_err("failed to execute tile groups.\n");
-                return rc;
-        }
+        BSG_CUDA_CALL(hb_mc_device_tile_groups_execute(&device));
 
         // Copy result matrix back from device DRAM into host memory.
-        src = (void *) ((intptr_t) C_device);
-        dst = (void *) &C[0];
-        rc = hb_mc_device_memcpy (&device, dst, src,
-                                  (C_HEIGHT * C_WIDTH) * sizeof(float),
-                                  HB_MC_MEMCPY_TO_HOST);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_test_err("failed to copy memory from device.\n");
-                return rc;
-        }
+        hb_mc_dma_dtoh_t dtoh_job = {
+                .d_addr = C_device,
+                .h_addr = C,
+                .size   = C_size 
+        };
+
+        hb_mc_device_dma_to_host(&device, &dtoh_job, 1);
+
+        // // Copy result matrix back from device DRAM into host memory.
+        // src = (void *) ((intptr_t) C_device);
+        // dst = (void *) &C[0];
+        // BSG_CUDA_CALL(hb_mc_device_memcpy (&device, dst, src,
+        //                                    (C_HEIGHT * C_WIDTH) * sizeof(float),
+        //                                    HB_MC_MEMCPY_TO_HOST));
+
 
         // Freeze the tiles and memory manager cleanup.
-        rc = hb_mc_device_finish(&device);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_test_err("failed to de-initialize device.\n");
-                return rc;
-        }
+        BSG_CUDA_CALL(hb_mc_device_finish(&device));
 
         // Compare the known-correct matrix (R) and the result matrix (C)
         float max = 0.1;

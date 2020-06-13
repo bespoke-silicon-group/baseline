@@ -46,6 +46,7 @@
 #endif
 
 #include <bsg_manycore_errno.h>
+#include <bsg_manycore_printing.h>
 #include <unistd.h>
 #include <argp.h>
 
