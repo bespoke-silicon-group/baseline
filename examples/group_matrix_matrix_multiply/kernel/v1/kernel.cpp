@@ -26,134 +26,172 @@
 bsg_barrier<bsg_tiles_X, bsg_tiles_Y> barrier;
 
 
-template <int TG_DIM_X, int TG_DIM_Y, int BLOCK_SIZE_X, int BLOCK_SIZE_Y, typename T>
-void __attribute__ ((noinline)) memcpy_block_to_shmem (T *A, T *dst,
-                                                       uint32_t M,
-                                                       uint32_t N,
-                                                       uint32_t sub_block_y,
-                                                       uint32_t sub_block_x) { 
-
-    uint32_t start_y = sub_block_y * BLOCK_SIZE_Y;
-    uint32_t start_x = sub_block_x * BLOCK_SIZE_X;
+// Load a BLOCK_SIZE_X x BLOCK_SIZE_Y submatrix 
+// from DRAM into tile group shared memory
+template <int TG_DIM_X, int TG_DIM_Y,
+          int BLOCK_SIZE_X, int BLOCK_SIZE_Y, typename T>
+    void __attribute__ ((noinline)) memcpy_block_to_shmem (T *A, T *dst,
+                                                           uint32_t M,
+                                                           uint32_t N,
+                                                           uint32_t sub_block_y,
+                                                           uint32_t sub_block_x) { 
     
-    for (uint32_t iter_y = __bsg_y; iter_y < BLOCK_SIZE_Y; iter_y += TG_DIM_Y) { 
-        for (uint32_t iter_x = __bsg_x; iter_x < BLOCK_SIZE_X; iter_x += TG_DIM_X) { 
-            // dst[iter_y][iter_x] <-- A[iter_y + start_y][iter_x + start_x]
-            bsg_tile_group_shared_store (T, dst, (iter_y * BLOCK_SIZE_X + iter_x), A[((iter_y + start_y) * N + iter_x + start_x)]);
+        uint32_t start_y = sub_block_y * BLOCK_SIZE_Y;
+        uint32_t start_x = sub_block_x * BLOCK_SIZE_X;
+        
+        for (uint32_t iter_y = __bsg_y; iter_y < BLOCK_SIZE_Y; iter_y += TG_DIM_Y) { 
+            for (uint32_t iter_x = __bsg_x; iter_x < BLOCK_SIZE_X; iter_x += TG_DIM_X) { 
+                // dst[iter_y][iter_x] <-- A[iter_y + start_y][iter_x + start_x]
+                bsg_tile_group_shared_store (T, dst, (iter_y * BLOCK_SIZE_X + iter_x), 
+                                             A[((iter_y + start_y) * N + iter_x + start_x)]);
+            }
         }
+        return; 
     }
-    return; 
-}
-
-template <int TG_DIM_X, int TG_DIM_Y, int BLOCK_SIZE_X, int BLOCK_SIZE_Y, typename T>
-void __attribute__ ((noinline)) memcpy_block_to_shmem_transposed (T *A, T *dst,
-                                                                  uint32_t M,
-                                                                  uint32_t N,
-                                                                  uint32_t sub_block_y,
-                                                                  uint32_t sub_block_x) { 
-
-    uint32_t start_y = sub_block_y * BLOCK_SIZE_Y;
-    uint32_t start_x = sub_block_x * BLOCK_SIZE_X;
-    
-    for (uint32_t iter_y = __bsg_y; iter_y < BLOCK_SIZE_Y; iter_y += TG_DIM_Y) { 
-        for (uint32_t iter_x = __bsg_x; iter_x < BLOCK_SIZE_X; iter_x += TG_DIM_X) { 
-            // dst[iter_x][iter_y] <-- A[iter_y + start_y][iter_x + start_x]
-            bsg_tile_group_shared_store (T, dst, (iter_x * BLOCK_SIZE_Y + iter_y), A[((iter_y + start_y) * N + iter_x + start_x)]);
-        }
-    }
-    return; 
-}
-
-template <int TG_DIM_X, int TG_DIM_Y, int BLOCK_SIZE_X, int BLOCK_SIZE_Y, typename T>
-void __attribute__ ((noinline)) memcpy_shmem_to_block (T *A, T *src,
-                                                       uint32_t M,
-                                                       uint32_t N,
-                                                       uint32_t sub_block_y,
-                                                       uint32_t sub_block_x) { 
-
-    uint32_t start_y = sub_block_y * BLOCK_SIZE_Y;
-    uint32_t start_x = sub_block_x * BLOCK_SIZE_X;
-    
-    for (uint32_t iter_y = __bsg_y; iter_y < BLOCK_SIZE_Y; iter_y += TG_DIM_Y) { 
-        for (uint32_t iter_x = __bsg_x; iter_x < BLOCK_SIZE_X; iter_x += TG_DIM_X) { 
-            // A[iter_y + start_y][iter_x + start_x] <-- src[iter_y][iter_x]
-            bsg_tile_group_shared_load (T, src, (iter_y * BLOCK_SIZE_X + iter_x), A[((iter_y + start_y) * N + iter_x + start_x)]);
-        }
-    }
-    return; 
-}
 
 
-template <int TG_DIM_X, int TG_DIM_Y, int BLOCK_SIZE_X, int BLOCK_SIZE_Y, int SUBBLOCK_SIZE, typename TA, typename TB, typename TC>
-void __attribute__ ((noinline)) subblock_shmem_matrix_mul_transposed (TA *A, TB *B, TC *C,
+// Load a BLOCK_SIZE_X x BLOCK_SIZE_Y submatrix 
+// from DRAM into tile group shared memory and transpose it
+template <int TG_DIM_X, int TG_DIM_Y,
+          int BLOCK_SIZE_X, int BLOCK_SIZE_Y, typename T>
+    void __attribute__ ((noinline)) memcpy_block_to_shmem_transposed (T *A, T *dst,
                                                                       uint32_t M,
                                                                       uint32_t N,
-                                                                      uint32_t P,
-                                                                      uint32_t block_num) { 
-
-    for (uint32_t iter_y = __bsg_y; iter_y < BLOCK_SIZE_Y; iter_y += TG_DIM_Y) { 
-        for (uint32_t iter_x = __bsg_x; iter_x < BLOCK_SIZE_X; iter_x += TG_DIM_X) { 
-            TC sum = static_cast<TC>(0); 
-            TA lc_A;
-            TB lc_B;
-            TC lc_C;
-            for (uint32_t k = 0; k < SUBBLOCK_SIZE; k ++) { 
-                // lc_A <-- A[iter_y][iter_x]
-                bsg_tile_group_shared_load (TA, A, (iter_y * SUBBLOCK_SIZE + k), lc_A); 
-                // lc_B <-- B[iter_y][iter_x] remember, B is transposed
-                bsg_tile_group_shared_load (TB, B, (iter_x * SUBBLOCK_SIZE + k), lc_B);
-                sum += lc_A * lc_B;
+                                                                      uint32_t sub_block_y,
+                                                                      uint32_t sub_block_x) { 
+    
+        uint32_t start_y = sub_block_y * BLOCK_SIZE_Y;
+        uint32_t start_x = sub_block_x * BLOCK_SIZE_X;
+        
+        for (uint32_t iter_y = __bsg_y; iter_y < BLOCK_SIZE_Y; iter_y += TG_DIM_Y) { 
+            for (uint32_t iter_x = __bsg_x; iter_x < BLOCK_SIZE_X; iter_x += TG_DIM_X) { 
+                // dst[iter_x][iter_y] <-- A[iter_y + start_y][iter_x + start_x]
+                bsg_tile_group_shared_store (T, dst, (iter_x * BLOCK_SIZE_Y + iter_y), A[((iter_y + start_y) * N + iter_x + start_x)]);
             }
-            
-            if (!block_num) { 
-                // C[iter_y][iter_x] <-- sum
-                bsg_tile_group_shared_store (TC, C, (iter_y * BLOCK_SIZE_X + iter_x), sum);
-            }
-
-            else { 
-                // C[iter_y][iter_x] += sum
-                bsg_tile_group_shared_load (TC, C, (iter_y * BLOCK_SIZE_X + iter_x), lc_C);
-                bsg_tile_group_shared_store (TC, C, (iter_y * BLOCK_SIZE_X + iter_x), lc_C + sum);
-            } 
         }
+        return; 
     }
-    return;
-}
 
-template <int TG_DIM_X, int TG_DIM_Y, int BLOCK_SIZE_X, int BLOCK_SIZE_Y, int SUBBLOCK_SIZE, typename TA, typename TB, typename TC>
-int __attribute__ ((noinline)) group_matrix_multiply(TA *A, TB *B, TC *C, 
-                                                     uint32_t M,
-                                                     uint32_t N,
-                                                     uint32_t P) { 
 
-    // declare tile-group shared memory
-    bsg_tile_group_shared_mem (TA, sh_A, (BLOCK_SIZE_Y * SUBBLOCK_SIZE));
-    bsg_tile_group_shared_mem (TA, sh_B, (SUBBLOCK_SIZE * BLOCK_SIZE_X));
-    bsg_tile_group_shared_mem (TA, sh_C, (BLOCK_SIZE_Y * BLOCK_SIZE_X));
+// Store a BLOCK_SIZE_X x BLOCK_SIZE_Y submatrix 
+// from tile group shared memory to DRAM 
+template <int TG_DIM_X, int TG_DIM_Y,
+          int BLOCK_SIZE_X, int BLOCK_SIZE_Y, typename T>
+    void __attribute__ ((noinline)) memcpy_shmem_to_block (T *A, T *src,
+                                                           uint32_t M,
+                                                           uint32_t N,
+                                                           uint32_t sub_block_y,
+                                                           uint32_t sub_block_x) { 
     
-    uint32_t num_blocks = N / SUBBLOCK_SIZE;	// *** Must divide evenly ***
-    
-    for (uint32_t block_num = 0; block_num < num_blocks; block_num ++) { 
-    
-        memcpy_block_to_shmem<TG_DIM_X, TG_DIM_Y, SUBBLOCK_SIZE, BLOCK_SIZE_Y>
-                             (A, sh_A, M, N, __bsg_tile_group_id_y, block_num);
+        uint32_t start_y = sub_block_y * BLOCK_SIZE_Y;
+        uint32_t start_x = sub_block_x * BLOCK_SIZE_X;
         
-        memcpy_block_to_shmem_transposed<TG_DIM_X, TG_DIM_Y, BLOCK_SIZE_X, SUBBLOCK_SIZE>
-                                        (B, sh_B, N, P, block_num, __bsg_tile_group_id_x);
-        
-        barrier.sync();
-        
-        subblock_shmem_matrix_mul_transposed<TG_DIM_X, TG_DIM_Y, BLOCK_SIZE_X, BLOCK_SIZE_Y, SUBBLOCK_SIZE>
-                                            (sh_A, sh_B, sh_C, M, N, P, block_num);
-        
-        barrier.sync();
+        for (uint32_t iter_y = __bsg_y; iter_y < BLOCK_SIZE_Y; iter_y += TG_DIM_Y) { 
+            for (uint32_t iter_x = __bsg_x; iter_x < BLOCK_SIZE_X; iter_x += TG_DIM_X) { 
+                // A[iter_y + start_y][iter_x + start_x] <-- src[iter_y][iter_x]
+                bsg_tile_group_shared_load (T, src, (iter_y * BLOCK_SIZE_X + iter_x), A[((iter_y + start_y) * N + iter_x + start_x)]);
+            }
+        }
+        return; 
     }
+
+
+// Perform a submatrix multiplication among two 
+// matrices stored in tile group shared memory
+// and store into tile group shared memory
+template <int TG_DIM_X, int TG_DIM_Y,
+          int BLOCK_SIZE_X, int BLOCK_SIZE_Y, int SUBBLOCK_SIZE,
+          typename TA, typename TB, typename TC>
+    void __attribute__ ((noinline)) subblock_shmem_matrix_mul_transposed (TA *A, TB *B, TC *C,
+                                                                          uint32_t M,
+                                                                          uint32_t N,
+                                                                          uint32_t P,
+                                                                          uint32_t block_num) { 
     
-    memcpy_shmem_to_block<TG_DIM_X, TG_DIM_Y, BLOCK_SIZE_X, BLOCK_SIZE_Y>
-                          (C, sh_C, M, P, __bsg_tile_group_id_y, __bsg_tile_group_id_x); 
+        for (uint32_t iter_y = __bsg_y; iter_y < BLOCK_SIZE_Y; iter_y += TG_DIM_Y) { 
+            for (uint32_t iter_x = __bsg_x; iter_x < BLOCK_SIZE_X; iter_x += TG_DIM_X) { 
+                TC sum = static_cast<TC>(0); 
+                TA lc_A;
+                TB lc_B;
+                TC lc_C;
+                for (uint32_t k = 0; k < SUBBLOCK_SIZE; k ++) { 
+                    // lc_A <-- A[iter_y][iter_x]
+                    bsg_tile_group_shared_load (TA, A, (iter_y * SUBBLOCK_SIZE + k), lc_A); 
+                    // lc_B <-- B[iter_y][iter_x] remember, B is transposed
+                    bsg_tile_group_shared_load (TB, B, (iter_x * SUBBLOCK_SIZE + k), lc_B);
+                    sum += lc_A * lc_B;
+                }
+                
+                if (!block_num) { 
+                    // C[iter_y][iter_x] <-- sum
+                    bsg_tile_group_shared_store (TC, C, (iter_y * BLOCK_SIZE_X + iter_x), sum);
+                }
     
-    return 0;
-}
+                else { 
+                    // C[iter_y][iter_x] += sum
+                    bsg_tile_group_shared_load (TC, C, (iter_y * BLOCK_SIZE_X + iter_x), lc_C);
+                    bsg_tile_group_shared_store (TC, C, (iter_y * BLOCK_SIZE_X + iter_x), lc_C + sum);
+                } 
+            }
+        }
+        return;
+    }
+
+
+template <int TG_DIM_X, int TG_DIM_Y,
+          int BLOCK_SIZE_X, int BLOCK_SIZE_Y, int SUBBLOCK_SIZE,
+          typename TA, typename TB, typename TC>
+    int __attribute__ ((noinline)) group_matrix_multiply(TA *A, TB *B, TC *C, 
+                                                         uint32_t M,
+                                                         uint32_t N,
+                                                         uint32_t P) { 
+    
+        // declare tile-group shared memory
+        bsg_tile_group_shared_mem (TA, sh_A, (BLOCK_SIZE_Y * SUBBLOCK_SIZE));
+        bsg_tile_group_shared_mem (TA, sh_B, (SUBBLOCK_SIZE * BLOCK_SIZE_X));
+        bsg_tile_group_shared_mem (TA, sh_C, (BLOCK_SIZE_Y * BLOCK_SIZE_X));
+        
+        uint32_t num_blocks = N / SUBBLOCK_SIZE;	// *** Must divide evenly ***
+        
+        for (uint32_t block_num = 0; block_num < num_blocks; block_num ++) { 
+
+            // Load a MxN submatrix from A in DRAM into 
+            // tile group shared memory and transpose it
+            memcpy_block_to_shmem<TG_DIM_X, TG_DIM_Y,
+                                  SUBBLOCK_SIZE, BLOCK_SIZE_Y>
+                                  (A, sh_A, M, N,
+                                   __bsg_tile_group_id_y, block_num);
+            
+            // Load a NxP submatrix from B in DRAM into 
+            // tile group shared memory and transpose it
+            memcpy_block_to_shmem_transposed<TG_DIM_X, TG_DIM_Y,
+                                             BLOCK_SIZE_X, SUBBLOCK_SIZE>
+                                             (B, sh_B, N, P,
+                                              block_num, __bsg_tile_group_id_x);
+            
+            barrier.sync();
+            
+            // Perform submatrix multiplication in 
+            // tile group shared memory            
+            subblock_shmem_matrix_mul_transposed<TG_DIM_X, TG_DIM_Y,
+                                                 BLOCK_SIZE_X, BLOCK_SIZE_Y,
+                                                 SUBBLOCK_SIZE>
+                                                 (sh_A, sh_B, sh_C,
+                                                  M, N, P, block_num);
+            
+            barrier.sync();
+        }
+
+        // Store the MxP submatrix multiplication result
+        // from tile group shared memory into C in DRAM
+        memcpy_shmem_to_block<TG_DIM_X, TG_DIM_Y,
+                              BLOCK_SIZE_X, BLOCK_SIZE_Y>
+                              (C, sh_C, M, P,
+                               __bsg_tile_group_id_y,
+                               __bsg_tile_group_id_x); 
+        
+        return 0;
+    }
 
 
 extern "C" {
