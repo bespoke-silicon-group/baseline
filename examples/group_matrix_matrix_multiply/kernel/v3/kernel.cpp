@@ -267,7 +267,7 @@ extern "C" {
                                                                 A_HEIGHT,
                                                                 A_WIDTH,
                                                                 B_WIDTH,
-                                                                (i << 1));
+                                                                (1 << i));
 
             bsg_cuda_print_stat_end(i+1);
         }
