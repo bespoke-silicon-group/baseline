@@ -39,20 +39,22 @@ template <int TG_DIM_X, int TG_DIM_Y,
           int BLOCK_SIZE_X, int BLOCK_SIZE_Y,
           int STRIPE_SIZE, typename T>
     void __attribute__ ((noinline)) 
-    memcpy_subblock_to_shmem (T *A,
-            T (&dst)[BLOCK_SIZE_Y][BLOCK_SIZE_X],
-            uint32_t M,
-            uint32_t N,
-            uint32_t sub_block_y,
-            uint32_t sub_block_x) { 
+    memcpy_subblock_to_shmem (T *src,
+                              T (&dst)[BLOCK_SIZE_Y][BLOCK_SIZE_X],
+                              uint32_t M,
+                              uint32_t N,
+                              uint32_t sub_block_y,
+                              uint32_t sub_block_x) { 
     
+        // Cast to 2D pointer for input source matrix 
+        T (&A)[M][N] = *reinterpret_cast<T (*)[M][N]> (src);
+
         uint32_t start_y = sub_block_y * BLOCK_SIZE_Y;
         uint32_t start_x = sub_block_x * BLOCK_SIZE_X;
         
         for (uint32_t iter_y = __bsg_y; iter_y < BLOCK_SIZE_Y; iter_y += TG_DIM_Y) { 
             for (uint32_t iter_x = __bsg_x; iter_x < BLOCK_SIZE_X; iter_x += TG_DIM_X) { 
-                // dst[iter_y][iter_x] <-- A[iter_y + start_y][iter_x + start_x]
-                dst[iter_y][iter_x] = A[((iter_y + start_y) * N + iter_x + start_x)];
+                dst[iter_y][iter_x] = A[iter_y + start_y][iter_x + start_x];
             }
         }
         return; 
@@ -65,20 +67,22 @@ template <int TG_DIM_X, int TG_DIM_Y,
           int BLOCK_SIZE_X, int BLOCK_SIZE_Y,
           int STRIPE_SIZE, typename T>
     void __attribute__ ((noinline)) 
-    memcpy_subblock_to_shmem_transposed (T *A,
-            T (&dst)[BLOCK_SIZE_Y][BLOCK_SIZE_X],
-            uint32_t M,
-            uint32_t N,
-            uint32_t sub_block_y,
-            uint32_t sub_block_x) { 
+    memcpy_subblock_to_shmem_transposed (T *src,
+                                         T (&dst)[BLOCK_SIZE_Y][BLOCK_SIZE_X],
+                                         uint32_t M,
+                                         uint32_t N,
+                                         uint32_t sub_block_y,
+                                         uint32_t sub_block_x) { 
     
+        // Cast to 2D pointer for input source matrix 
+        T (&A)[M][N] = *reinterpret_cast<T (*)[M][N]> (src);
+
         uint32_t start_y = sub_block_y * BLOCK_SIZE_Y;
         uint32_t start_x = sub_block_x * BLOCK_SIZE_X;
         
         for (uint32_t iter_y = __bsg_y; iter_y < BLOCK_SIZE_Y; iter_y += TG_DIM_Y) { 
             for (uint32_t iter_x = __bsg_x; iter_x < BLOCK_SIZE_X; iter_x += TG_DIM_X) { 
-                // dst[iter_x][iter_y] <-- A[iter_y + start_y][iter_x + start_x]
-                dst[iter_x][iter_y] = A[((iter_y + start_y) * N + iter_x + start_x)];
+                dst[iter_x][iter_y] = A[iter_y + start_y][iter_x + start_x];
             }
         }
         return; 
@@ -91,20 +95,22 @@ template <int TG_DIM_X, int TG_DIM_Y,
           int BLOCK_SIZE_X, int BLOCK_SIZE_Y,
           int STRIPE_SIZE, typename T>
     void __attribute__ ((noinline))
-    memcpy_shmem_to_subblock (T *A,
-            T (&src)[BLOCK_SIZE_Y][BLOCK_SIZE_X],
-            uint32_t M,
-            uint32_t N,
-            uint32_t sub_block_y,
-            uint32_t sub_block_x) { 
+    memcpy_shmem_to_subblock (T (&src)[BLOCK_SIZE_Y][BLOCK_SIZE_X],
+                              T *dst,
+                              uint32_t M,
+                              uint32_t N,
+                              uint32_t sub_block_y,
+                              uint32_t sub_block_x) { 
+
+        // Cast to 2D pointer for input destination matrix 
+        T (&A)[M][N] = *reinterpret_cast<T (*)[M][N]> (dst);
     
         uint32_t start_y = sub_block_y * BLOCK_SIZE_Y;
         uint32_t start_x = sub_block_x * BLOCK_SIZE_X;
         
         for (uint32_t iter_y = __bsg_y; iter_y < BLOCK_SIZE_Y; iter_y += TG_DIM_Y) { 
             for (uint32_t iter_x = __bsg_x; iter_x < BLOCK_SIZE_X; iter_x += TG_DIM_X) { 
-                // A[iter_y + start_y][iter_x + start_x] <-- src[iter_y][iter_x]
-                A[((iter_y + start_y) * N + iter_x + start_x)] = src[iter_y][iter_x];
+                A[iter_y + start_y][iter_x + start_x] = src[iter_y][iter_x];
             }
         }
         return; 
@@ -198,13 +204,14 @@ template <int TG_DIM_X, int TG_DIM_Y,
                           uint32_t N,
                           uint32_t P,
                           uint32_t unroll_factor) { 
-    
+
+
         // Declare tile-group shared memory
         TileGroupSharedMem<TA, (BLOCK_SIZE_Y  * SUBBLOCK_SIZE), TG_DIM_X, TG_DIM_Y, STRIPE_SIZE> A_arr;
         TileGroupSharedMem<TB, (SUBBLOCK_SIZE * BLOCK_SIZE_X) , TG_DIM_X, TG_DIM_Y, STRIPE_SIZE> B_arr;
         TileGroupSharedMem<TC, (BLOCK_SIZE_Y  * BLOCK_SIZE_X) , TG_DIM_X, TG_DIM_Y, STRIPE_SIZE> C_arr;
 
-        // Cast to a 2D array
+        // Cast to a 2D tile group shared array
         TA (&A_sh)[BLOCK_SIZE_Y ][SUBBLOCK_SIZE] = *reinterpret_cast<TA (*)[BLOCK_SIZE_Y ][SUBBLOCK_SIZE]> (A_arr.addr());
         TB (&B_sh)[SUBBLOCK_SIZE][BLOCK_SIZE_X ] = *reinterpret_cast<TB (*)[SUBBLOCK_SIZE][BLOCK_SIZE_X ]> (B_arr.addr());
         TC (&C_sh)[BLOCK_SIZE_Y ][BLOCK_SIZE_X ] = *reinterpret_cast<TC (*)[BLOCK_SIZE_Y ][BLOCK_SIZE_X ]> (C_arr.addr());
@@ -246,7 +253,7 @@ template <int TG_DIM_X, int TG_DIM_Y,
         // from tile group shared memory into C in DRAM
         memcpy_shmem_to_subblock<TG_DIM_X, TG_DIM_Y,
                                  BLOCK_SIZE_X, BLOCK_SIZE_Y, STRIPE_SIZE>
-                                 (C, C_sh, M, P,
+                                 (C_sh, C, M, P,
                                   __bsg_tile_group_id_y, __bsg_tile_group_id_x); 
         
         return 0;
