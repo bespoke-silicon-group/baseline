@@ -15,7 +15,7 @@
 
 #define TEMPLATE_TG_DIM_X 4
 #define TEMPLATE_TG_DIM_Y 4
-#define TEMPLATE_BLOCK_SIZE_X  64
+#define TEMPLATE_BLOCK_SIZE_X  64 
 #define TEMPLATE_BLOCK_SIZE_Y  64
 #define TEMPLATE_SUBBLOCK_SIZE 32
 #define TEMPLATE_STRIPE_SIZE   8
@@ -205,9 +205,9 @@ template <int TG_DIM_X, int TG_DIM_Y,
         TileGroupSharedMem<TC, (BLOCK_SIZE_Y  * BLOCK_SIZE_X) , TG_DIM_X, TG_DIM_Y, STRIPE_SIZE> C_arr;
 
         // Cast to a 2D array
-        TA (&A_sh)[BLOCK_SIZE_Y ][SUBBLOCK_SIZE] = *reinterpret_cast<TA (*)[BLOCK_SIZE_Y ][SUBBLOCK_SIZE]> (A_arr._addr);
-        TB (&B_sh)[SUBBLOCK_SIZE][BLOCK_SIZE_X ] = *reinterpret_cast<TB (*)[SUBBLOCK_SIZE][BLOCK_SIZE_X ]> (B_arr._addr);
-        TC (&C_sh)[BLOCK_SIZE_Y ][BLOCK_SIZE_X ] = *reinterpret_cast<TC (*)[BLOCK_SIZE_Y ][BLOCK_SIZE_X ]> (C_arr._addr);
+        TA (&A_sh)[BLOCK_SIZE_Y ][SUBBLOCK_SIZE] = *reinterpret_cast<TA (*)[BLOCK_SIZE_Y ][SUBBLOCK_SIZE]> (A_arr.addr());
+        TB (&B_sh)[SUBBLOCK_SIZE][BLOCK_SIZE_X ] = *reinterpret_cast<TB (*)[SUBBLOCK_SIZE][BLOCK_SIZE_X ]> (B_arr.addr());
+        TC (&C_sh)[BLOCK_SIZE_Y ][BLOCK_SIZE_X ] = *reinterpret_cast<TC (*)[BLOCK_SIZE_Y ][BLOCK_SIZE_X ]> (C_arr.addr());
 
 
         uint32_t num_blocks = (N + SUBBLOCK_SIZE-1) / SUBBLOCK_SIZE; 
