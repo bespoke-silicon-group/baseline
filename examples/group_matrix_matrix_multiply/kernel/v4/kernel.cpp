@@ -6,8 +6,6 @@
 // latency DRAM.
 // This code uses the hardware tile group shared memory 
 // in conjunction with it's library bsg_shared_mem.hpp
-// Casts the tile group shared memory and input arrays 
-// to a 2D pointer
 
 // TEMPLATE_TG_DIM_X/Y must be defined before bsg_manycore.h is
 // included. bsg_tiles_X and bsg_tiles_Y must also be defined for
@@ -15,7 +13,7 @@
 
 #define TEMPLATE_TG_DIM_X 4
 #define TEMPLATE_TG_DIM_Y 4
-#define TEMPLATE_BLOCK_SIZE_X  64 
+#define TEMPLATE_BLOCK_SIZE_X  64
 #define TEMPLATE_BLOCK_SIZE_Y  64
 #define TEMPLATE_SUBBLOCK_SIZE 32
 #define TEMPLATE_STRIPE_SIZE   8
@@ -46,20 +44,21 @@ template <int TG_DIM_X, int TG_DIM_Y,
                               uint32_t sub_block_y,
                               uint32_t sub_block_x) { 
     
-        // Cast to 2D pointer for input source matrix 
-        T (&A)[M][N] = *reinterpret_cast<T (*)[M][N]> (src);
-
         uint32_t start_y = sub_block_y * BLOCK_SIZE_Y;
         uint32_t start_x = sub_block_x * BLOCK_SIZE_X;
         
         for (uint32_t iter_y = __bsg_y; iter_y < BLOCK_SIZE_Y; iter_y += TG_DIM_Y) { 
             for (uint32_t iter_x = __bsg_x; iter_x < BLOCK_SIZE_X; iter_x += TG_DIM_X) { 
-                dst[iter_y][iter_x] = A[iter_y + start_y][iter_x + start_x];
+                // dst[iter_y][iter_x] <-- src[iter_y + start_y][iter_x + start_x]
+                dst[iter_y][iter_x] = src[((iter_y + start_y) * N + iter_x + start_x)];
             }
         }
         return; 
     }
 
+
+//BLOCK_SIZE_X = BLOCK_SIZE_X (P)
+//BLOCK_SIZE_Y = SUBBLOCKSIZE (S)
 
 // Load a BLOCK_SIZE_X x BLOCK_SIZE_Y submatrix 
 // from DRAM into tile group shared memory and transpose it
@@ -68,21 +67,19 @@ template <int TG_DIM_X, int TG_DIM_Y,
           int STRIPE_SIZE, typename T>
     void __attribute__ ((noinline)) 
     memcpy_subblock_to_shmem_transposed (T *src,
-                                         T (&dst)[BLOCK_SIZE_Y][BLOCK_SIZE_X],
+                                         T (&dst)[BLOCK_SIZE_X][BLOCK_SIZE_Y],
                                          uint32_t M,
                                          uint32_t N,
                                          uint32_t sub_block_y,
                                          uint32_t sub_block_x) { 
     
-        // Cast to 2D pointer for input source matrix 
-        T (&A)[M][N] = *reinterpret_cast<T (*)[M][N]> (src);
-
         uint32_t start_y = sub_block_y * BLOCK_SIZE_Y;
         uint32_t start_x = sub_block_x * BLOCK_SIZE_X;
         
         for (uint32_t iter_y = __bsg_y; iter_y < BLOCK_SIZE_Y; iter_y += TG_DIM_Y) { 
             for (uint32_t iter_x = __bsg_x; iter_x < BLOCK_SIZE_X; iter_x += TG_DIM_X) { 
-                dst[iter_x][iter_y] = A[iter_y + start_y][iter_x + start_x];
+                // dst[iter_x][iter_y] <-- src[iter_y + start_y][iter_x + start_x]
+                dst[iter_x][iter_y] = src[((iter_y + start_y) * N + iter_x + start_x)];
             }
         }
         return; 
@@ -95,27 +92,28 @@ template <int TG_DIM_X, int TG_DIM_Y,
           int BLOCK_SIZE_X, int BLOCK_SIZE_Y,
           int STRIPE_SIZE, typename T>
     void __attribute__ ((noinline))
-    memcpy_shmem_to_subblock (T (&src)[BLOCK_SIZE_Y][BLOCK_SIZE_X],
-                              T *dst,
+    memcpy_shmem_to_subblock (T *dst,
+                              T (&src)[BLOCK_SIZE_Y][BLOCK_SIZE_X],
                               uint32_t M,
                               uint32_t N,
                               uint32_t sub_block_y,
                               uint32_t sub_block_x) { 
-
-        // Cast to 2D pointer for input destination matrix 
-        T (&A)[M][N] = *reinterpret_cast<T (*)[M][N]> (dst);
     
         uint32_t start_y = sub_block_y * BLOCK_SIZE_Y;
         uint32_t start_x = sub_block_x * BLOCK_SIZE_X;
         
         for (uint32_t iter_y = __bsg_y; iter_y < BLOCK_SIZE_Y; iter_y += TG_DIM_Y) { 
             for (uint32_t iter_x = __bsg_x; iter_x < BLOCK_SIZE_X; iter_x += TG_DIM_X) { 
-                A[iter_y + start_y][iter_x + start_x] = src[iter_y][iter_x];
+                // dst[iter_y + start_y][iter_x + start_x] <-- src[iter_y][iter_x]
+                dst[((iter_y + start_y) * N + iter_x + start_x)] = src[iter_y][iter_x];
             }
         }
         return; 
     }
 
+
+// BLOCK_SIZE_X (P)
+// BLOCK_SIZE_Y (M)
 
 // Perform a submatrix multiplication among two 
 // matrices stored in tile group shared memory
@@ -126,15 +124,15 @@ template <int TG_DIM_X, int TG_DIM_Y,
           typename TA, typename TB, typename TC>
     void __attribute__ ((noinline))
     subblock_shmem_matrix_mul_transposed (
-            TA (&A)[BLOCK_SIZE_Y ][SUBBLOCK_SIZE],
-            TB (&B)[SUBBLOCK_SIZE][BLOCK_SIZE_X ],
-            TC (&C)[BLOCK_SIZE_Y ][BLOCK_SIZE_X ],
-            uint32_t M,
-            uint32_t N,
-            uint32_t P,
-            uint32_t block_num,
-            uint32_t unroll_factor) { 
-    
+                                          TA (&A)[BLOCK_SIZE_Y][SUBBLOCK_SIZE],
+                                          TB (&B)[BLOCK_SIZE_X][SUBBLOCK_SIZE],
+                                          TC (&C)[BLOCK_SIZE_Y][BLOCK_SIZE_X ],
+                                          uint32_t M,
+                                          uint32_t N,
+                                          uint32_t P,
+                                          uint32_t block_num,
+                                          uint32_t unroll_factor) { 
+                                   
         for (uint32_t iter_y = __bsg_y; iter_y < BLOCK_SIZE_Y; iter_y += TG_DIM_Y) { 
             for (uint32_t iter_x = __bsg_x; iter_x < BLOCK_SIZE_X; iter_x += TG_DIM_X) { 
                 TC sum = static_cast<TC>(0); 
@@ -204,19 +202,18 @@ template <int TG_DIM_X, int TG_DIM_Y,
                           uint32_t N,
                           uint32_t P,
                           uint32_t unroll_factor) { 
-
-
+    
         // Declare tile-group shared memory
-        TileGroupSharedMem<TA, (BLOCK_SIZE_Y  * SUBBLOCK_SIZE), TG_DIM_X, TG_DIM_Y, STRIPE_SIZE> A_arr;
-        TileGroupSharedMem<TB, (SUBBLOCK_SIZE * BLOCK_SIZE_X) , TG_DIM_X, TG_DIM_Y, STRIPE_SIZE> B_arr;
-        TileGroupSharedMem<TC, (BLOCK_SIZE_Y  * BLOCK_SIZE_X) , TG_DIM_X, TG_DIM_Y, STRIPE_SIZE> C_arr;
+        TileGroupSharedMem<TA, (BLOCK_SIZE_Y * SUBBLOCK_SIZE), TG_DIM_X, TG_DIM_Y, STRIPE_SIZE> A_arr;
+        TileGroupSharedMem<TB, (BLOCK_SIZE_X * SUBBLOCK_SIZE), TG_DIM_X, TG_DIM_Y, STRIPE_SIZE> B_arr;
+        TileGroupSharedMem<TC, (BLOCK_SIZE_Y * BLOCK_SIZE_X ), TG_DIM_X, TG_DIM_Y, STRIPE_SIZE> C_arr;
 
         // Cast to a 2D tile group shared array
-        TA (&A_sh)[BLOCK_SIZE_Y ][SUBBLOCK_SIZE] = *reinterpret_cast<TA (*)[BLOCK_SIZE_Y ][SUBBLOCK_SIZE]> (A_arr.addr());
-        TB (&B_sh)[SUBBLOCK_SIZE][BLOCK_SIZE_X ] = *reinterpret_cast<TB (*)[SUBBLOCK_SIZE][BLOCK_SIZE_X ]> (B_arr.addr());
-        TC (&C_sh)[BLOCK_SIZE_Y ][BLOCK_SIZE_X ] = *reinterpret_cast<TC (*)[BLOCK_SIZE_Y ][BLOCK_SIZE_X ]> (C_arr.addr());
+        TA (&A_sh)[BLOCK_SIZE_Y][SUBBLOCK_SIZE] = *reinterpret_cast<TA (*)[BLOCK_SIZE_Y][SUBBLOCK_SIZE]> (A_arr.addr());
+        TB (&B_sh)[BLOCK_SIZE_X][SUBBLOCK_SIZE] = *reinterpret_cast<TB (*)[BLOCK_SIZE_X][SUBBLOCK_SIZE]> (B_arr.addr());
+        TC (&C_sh)[BLOCK_SIZE_Y][BLOCK_SIZE_X ] = *reinterpret_cast<TC (*)[BLOCK_SIZE_Y][BLOCK_SIZE_X ]> (C_arr.addr());
 
-
+        
         uint32_t num_blocks = (N + SUBBLOCK_SIZE-1) / SUBBLOCK_SIZE; 
     
         for (uint32_t block_num = 0; block_num < num_blocks; block_num ++) { 
@@ -253,7 +250,7 @@ template <int TG_DIM_X, int TG_DIM_Y,
         // from tile group shared memory into C in DRAM
         memcpy_shmem_to_subblock<TG_DIM_X, TG_DIM_Y,
                                  BLOCK_SIZE_X, BLOCK_SIZE_Y, STRIPE_SIZE>
-                                 (C_sh, C, M, P,
+                                 (C, C_sh, M, P,
                                   __bsg_tile_group_id_y, __bsg_tile_group_id_x); 
         
         return 0;
