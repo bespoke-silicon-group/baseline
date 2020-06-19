@@ -44,21 +44,20 @@ template <int TG_DIM_X, int TG_DIM_Y,
                               uint32_t sub_block_y,
                               uint32_t sub_block_x) { 
     
+        // Convert input array into 2D matrix
+        T (&A)[M][N] = *reinterpret_cast<T (*)[M][N]> (src);
+
         uint32_t start_y = sub_block_y * BLOCK_SIZE_Y;
         uint32_t start_x = sub_block_x * BLOCK_SIZE_X;
         
         for (uint32_t iter_y = __bsg_y; iter_y < BLOCK_SIZE_Y; iter_y += TG_DIM_Y) { 
             for (uint32_t iter_x = __bsg_x; iter_x < BLOCK_SIZE_X; iter_x += TG_DIM_X) { 
-                // dst[iter_y][iter_x] <-- src[iter_y + start_y][iter_x + start_x]
-                dst[iter_y][iter_x] = src[((iter_y + start_y) * N + iter_x + start_x)];
+                dst[iter_y][iter_x] = A[(iter_y + start_y)][iter_x + start_x];
             }
         }
         return; 
     }
 
-
-//BLOCK_SIZE_X = BLOCK_SIZE_X (P)
-//BLOCK_SIZE_Y = SUBBLOCKSIZE (S)
 
 // Load a BLOCK_SIZE_X x BLOCK_SIZE_Y submatrix 
 // from DRAM into tile group shared memory and transpose it
@@ -73,13 +72,15 @@ template <int TG_DIM_X, int TG_DIM_Y,
                                          uint32_t sub_block_y,
                                          uint32_t sub_block_x) { 
     
+        // Convert input array into 2D matrix
+        T (&A)[M][N] = *reinterpret_cast<T (*)[M][N]> (src);
+
         uint32_t start_y = sub_block_y * BLOCK_SIZE_Y;
         uint32_t start_x = sub_block_x * BLOCK_SIZE_X;
         
         for (uint32_t iter_y = __bsg_y; iter_y < BLOCK_SIZE_Y; iter_y += TG_DIM_Y) { 
             for (uint32_t iter_x = __bsg_x; iter_x < BLOCK_SIZE_X; iter_x += TG_DIM_X) { 
-                // dst[iter_x][iter_y] <-- src[iter_y + start_y][iter_x + start_x]
-                dst[iter_x][iter_y] = src[((iter_y + start_y) * N + iter_x + start_x)];
+                dst[iter_x][iter_y] = A[(iter_y + start_y)][iter_x + start_x];
             }
         }
         return; 
@@ -98,14 +99,16 @@ template <int TG_DIM_X, int TG_DIM_Y,
                               uint32_t N,
                               uint32_t sub_block_y,
                               uint32_t sub_block_x) { 
+
+        // Convert input array into 2D matrix
+        T (&A)[M][N] = *reinterpret_cast<T (*)[M][N]> (dst);
     
         uint32_t start_y = sub_block_y * BLOCK_SIZE_Y;
         uint32_t start_x = sub_block_x * BLOCK_SIZE_X;
         
         for (uint32_t iter_y = __bsg_y; iter_y < BLOCK_SIZE_Y; iter_y += TG_DIM_Y) { 
             for (uint32_t iter_x = __bsg_x; iter_x < BLOCK_SIZE_X; iter_x += TG_DIM_X) { 
-                // dst[iter_y + start_y][iter_x + start_x] <-- src[iter_y][iter_x]
-                dst[((iter_y + start_y) * N + iter_x + start_x)] = src[iter_y][iter_x];
+                A[(iter_y + start_y)][iter_x + start_x] = src[iter_y][iter_x];
             }
         }
         return; 
@@ -179,11 +182,9 @@ template <int TG_DIM_X, int TG_DIM_Y,
                 }
                 
                 if (!block_num) { 
-                    // C[iter_y][iter_x] <-- sum
                     C[iter_y][iter_x] = sum;
                 }
                 else { 
-                    // C[iter_y][iter_x] += sum
                     C[iter_y][iter_x] += sum;
                 } 
             }
@@ -267,7 +268,7 @@ extern "C" {
         int rc;
         bsg_cuda_print_stat_kernel_start();
 
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 1; i++) {
             bsg_cuda_print_stat_start(i+1);
 
             rc = group_matrix_multiply <TEMPLATE_TG_DIM_X,
