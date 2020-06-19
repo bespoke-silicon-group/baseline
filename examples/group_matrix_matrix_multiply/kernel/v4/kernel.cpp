@@ -1,11 +1,14 @@
-// This kernel performs blocked matrix multiplication using 
-// tile group shared memory. Subblocks of input matrices are
-// loaded into tile group shared memory by all tiles, and 
-// accesses for matrix multiplication are done to the 
-// lower-latency tile group shared meomry instead of the long-
-// latency DRAM.
-// This code uses the hardware tile group shared memory 
-// in conjunction with it's library bsg_shared_mem.hpp
+// * This kernel performs blocked matrix multiplication using 
+//   tile group shared memory. Subblocks of input matrices are
+//   loaded into tile group shared memory by all tiles, and 
+//   accesses for matrix multiplication are done to the 
+//   lower-latency tile group shared meomry instead of the long-
+//   latency DRAM.
+// * This code uses the hardware tile group shared memory 
+//   in conjunction with it's library bsg_shared_mem.hpp
+// * This version converts tile group shared memory and 
+//   input vector pointers into two dimensional matrix 
+//   references better understanding and easier programming.
 
 // TEMPLATE_TG_DIM_X/Y must be defined before bsg_manycore.h is
 // included. bsg_tiles_X and bsg_tiles_Y must also be defined for
