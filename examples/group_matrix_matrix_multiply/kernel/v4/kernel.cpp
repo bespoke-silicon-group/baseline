@@ -17,9 +17,9 @@
 
 #define TEMPLATE_TG_DIM_X 4
 #define TEMPLATE_TG_DIM_Y 4
-#define TEMPLATE_BLOCK_SIZE_X  16
-#define TEMPLATE_BLOCK_SIZE_Y  16
-#define TEMPLATE_SUBBLOCK_SIZE 8
+#define TEMPLATE_BLOCK_SIZE_X  64
+#define TEMPLATE_BLOCK_SIZE_Y  64
+#define TEMPLATE_SUBBLOCK_SIZE 32
 #define TEMPLATE_STRIPE_SIZE   8
 #define bsg_tiles_X TEMPLATE_TG_DIM_X
 #define bsg_tiles_Y TEMPLATE_TG_DIM_Y
@@ -272,7 +272,7 @@ extern "C" {
         int rc;
         bsg_cuda_print_stat_kernel_start();
 
-        for (int i = 0; i < 1; i++) {
+        for (int i = 0; i < 6; i++) {
             bsg_cuda_print_stat_start(i+1);
 
             rc = group_matrix_multiply <TEMPLATE_TG_DIM_X,
