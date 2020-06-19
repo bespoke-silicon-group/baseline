@@ -268,7 +268,7 @@ extern "C" {
         int rc;
         bsg_cuda_print_stat_kernel_start();
 
-        for (int i = 0; i < 1; i++) {
+        for (int i = 0; i < 6; i++) {
             bsg_cuda_print_stat_start(i+1);
 
             rc = group_matrix_multiply <TEMPLATE_TG_DIM_X,
