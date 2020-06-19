@@ -8,7 +8,8 @@
 //   in conjunction with it's library bsg_shared_mem.hpp
 // * This version converts tile group shared memory and 
 //   input vector pointers into two dimensional matrix 
-//   references better understanding and easier programming.
+//   references for better understanding of the code and
+//   easier programming.
 
 // TEMPLATE_TG_DIM_X/Y must be defined before bsg_manycore.h is
 // included. bsg_tiles_X and bsg_tiles_Y must also be defined for
@@ -16,9 +17,9 @@
 
 #define TEMPLATE_TG_DIM_X 4
 #define TEMPLATE_TG_DIM_Y 4
-#define TEMPLATE_BLOCK_SIZE_X  64
-#define TEMPLATE_BLOCK_SIZE_Y  64
-#define TEMPLATE_SUBBLOCK_SIZE 32
+#define TEMPLATE_BLOCK_SIZE_X  16
+#define TEMPLATE_BLOCK_SIZE_Y  16
+#define TEMPLATE_SUBBLOCK_SIZE 8
 #define TEMPLATE_STRIPE_SIZE   8
 #define bsg_tiles_X TEMPLATE_TG_DIM_X
 #define bsg_tiles_Y TEMPLATE_TG_DIM_Y
@@ -47,15 +48,16 @@ template <int TG_DIM_X, int TG_DIM_Y,
                               uint32_t sub_block_y,
                               uint32_t sub_block_x) { 
     
-        // Convert input array into 2D matrix
-        T (&A)[M][N] = *reinterpret_cast<T (*)[M][N]> (src);
-
         uint32_t start_y = sub_block_y * BLOCK_SIZE_Y;
         uint32_t start_x = sub_block_x * BLOCK_SIZE_X;
-        
+
+        // Create a 2D pointer from the start of the source sub-matrix 
+        // to be loaded into tile group shared memory from DRAM
+        T (&A)[M][N] = *reinterpret_cast<T (*)[M][N]> (&(src[start_y * N + start_x]));
+
         for (uint32_t iter_y = __bsg_y; iter_y < BLOCK_SIZE_Y; iter_y += TG_DIM_Y) { 
             for (uint32_t iter_x = __bsg_x; iter_x < BLOCK_SIZE_X; iter_x += TG_DIM_X) { 
-                dst[iter_y][iter_x] = A[(iter_y + start_y)][iter_x + start_x];
+                dst[iter_y][iter_x] = A[iter_y][iter_x];
             }
         }
         return; 
@@ -75,15 +77,16 @@ template <int TG_DIM_X, int TG_DIM_Y,
                                          uint32_t sub_block_y,
                                          uint32_t sub_block_x) { 
     
-        // Convert input array into 2D matrix
-        T (&A)[M][N] = *reinterpret_cast<T (*)[M][N]> (src);
-
         uint32_t start_y = sub_block_y * BLOCK_SIZE_Y;
         uint32_t start_x = sub_block_x * BLOCK_SIZE_X;
+
+        // Create a 2D pointer from the start of the source sub-matrix 
+        // to be loaded into tile group shared memory from DRAM
+        T (&A)[M][N] = *reinterpret_cast<T (*)[M][N]> (&(src[start_y * N + start_x]));
         
         for (uint32_t iter_y = __bsg_y; iter_y < BLOCK_SIZE_Y; iter_y += TG_DIM_Y) { 
             for (uint32_t iter_x = __bsg_x; iter_x < BLOCK_SIZE_X; iter_x += TG_DIM_X) { 
-                dst[iter_x][iter_y] = A[(iter_y + start_y)][iter_x + start_x];
+                dst[iter_x][iter_y] = A[iter_y][iter_x];
             }
         }
         return; 
@@ -103,23 +106,21 @@ template <int TG_DIM_X, int TG_DIM_Y,
                               uint32_t sub_block_y,
                               uint32_t sub_block_x) { 
 
-        // Convert input array into 2D matrix
-        T (&A)[M][N] = *reinterpret_cast<T (*)[M][N]> (dst);
-    
         uint32_t start_y = sub_block_y * BLOCK_SIZE_Y;
         uint32_t start_x = sub_block_x * BLOCK_SIZE_X;
+
+        // Create a 2D pointer from the start of the destination sub-matrix
+        // to be stored into DRAM from tile group shared memory 
+        T (&A)[M][N] = *reinterpret_cast<T (*)[M][N]> (&(dst[start_y * N + start_x]));
         
         for (uint32_t iter_y = __bsg_y; iter_y < BLOCK_SIZE_Y; iter_y += TG_DIM_Y) { 
             for (uint32_t iter_x = __bsg_x; iter_x < BLOCK_SIZE_X; iter_x += TG_DIM_X) { 
-                A[(iter_y + start_y)][iter_x + start_x] = src[iter_y][iter_x];
+                A[iter_y][iter_x] = src[iter_y][iter_x];
             }
         }
         return; 
     }
 
-
-// BLOCK_SIZE_X (P)
-// BLOCK_SIZE_Y (M)
 
 // Perform a submatrix multiplication among two 
 // matrices stored in tile group shared memory
@@ -271,7 +272,7 @@ extern "C" {
         int rc;
         bsg_cuda_print_stat_kernel_start();
 
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 1; i++) {
             bsg_cuda_print_stat_start(i+1);
 
             rc = group_matrix_multiply <TEMPLATE_TG_DIM_X,
