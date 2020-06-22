@@ -54,25 +54,25 @@ _REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 
 # This rule defines the `make <version name>` rule (e.g. `make v2`). For all
 # kernel versions defined in $(VERSIONS) you can run `make <version name` and
-# the cosimulation results ($(HOST_TARGET).cosim.log, $(HOST_TARGET).vpd,
+# the cosimulation results ($(HOST_TARGET).log, $(HOST_TARGET).vpd,
 # vanilla_operation_trace.csv, vanila_stats.csv, etc) will be put in the
 # kernel/<version name>/ directory.
-$(VERSIONS): %: kernel/%/$(HOST_TARGET).cosim.log
+$(VERSIONS): %: kernel/%/$(HOST_TARGET).log
 
 ################################################################################
 # Define rules for the default cosimulation execution.
 ################################################################################
 
 # ALIASES defines the outputs that are also generated when cosimulation is
-# run. They are aliases for running $(HOST_TARGET).cosim.log. We use empty an
+# run. They are aliases for running $(HOST_TARGET).log. We use empty an
 # make recipe for aliases for reasons described here:
 # https://www.gnu.org/software/make/manual/html_node/Empty-Recipes.html
 ALIASES = vanilla_stats.csv vcache_stats.csv \
 	vanilla_operation_trace.csv vcache_operation_trace.csv
 vanilla_operation_trace.csv vcache_operation_trace.csv: SIM_ARGS += +trace
-$(ALIASES): $(HOST_TARGET).cosim.log ;
-$(HOST_TARGET).cosim.log: kernel.riscv $(HOST_TARGET).cosim 
-	./$(HOST_TARGET).cosim +ntb_random_seed_automatic +rad $(SIM_ARGS) \
+$(ALIASES): $(HOST_TARGET).log ;
+$(HOST_TARGET).log: kernel.riscv $(HOST_TARGET)
+	./$(HOST_TARGET) +ntb_random_seed_automatic +rad $(SIM_ARGS) \
 		+c_args="kernel.riscv $(DEFAULT_VERSION)" | tee $@
 
 ################################################################################
@@ -88,30 +88,30 @@ $(HOST_TARGET).cosim.log: kernel.riscv $(HOST_TARGET).cosim
 ################################################################################
 
 # KERNEL_ALIASES defines the outputs that are also generated when cosimulation
-# is run. They are aliases for kernel/<version name>/$(HOST_TARGET).cosim.log
+# is run. They are aliases for kernel/<version name>/$(HOST_TARGET).log
 # (This is simliar to ALIASES above). We use empty an make recipe for aliases
 # for reasons described here:
 # https://www.gnu.org/software/make/manual/html_node/Empty-Recipes.html
 KERNEL_ALIASES = $(foreach a,$(ALIASES),kernel/%/$a)
 .PRECIOUS: $(KERNEL_ALIASES)
-$(KERNEL_ALIASES): kernel/%/$(HOST_TARGET).cosim.log ;
-kernel/%/$(HOST_TARGET).cosim.log: kernel/%/kernel.riscv $(HOST_TARGET).cosim 
+$(KERNEL_ALIASES): kernel/%/$(HOST_TARGET).log ;
+kernel/%/$(HOST_TARGET).log: kernel/%/kernel.riscv $(HOST_TARGET)
 	$(eval EXEC_PATH   := $(patsubst %/,%,$(dir $@)))
 	$(eval KERNEL_PATH := $(CURRENT_PATH)/$(EXEC_PATH))
 	$(eval _VERSION    := $(notdir $(EXEC_PATH)))
 	cd $(EXEC_PATH) && \
-	$(CURRENT_PATH)/$(HOST_TARGET).cosim +ntb_random_seed_automatic +trace \
+	$(CURRENT_PATH)/$(HOST_TARGET) +ntb_random_seed_automatic +trace \
 		+vpdfile+$(HOST_TARGET).vpd \
 		+c_args="$(KERNEL_PATH)/kernel.riscv $(_VERSION)" | tee $(notdir $@)
 
 cosim.clean: host.link.clean host.compile.clean
-	rm -rf *.cosim{.daidir,.tmp,.log,} 64
+	rm -rf *{.daidir,.tmp,.log} 64
 	rm -rf vc_hdrs.h ucli.key
 	rm -rf *.vpd *.vcs.log
 	rm -rf $(HOST_TARGET)
 
 _HELP_STRING := "Rules from host/cosim.mk\n"
-_HELP_STRING += "    $(HOST_TARGET).cosim.log | kernel/<version>/$(HOST_TARGET).cosim.log : \n"
+_HELP_STRING += "    $(HOST_TARGET).log | kernel/<version>/$(HOST_TARGET).log : \n"
 _HELP_STRING += "        - Run $(HOST_TARGET) on the [default | <version>] kernel\n"
 _HELP_STRING += "\n"
 _HELP_STRING += $(HELP_STRING)
