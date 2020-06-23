@@ -20,7 +20,7 @@
 #define TEMPLATE_BLOCK_SIZE_X  64
 #define TEMPLATE_BLOCK_SIZE_Y  64
 #define TEMPLATE_SUBBLOCK_SIZE 32
-#define TEMPLATE_STRIPE_SIZE   8
+#define TEMPLATE_STRIPE_SIZE   1
 #define bsg_tiles_X TEMPLATE_TG_DIM_X
 #define bsg_tiles_Y TEMPLATE_TG_DIM_Y
 
@@ -51,10 +51,11 @@ template <int TG_DIM_X, int TG_DIM_Y,
         uint32_t start_y = sub_block_y * BLOCK_SIZE_Y;
         uint32_t start_x = sub_block_x * BLOCK_SIZE_X;
 
-        // Create a 2D pointer from the start of the source sub-matrix 
-        // to be loaded into tile group shared memory from DRAM
-        T (&A)[M][N] = *reinterpret_cast<T (*)[M][N]> (&(src[start_y * N + start_x]));
-
+        // Create a 2D reference to the source MxN matrix from the 1D input pointer 
+        T (&src_2d)[M][N] = *reinterpret_cast<T (*)[M][N]> (src);
+        // Offset the 2D pointer to start from the beginning of the sub-matrix to be accessed
+        T (&A)[M][N] = *reinterpret_cast<T (*)[M][N]> (&(src_2d[start_y][start_x]));
+        
         for (uint32_t iter_y = __bsg_y; iter_y < BLOCK_SIZE_Y; iter_y += TG_DIM_Y) { 
             for (uint32_t iter_x = __bsg_x; iter_x < BLOCK_SIZE_X; iter_x += TG_DIM_X) { 
                 dst[iter_y][iter_x] = A[iter_y][iter_x];
@@ -80,10 +81,11 @@ template <int TG_DIM_X, int TG_DIM_Y,
         uint32_t start_y = sub_block_y * BLOCK_SIZE_Y;
         uint32_t start_x = sub_block_x * BLOCK_SIZE_X;
 
-        // Create a 2D pointer from the start of the source sub-matrix 
-        // to be loaded into tile group shared memory from DRAM
-        T (&A)[M][N] = *reinterpret_cast<T (*)[M][N]> (&(src[start_y * N + start_x]));
-        
+        // Create a 2D reference to the source MxN matrix from the 1D input pointer 
+        T (&src_2d)[M][N] = *reinterpret_cast<T (*)[M][N]> (src);
+        // Offset the 2D pointer to start from the beginning of the sub-matrix to be accessed
+        T (&A)[M][N] = *reinterpret_cast<T (*)[M][N]> (&(src_2d[start_y][start_x]));
+
         for (uint32_t iter_y = __bsg_y; iter_y < BLOCK_SIZE_Y; iter_y += TG_DIM_Y) { 
             for (uint32_t iter_x = __bsg_x; iter_x < BLOCK_SIZE_X; iter_x += TG_DIM_X) { 
                 dst[iter_x][iter_y] = A[iter_y][iter_x];
@@ -109,9 +111,11 @@ template <int TG_DIM_X, int TG_DIM_Y,
         uint32_t start_y = sub_block_y * BLOCK_SIZE_Y;
         uint32_t start_x = sub_block_x * BLOCK_SIZE_X;
 
-        // Create a 2D pointer from the start of the destination sub-matrix
-        // to be stored into DRAM from tile group shared memory 
-        T (&A)[M][N] = *reinterpret_cast<T (*)[M][N]> (&(dst[start_y * N + start_x]));
+        // Create a 2D reference to an MxN destination matrix from the 1D input pointer 
+        T (&dst_2d)[M][N] = *reinterpret_cast<T (*)[M][N]> (dst);
+        // Offset the 2D pointer to start from the beginning of the sub-matrix to be accessed
+        T (&A)[M][N] = *reinterpret_cast<T (*)[M][N]> (&(dst_2d[start_y][start_x]));
+
         
         for (uint32_t iter_y = __bsg_y; iter_y < BLOCK_SIZE_Y; iter_y += TG_DIM_Y) { 
             for (uint32_t iter_x = __bsg_x; iter_x < BLOCK_SIZE_X; iter_x += TG_DIM_X) { 
