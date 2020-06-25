@@ -33,10 +33,10 @@
 // templatization, and loop unrolling with different stripe sizes.
 
 // Reference and Frame sizes:
-#define REF_HEIGHT   16
-#define REF_WIDTH    16
-#define FRAME_HEIGHT 4
-#define FRAME_WIDTH  4
+#define REF_HEIGHT   64
+#define REF_WIDTH    64
+#define FRAME_HEIGHT 32
+#define FRAME_WIDTH  32
 #define RES_HEIGHT   (REF_HEIGHT - FRAME_HEIGHT + 1)
 #define RES_WIDTH    (REF_WIDTH - FRAME_WIDTH + 1)
 
