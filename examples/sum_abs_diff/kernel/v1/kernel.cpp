@@ -22,11 +22,10 @@
 bsg_barrier<bsg_tiles_X, bsg_tiles_Y> barrier;
 
 
-// Version 0 - Multiple work per tile
-// In this version, each tile performs multiple units of work. The workload share 
-// of each tile group is defined by block_size_x/y and passed to the kernel. Each 
-// tile then performs the kernel in a loop, with each iteration belonging to a 
-// unit of work (or vitual thread).
+// Version 1 - Using tile group shared memory macros for storing frame 
+// Due to redundant accesses to DRAM, performance can be improved 
+// by loading frame matrxix into shared meomry and using that for compuation.
+
 template <int TG_DIM_X,
           int TG_DIM_Y,
           typename T>
@@ -39,31 +38,45 @@ template <int TG_DIM_X,
                                                   uint32_t RES_WIDTH,
                                                   uint32_t block_size_y,
                                                   uint32_t block_size_x) {
-    
+
+        bsg_tile_group_shared_mem (T, sh_frame, (FRAME_HEIGHT * FRAME_WIDTH));
+
+        // Load frame into tile group shared memory
+        for (int iter_y = bsg_y; iter_y < FRAME_HEIGHT; iter_y += bsg_tiles_Y) {
+            for (int iter_x = bsg_x; iter_x < FRAME_WIDTH; iter_x += bsg_tiles_X) {
+                bsg_tile_group_shared_store (T, sh_frame, (iter_y * FRAME_WIDTH + iter_x), frame[iter_y * FRAME_WIDTH + iter_x]);
+            }
+        }
+
+        // Perform barrier to make sure frame is loaded into tile group shared memory
+        barrier.sync();
+
         int tg_start_y = __bsg_tile_group_id_y * block_size_y;
-        int tg_end_y   = MIN (tg_start_y + block_size_y, RES_HEIGHT);
+        int tg_end_y = MIN (tg_start_y + block_size_y, RES_HEIGHT);
         int tg_start_x = __bsg_tile_group_id_x * block_size_x;
-        int tg_end_x   = MIN (tg_start_x + block_size_x, RES_WIDTH);
-    
-        for (int iter_y = tg_start_y + bsg_y; iter_y < tg_end_y; iter_y += TG_DIM_Y) {
-            for (int iter_x = tg_start_x + bsg_x; iter_x < tg_end_x; iter_x += TG_DIM_X) {
-    
+        int tg_end_x = MIN (tg_start_x + block_size_x, RES_WIDTH);
+
+        for (int iter_y = tg_start_y + bsg_y; iter_y < tg_end_y; iter_y += bsg_tiles_Y) {
+            for (int iter_x = tg_start_x + bsg_x; iter_x < tg_end_x; iter_x += bsg_tiles_X) {
+
                 int start_y = iter_y;
                 int end_y = iter_y + FRAME_HEIGHT;
                 int start_x = iter_x;
                 int end_x = iter_x + FRAME_WIDTH;
-    
+
                 T sad = 0;
                 for (int y = start_y; y < end_y; y ++) {
                     for (int x = start_x; x < end_x; x ++) {
-                        sad += ABS ( (ref[y * REF_WIDTH + x] - frame[(y - start_y) * FRAME_WIDTH + (x - start_x)]) );
+                        // Load the frame element from tile group shared memory into lc_frame
+                        T lc_frame = bsg_tile_group_shared_load (T, sh_frame, ((y - start_y) * FRAME_WIDTH + (x - start_x)), lc_frame);
+                        sad += ABS ( (ref [y * REF_WIDTH + x] - lc_frame) );
                     }
                 }
-    
-                res[iter_y * RES_WIDTH + iter_x] = sad;
+
+                res [iter_y * RES_WIDTH + iter_x] = sad;
             }
         }
-    
+
         return 0;
     }
 
