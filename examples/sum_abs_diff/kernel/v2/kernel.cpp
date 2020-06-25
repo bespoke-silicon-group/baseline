@@ -13,25 +13,31 @@
 #define TEMPLATE_TG_DIM_Y 4
 #define TEMPLATE_FRAME_HEIGHT 4
 #define TEMPLATE_FRAME_WIDTH  4
+#define TEMPLATE_STRIPE_SIZE  1
 #define bsg_tiles_X TEMPLATE_TG_DIM_X
 #define bsg_tiles_Y TEMPLATE_TG_DIM_Y
 
 #include <bsg_manycore.h>
 #include <sum_abs_diff.hpp>
 #include <bsg_tile_group_barrier.hpp>
+#include <bsg_striped_array.hpp>
 
+using namespace bsg_manycore;
 
 bsg_barrier<bsg_tiles_X, bsg_tiles_Y> barrier;
 
 
-// Version 1 - Using tile group shared memory macros for storing frame 
+// Version 2 - Using tile group shared memory macros for storing frame 
 // Due to redundant accesses to DRAM, performance can be improved 
 // by loading frame matrxix into shared meomry and using that for compuation.
+// Uses the C++ templatized striped array library for tile group
+// shared memory.
 
 template <int TG_DIM_X,
           int TG_DIM_Y,
           int FRAME_HEIGHT,
           int FRAME_WIDTH,
+          int STRIPE_SIZE,
           typename T>
     int  __attribute__ ((noinline)) sum_abs_diff (T *ref, T *frame, T *res,
                                                   uint32_t REF_HEIGHT,
@@ -41,12 +47,12 @@ template <int TG_DIM_X,
                                                   uint32_t block_size_y,
                                                   uint32_t block_size_x) {
 
-        bsg_tile_group_shared_mem (T, sh_frame, (FRAME_HEIGHT * FRAME_WIDTH));
+        TileGroupStripedArray<T, (FRAME_HEIGHT * FRAME_WIDTH), TG_DIM_X, TG_DIM_Y, STRIPE_SIZE> sh_frame;
 
         // Load frame into tile group shared memory
         for (int iter_y = bsg_y; iter_y < FRAME_HEIGHT; iter_y += bsg_tiles_Y) {
             for (int iter_x = bsg_x; iter_x < FRAME_WIDTH; iter_x += bsg_tiles_X) {
-                bsg_tile_group_shared_store (T, sh_frame, (iter_y * FRAME_WIDTH + iter_x), frame[iter_y * FRAME_WIDTH + iter_x]);
+                sh_frame[iter_y * FRAME_WIDTH + iter_x] = frame[iter_y * FRAME_WIDTH + iter_x];
             }
         }
 
@@ -69,9 +75,7 @@ template <int TG_DIM_X,
                 T sad = 0;
                 for (int y = start_y; y < end_y; y ++) {
                     for (int x = start_x; x < end_x; x ++) {
-                        // Load the frame element from tile group shared memory into lc_frame
-                        T lc_frame = bsg_tile_group_shared_load (T, sh_frame, ((y - start_y) * FRAME_WIDTH + (x - start_x)), lc_frame);
-                        sad += ABS ( (ref [y * REF_WIDTH + x] - lc_frame) );
+                        sad += ABS ( (ref [y * REF_WIDTH + x] - sh_frame[(y - start_y) * FRAME_WIDTH + (x - start_x)]) );
                     }
                 }
 
@@ -102,7 +106,8 @@ extern "C" {
         rc = sum_abs_diff<TEMPLATE_TG_DIM_X,
                           TEMPLATE_TG_DIM_Y,
                           TEMPLATE_FRAME_HEIGHT,
-                          TEMPLATE_FRAME_WIDTH> (ref, frame, res,
+                          TEMPLATE_FRAME_WIDTH,
+                          TEMPLATE_STRIPE_SIZE> (ref, frame, res,
                                                  REF_HEIGHT,
                                                  REF_WIDTH,
                                                  RES_HEIGHT,
