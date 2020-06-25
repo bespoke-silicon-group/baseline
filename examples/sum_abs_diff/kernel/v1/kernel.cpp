@@ -41,6 +41,7 @@ template <int TG_DIM_X,
                                                   uint32_t block_size_y,
                                                   uint32_t block_size_x) {
 
+        // Declare tile-group shared memory
         bsg_tile_group_shared_mem (T, sh_frame, (FRAME_HEIGHT * FRAME_WIDTH));
 
         // Load frame into tile group shared memory
