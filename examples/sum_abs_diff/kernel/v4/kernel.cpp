@@ -81,10 +81,14 @@ template <int TG_DIM_X,
         for (int iter_y = tg_start_y + bsg_y; iter_y < tg_end_y; iter_y += bsg_tiles_Y) {
             for (int iter_x = tg_start_x + bsg_x; iter_x < tg_end_x; iter_x += bsg_tiles_X) {
 
+                // Offset the 2D pointer to the reference to start from 
+                // the beginning of the sub-matrix to be accesses [iter_y][iter_x]
+                T (&ref_2d_offset)[REF_HEIGHT][REF_WIDTH] = *reinterpret_cast<T (*)[REF_HEIGHT][REF_WIDTH]> (&(ref_2d[iter_y][iter_x]));
+
                 T sad = 0;
                 for (int y = 0; y < FRAME_HEIGHT; y ++) {
                     for (int x = 0; x < FRAME_WIDTH; x ++) {
-                        sad += ABS ( (ref_2d[iter_y + y][iter_x + x] - sh_frame_2d[y][x]) );
+                        sad += ABS ( (ref_2d_offset[y][x] - sh_frame_2d[y][x]) );
                     }
                 }
 
