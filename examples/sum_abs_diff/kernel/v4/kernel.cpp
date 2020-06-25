@@ -81,15 +81,10 @@ template <int TG_DIM_X,
         for (int iter_y = tg_start_y + bsg_y; iter_y < tg_end_y; iter_y += bsg_tiles_Y) {
             for (int iter_x = tg_start_x + bsg_x; iter_x < tg_end_x; iter_x += bsg_tiles_X) {
 
-                int start_y = iter_y;
-                int end_y = iter_y + FRAME_HEIGHT;
-                int start_x = iter_x;
-                int end_x = iter_x + FRAME_WIDTH;
-
                 T sad = 0;
-                for (int y = start_y; y < end_y; y ++) {
-                    for (int x = start_x; x < end_x; x ++) {
-                        sad += ABS ( (ref_2d[y][x] - sh_frame_2d[(y - start_y)][(x - start_x)]) );
+                for (int y = 0; y < FRAME_HEIGHT; y ++) {
+                    for (int x = 0; x < FRAME_WIDTH; x ++) {
+                        sad += ABS ( (ref_2d[iter_y + y][iter_x + x] - sh_frame_2d[y][x]) );
                     }
                 }
 
