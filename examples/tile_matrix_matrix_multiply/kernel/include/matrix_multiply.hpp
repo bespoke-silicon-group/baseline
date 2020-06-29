@@ -1,5 +1,6 @@
 #ifndef __MATRIX_MULTIPLY_HPP
 #define __MATRIX_MULTIPLY_HPP
+#include <bsg_manycore.h>
 #include <cstdint>
 
 /*
@@ -12,16 +13,22 @@ template <typename TA, typename TB, typename TC>
 int __attribute__ ((noinline)) kernel_matrix_multiply(TA *A, TB *B, TC *C,
                       uint32_t A_HEIGHT, uint32_t A_WIDTH,
                       uint32_t B_WIDTH) {
+        bsg_cuda_print_stat_kernel_start()
         TC sum;
         for (uint32_t y = 0; y < A_HEIGHT; ++y) {
+                bsg_cuda_print_stat_start(0)
                 for (uint32_t x = 0; x < B_WIDTH; ++x){
+                        bsg_cuda_print_stat_start(1)
                         sum = static_cast<TC>(0);
                         for (uint32_t k = 0; k < A_WIDTH; k ++) {
                                 sum += A[y * A_WIDTH + k] * B[k * B_WIDTH + x];
                         }
                         C[y * B_WIDTH + x] = sum;
+                        bsg_cuda_print_stat_start(1)
                 }
+                bsg_cuda_print_stat_start(0)
         }
+        bsg_cuda_print_stat_kernel_start()
         return 0;
 }
 

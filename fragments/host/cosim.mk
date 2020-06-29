@@ -100,7 +100,7 @@ kernel/%/$(HOST_TARGET).log: kernel/%/kernel.riscv $(HOST_TARGET)
 	$(eval KERNEL_PATH := $(CURRENT_PATH)/$(EXEC_PATH))
 	$(eval _VERSION    := $(notdir $(EXEC_PATH)))
 	cd $(EXEC_PATH) && \
-	$(CURRENT_PATH)/$(HOST_TARGET) +ntb_random_seed_automatic +trace \
+	$(CURRENT_PATH)/$(HOST_TARGET) +ntb_random_seed_automatic \
 		+vpdfile+$(HOST_TARGET).vpd \
 		+c_args="$(KERNEL_PATH)/kernel.riscv $(_VERSION)" | tee $(notdir $@)
 

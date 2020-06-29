@@ -17,13 +17,36 @@
 #define bsg_tiles_Y BSG_TILE_GROUP_Y_DIM
 #include <bsg_manycore.h>
 #include <bsg_tile_group_barrier.h>
-
-#include <matrix_multiply.hpp>
+#include <cstdint>
+//#include <matrix_multiply.hpp>
 #include <cstring>
 
 /* We wrap all external-facing C++ kernels with `extern "C"` to
  * prevent name mangling 
  */
+template <typename TA, typename TB, typename TC>
+int __attribute__ ((noinline)) kernel_matrix_multiply(TA *A, TB *B, TC *C,
+                      uint32_t A_HEIGHT, uint32_t A_WIDTH,
+                      uint32_t B_WIDTH) {
+        bsg_cuda_print_stat_kernel_start();
+        TC sum;
+        for (uint32_t y = 0; y < A_HEIGHT; ++y) {
+                bsg_cuda_print_stat_start(0);
+                for (uint32_t x = 0; x < B_WIDTH; ++x){
+                        bsg_cuda_print_stat_start(1);
+                        sum = static_cast<TC>(0);
+                        for (uint32_t k = 0; k < A_WIDTH; k ++) {
+                                sum += A[y * A_WIDTH + k] * B[k * B_WIDTH + x];
+                        }
+                        C[y * B_WIDTH + x] = sum;
+                        bsg_cuda_print_stat_end(1);
+                }
+                bsg_cuda_print_stat_end(0);
+        }
+        bsg_cuda_print_stat_kernel_end();
+        return 0;
+}
+
 extern "C" {
         int  __attribute__ ((noinline)) kernel_matrix_multiply_int(
                       int *A, int *B, int *C,
@@ -31,9 +54,7 @@ extern "C" {
                       uint32_t B_WIDTH, uint32_t tag, uint32_t iter) {
                 int rc;
                 for(int i = 0; i <= iter; ++i){
-                        bsg_cuda_print_stat_start(tag);
                         rc = kernel_matrix_multiply(A, B, C, A_HEIGHT, A_WIDTH, B_WIDTH);
-                        bsg_cuda_print_stat_end(tag);
                 }
 
                 return rc;

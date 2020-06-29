@@ -343,39 +343,6 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
         }
         bsg_pr_test_info("int32_t test passed!\n");
 
-        // Run the 16-bit integer test and check the result
-        rc = run_test(device, "kernel_matrix_multiply_int16",
-                      A_16, B_16p, C_16, R_16,
-                      A_device, B_device, C_device,
-                      tg_dim, grid_dim, 2);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_test_err("int16_t test failed\n");
-                return rc;
-        }
-        bsg_pr_test_info("int16_t test passed!\n");
-
-        // Run the 8-bit integer test and check the result
-        rc = run_test(device, "kernel_matrix_multiply_int8",
-                      A_8, B_8p, C_8, R_8,
-                      A_device, B_device, C_device,
-                      tg_dim, grid_dim, 3);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_test_err("int8_t test failed\n");
-                return rc;
-        }
-        bsg_pr_test_info("int8_t test passed!\n");
-
-        // Run the 32-bit floating-point test and check the result
-        rc = run_test(device, "kernel_matrix_multiply_float",
-                      A_f, B_fp, C_f, R_f,
-                      A_device, B_device, C_device,
-                      tg_dim, grid_dim, 4);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_test_err("float test failed\n");
-                return rc;
-        }
-        bsg_pr_test_info("float test passed!\n");
-
         // Freeze the tiles and memory manager cleanup.
         rc = hb_mc_device_finish(&device);
         if (rc != HB_MC_SUCCESS) {

@@ -69,7 +69,7 @@ KERNEL_INCLUDES     += -I$(CURRENT_PATH)/kernel/include
 
 # Define the default kernel.cpp file. If KERNEL_DEFAULT is not defined it will
 # be set to kernel.cpp in the same directory as this Makefile.
-DEFAULT_VERSION     := v3
+DEFAULT_VERSION     := v0
 KERNEL_DEFAULT      := kernel/$(DEFAULT_VERSION)/kernel.cpp
 
 ################################################################################
@@ -132,7 +132,7 @@ _HELP_STRING += "        - Launch indpendent cosimulation executions of each ker
 _HELP_STRING += "          When execution finishes, it generates all the analysis products \n"
 _HELP_STRING += "          for each kernel in each respective kernel/<version_name>/ \n"
 _HELP_STRING += "          directory\n"
-analysis: $(foreach v,$(VERSIONS),kernel/$v/pc_stats kernel/$v/graphs kernel/$v/stats)
+analysis: $(foreach v,$(VERSIONS),kernel/$v/stats)
 
 _HELP_STRING += "    statistics: \n"
 _HELP_STRING += "        - Launch indpendent cosimulation executions of each kernel version.\n"
