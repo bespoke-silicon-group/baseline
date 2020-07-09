@@ -43,10 +43,10 @@ _HELP_STRING += "    stats | kernel/<version>/stats :\n"
 _HELP_STRING += "        - Run the Vanilla Stats Parser on the output of $(HOST_TARGET).cosim\n"
 _HELP_STRING += "          run on the [default | <version>] kernel to generate statistics\n"
 stats: vanilla_stats.csv vcache_stats.csv
-	python3 $(BSG_MANYCORE_DIR)/software/py/vanilla_stats_parser.py --vanilla vanilla_stats.csv --vcache vcache_stats.csv --tile --tile_group --per_vcache
+	PYTHONPATH=$(BSG_MANYCORE_DIR)/software/py/vanilla_parser/.. python3 -m vanilla_parser --only stats_parser --stats vanilla_stats.csv --vcache-stats vcache_stats.csv --tile #--tile_group --per_vcache
 
-%/stats: %/vanilla_stats.csv %/vcache_stats.csv
-	cd $(dir $<) && python3 $(BSG_MANYCORE_DIR)/software/py/vanilla_stats_parser.py --vanilla vanilla_stats.csv --vcache vcache_stats.csv --tile --tile_group --per_vcache
+/stats: %/vanilla_stats.csv %/vcache_stats.csv
+	cd $(dir $<) && PYTHONPATH=$(BSG_MANYCORE_DIR)/software/py/vanilla_parser/.. python3 -m vanilla_parser --only stats_parser --vanilla vanilla_stats.csv --vcache-stats vcache_stats.csv --tile #--tile_group --per_vcache
 
 _HELP_STRING += "    graphs | kernel/<version>/graphs :\n"
 _HELP_STRING += "        - Run the Operation Trace Parser on the output of $(HOST_TARGET).cosim\n"
@@ -56,16 +56,16 @@ graphs: blood_abstract.png blood_detailed.png vcache_stall_abstract.png vcache_s
 %/graphs: %/blood_abstract.png %/blood_detailed.png %/vcache_stall_abstract.png %/vcache_stall_detailed.png;
 
 blood_detailed.png: vanilla_operation_trace.csv vanilla_stats.csv
-	python3 $(BSG_MANYCORE_DIR)/software/py/blood_graph.py --trace vanilla_operation_trace.csv --stats vanilla_stats.csv --generate-key
+	PYTHONPATH=$(BSG_MANYCORE_DIR)/software/py/vanilla_parser/.. python3 -m vanilla_parser --only blood_graph --trace vanilla_operation_trace.csv --stats vanilla_stats.csv --generate-key
 
 blood_abstract.png: vanilla_operation_trace.csv vanilla_stats.csv
-	python3 $(BSG_MANYCORE_DIR)/software/py/blood_graph.py --trace vanilla_operation_trace.csv --stats vanilla_stats.csv --generate-key --abstract
+	PYTHONPATH=$(BSG_MANYCORE_DIR)/software/py/vanilla_parser/.. python3 -m vanilla_parser --only blood_graph --trace vanilla_operation_trace.csv --stats vanilla_stats.csv --generate-key --abstract
 
 vcache_stall_detailed.png: vcache_operation_trace.csv vcache_stats.csv
-	python3 $(BSG_MANYCORE_DIR)/software/py/vcache_stall_graph.py --trace vcache_operation_trace.csv --stats vcache_stats.csv --generate-key
+	PYTHONPATH=$(BSG_MANYCORE_DIR)/software/py/vanilla_parser/.. python3 -m vanilla_parser --only vcache_stall_graph --trace vcache_operation_trace.csv --stats vcache_stats.csv --generate-key 
 
 vcache_stall_abstract.png: vcache_operation_trace.csv vcache_stats.csv
-	python3 $(BSG_MANYCORE_DIR)/software/py/vcache_stall_graph.py --trace vcache_operation_trace.csv --stats vcache_stats.csv --generate-key --abstract
+	PYTHONPATH=$(BSG_MANYCORE_DIR)/software/py/vanilla_parser/.. python3 -m vanilla_parser --only vcache_stall_graph --trace vcache_operation_trace.csv --stats vcache_stats.csv --generate-key --abstract 
 
 
 %/blood_detailed.png: %/vanilla_operation_trace.csv %/vanilla_stats.csv
@@ -86,10 +86,12 @@ _HELP_STRING += "        - Run the Program Counter Histogram utility on the outp
 _HELP_STRING += "          $(HOST_TARGET).cosim run on the [default | <version>] kernel to \n"
 _HELP_STRING += "          generate the Program Counter Histogram\n"
 pc_stats: vanilla_operation_trace.csv
-	python3 $(BSG_MANYCORE_DIR)/software/py/vanilla_pc_histogram.py --tile --trace $<
+	PYTHONPATH=$(BSG_MANYCORE_DIR)/software/py/vanilla_parser/.. python3 -m vanilla_parser --only pc_histogram --tile --trace $< 
+
 
 %/pc_stats: %/vanilla_operation_trace.csv
-	cd $(dir $<) && python3 $(BSG_MANYCORE_DIR)/software/py/vanilla_pc_histogram.py --tile --trace $(notdir $<)
+	cd $(dir $<) &&  PYTHONPATH=$(BSG_MANYCORE_DIR)/software/py/vanilla_parser/.. python3 -m vanilla_parser --only pc_histogram --tile --trace $(notdir $<) 
+
 
 analysis.clean:
 	rm -rf vanilla_stats.csv vanilla_operation_trace.csv
