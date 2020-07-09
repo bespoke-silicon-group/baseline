@@ -45,7 +45,7 @@ _HELP_STRING += "          run on the [default | <version>] kernel to generate s
 stats: vanilla_stats.csv vcache_stats.csv
 	PYTHONPATH=$(BSG_MANYCORE_DIR)/software/py/vanilla_parser/.. python3 -m vanilla_parser --only stats_parser --stats vanilla_stats.csv --vcache-stats vcache_stats.csv --tile #--tile_group --per_vcache
 
-/stats: %/vanilla_stats.csv %/vcache_stats.csv
+%/stats: %/vanilla_stats.csv %/vcache_stats.csv
 	cd $(dir $<) && PYTHONPATH=$(BSG_MANYCORE_DIR)/software/py/vanilla_parser/.. python3 -m vanilla_parser --only stats_parser --vanilla vanilla_stats.csv --vcache-stats vcache_stats.csv --tile #--tile_group --per_vcache
 
 _HELP_STRING += "    graphs | kernel/<version>/graphs :\n"
@@ -88,10 +88,8 @@ _HELP_STRING += "          generate the Program Counter Histogram\n"
 pc_stats: vanilla_operation_trace.csv
 	PYTHONPATH=$(BSG_MANYCORE_DIR)/software/py/vanilla_parser/.. python3 -m vanilla_parser --only pc_histogram --tile --trace $< 
 
-
 %/pc_stats: %/vanilla_operation_trace.csv
 	cd $(dir $<) &&  PYTHONPATH=$(BSG_MANYCORE_DIR)/software/py/vanilla_parser/.. python3 -m vanilla_parser --only pc_histogram --tile --trace $(notdir $<) 
-
 
 analysis.clean:
 	rm -rf vanilla_stats.csv vanilla_operation_trace.csv
