@@ -26,11 +26,11 @@ $(LLVM_DIR):
 # Emit -O0 so that loads to consecutive memory locations aren't combined
 # Opt can run optimizations in any order, so it doesn't matter
 %.ll: %.c $(LLVM_DIR) $(RUNTIME_FNS)
-	$(LLVM_CLANG) $(CLANG_TARGET_OPTS) $(RISCV_CFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -c -emit-llvm -S $< -o $@ 
+	$(LLVM_CLANG) $(CLANG_TARGET_OPTS) $(RISCV_CFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -c -emit-llvm -S $< -o $@ |& tee $*.clang.log
 
 # do the same for C++ sources
 %.ll: %.cpp $(LLVM_DIR) $(RUNTIME_FNS)
-	$(LLVM_CLANGXX) $(CLANG_TARGET_OPTS) $(CLANG_RISCV_CXXFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -c -emit-llvm  -S $< -o $@ 
+	$(LLVM_CLANGXX) $(CLANG_TARGET_OPTS) $(CLANG_RISCV_CXXFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES) -c -emit-llvm  -S $< -o $@ |& tee $*.clang.log 
 
 %.ll.s: %.ll
 	$(LLVM_LLC) $(LLC_TARGET_OPTS) $< -o $@
