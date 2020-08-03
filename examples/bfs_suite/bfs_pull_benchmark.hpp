@@ -5,6 +5,7 @@
 #include "hammerblade/host/arg_parser.hpp"
 #include <string.h>
 #include <stdio.h>
+#include <fstream> 
 #include "../common.h"
 
 
