@@ -1,5 +1,9 @@
 #include "bfs_pull_benchmark.hpp"
 
+#define X 4
+#define Y 4
+#define PARTITIONS 2
+
 GraphHB edges;
 Vector<int32_t> parent_dev;
 Vector<int32_t> frontier_dev;
@@ -25,7 +29,12 @@ int launch(int argc, char * argv[]){
   else if(ucode_path.find("beamer") != std::string::npos) {
     version = 2;
   }
-
+  else if (ucode_path.find("blocked") != std::string::npos) {
+    version = 3;
+  }
+  else if (ucode_path.find("part") != std::string::npos) {
+    version = 4;
+  }
   std::cerr << "load microcode" << std::endl;
   hammerblade::builtin_loadMicroCodeFromFile(ucode_path);
   std::cerr << "load graph" << std::endl;
@@ -46,18 +55,19 @@ int launch(int argc, char * argv[]){
   next_frontier_dev.copyToDevice(zeros.data(), zeros.size());
 
   std::cerr << "Try to insert val to parent" << std::endl;
-  //int * file_frontier = hammerblade::builtin_loadFrontierFromFile(frontier_f.c_str());
-  //int * file_parent = hammerblade::builtin_loadFrontierFromFile(parent_f.c_str());
+  int * file_frontier = hammerblade::builtin_loadFrontierFromFile(frontier_f.c_str());
+  int * file_parent = hammerblade::builtin_loadFrontierFromFile(parent_f.c_str());
   std::cerr << "done with file read" << std::endl;
 
-  //parent_dev.copyToDevice(file_parent, edges.num_nodes());
-  //frontier_dev.copyToDevice(file_frontier, edges.num_nodes());
-  parent_dev.insert(65535, 65535);
-  frontier_dev.insert(65535, 1);
+  parent_dev.copyToDevice(file_parent, edges.num_nodes());
+  frontier_dev.copyToDevice(file_frontier, edges.num_nodes());
+  //parent_dev.insert(65535, 65535);
+  //frontier_dev.insert(65535, 1);
 
   std::cerr << "doing batch dma write" << std::endl;
+  device->freeze_cores();
   device->write_dma();
-
+  device->unfreeze_cores();
 
   std::cerr << "starting while loop" << std::endl;
   switch(version){
@@ -65,7 +75,7 @@ int launch(int argc, char * argv[]){
       for(int i = 0; i < 1; i++) //just doing one large iteration
       {
         device->enqueueJob("edgeset_apply_pull_parallel_from_vertexset_to_filter_func_with_frontier_call",
-                         hb_mc_dimension(4,4),
+                         hb_mc_dimension(X,Y),
                         {edges.getInIndicesAddr(),
                          edges.getInNeighborsAddr(),
                          frontier_dev.getAddr(), next_frontier_dev.getAddr(),  parent_dev.getAddr(),
@@ -83,7 +93,7 @@ int launch(int argc, char * argv[]){
       for(int i = 0; i < 1; i++) //just doing one large iteration
       {
         device->enqueueJob("edgeset_apply_push_serial_from_vertexset_to_filter_func_with_frontier_call",
-                         hb_mc_dimension(4,4),
+                         hb_mc_dimension(X,Y),
                         {edges.getOutIndicesAddr(),
                          edges.getOutNeighborsAddr(),
                          frontier_dev.getAddr(), next_frontier_dev.getAddr(),  parent_dev.getAddr(),
@@ -101,7 +111,7 @@ int launch(int argc, char * argv[]){
       for(int i = 0; i < 1; i++) //just doing one large iteration
       {
         device->enqueueJob("edgeset_apply_hybrid_parallel_call",
-                         hb_mc_dimension(4,4),
+                         hb_mc_dimension(X,Y),
                         {edges.getOutIndicesAddr(),
                          edges.getOutNeighborsAddr(),
                          edges.getInIndicesAddr(),
@@ -117,14 +127,58 @@ int launch(int argc, char * argv[]){
         //device->write_dma();
     }
     break;
-  } 
+  case 3: //do blocked dense pull bfs
+      for(int i = 0; i < 1; i++) //just doing one large iteration
+      {
+        device->enqueueJob("edgeset_apply_pull_parallel_from_vertexset_to_filter_func_with_frontier_call",
+                         hb_mc_dimension(X,Y),
+                        {edges.getInVertexlistAddr(),
+                         edges.getInNeighborsAddr(),
+                         frontier_dev.getAddr(), next_frontier_dev.getAddr(),  parent_dev.getAddr(),
+                         edges.num_nodes(),
+                         edges.num_edges(),
+                         edges.num_nodes()});
+        device->runJobs();
+        std::cerr << "finished call" << std::endl;
+      }
+      break;
+  case 4:
+      for(int i = 0; i < PARTITIONS; i++) 
+			{
+        device->enqueueJob("edgeset_apply_pull_parallel_from_vertexset_to_filter_func_with_frontier_call",
+											 hb_mc_dimension(X,Y),
+											{edges.getInVertexlistAddr(),
+											 edges.getInNeighborsAddr(),
+											 frontier_dev.getAddr(), next_frontier_dev.getAddr(),  parent_dev.getAddr(),
+											 edges.num_nodes(),
+											 edges.num_edges(),
+                       i,
+											 edges.num_nodes()});
+        device->runJobs();
+        std::cerr << "finished call" << std::endl;
+      }
+      break;
+  }
+        
   std::cerr << "finished while loop" << std::endl;
+  bool verify = false;
+
+  if(verify) {
+    int * host_next = new int[edges.num_nodes()];
+    next_frontier_dev.copyToHost(host_next, edges.num_nodes());
+
+    device->freeze_cores();
+    device->read_dma();
+    device->unfreeze_cores();
+
+    ofstream file("./frontier_verify.txt");
+    if(!file.is_open()) std::cerr <<"couldn't open file\n";
+    for(int i = 0; i < edges.num_nodes(); i++) {
+      file << host_next[i] << std::endl;
+    }
+    file.close();
+  }
   return 0;
-  //hammerblade::read_global_buffer<int32_t>(host_parent, parent_dev, edges.num_nodes());
-  //std::cerr << "Results of BFS" << std::endl;
-  //for(auto i : host_parent) {
-  //    std::cerr << i << std::endl;
-  //}
 }
 #ifdef COSIM
 void cosim_main(uint32_t *exit_code, char * args) {

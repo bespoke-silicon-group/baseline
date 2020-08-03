@@ -1,5 +1,5 @@
-#define BSG_TILE_GROUP_X_DIM 16
-#define BSG_TILE_GROUP_Y_DIM 8
+#define BSG_TILE_GROUP_X_DIM 8
+#define BSG_TILE_GROUP_Y_DIM 4
 #define bsg_tiles_X BSG_TILE_GROUP_X_DIM
 #define bsg_tiles_Y BSG_TILE_GROUP_Y_DIM
 #include <bsg_manycore.h>
@@ -9,6 +9,15 @@ bsg_barrier<bsg_tiles_X, bsg_tiles_Y> barrier;
 #include <bfs_pull_benchmark.hpp>
 #include <cstring>
 #include <local_range.h>
+
+#define PARTIAL
+#define DEBUG
+
+#ifdef PARTIAL
+#define PARTS 2
+#else
+#define PARTS 1
+#endif
 
 #ifdef DEBUG
 #define pr_dbg(fmt, ...)                        \
@@ -20,12 +29,14 @@ bsg_barrier<bsg_tiles_X, bsg_tiles_Y> barrier;
 template <typename TO_FUNC , typename APPLY_FUNC> int edgeset_apply_push_serial_from_vertexset_to_filter_func_with_frontier(int *out_indices , int *out_neighbors, int* from_vertexset, int * next_frontier, int * parent, TO_FUNC to_func, APPLY_FUNC apply_func, int V, int E, int block_size_x)
 {
     int start, end;
-    local_range(V, &start, &end);
+    //int traversed=0;
+    local_range(V/PARTS, &start, &end);
     for ( int s=start; s < end; s++) {
       if(from_vertexset[s]) {
         int degree = out_indices[s + 1] - out_indices[s];
         int * neighbors = &out_neighbors[out_indices[s]];
         for(int d = 0; d < degree; d++) {
+    //      traversed++;
           if(parent[neighbors[d]] == -1) {
             parent[neighbors[d]] = s;
             next_frontier[neighbors[d]] = 1;
@@ -34,6 +45,7 @@ template <typename TO_FUNC , typename APPLY_FUNC> int edgeset_apply_push_serial_
       }
     }
     //barrier.sync();
+    //pr_dbg("traversed edges: %i\n", traversed);
     return 0;
 } //end of edgeset apply function
 

@@ -33,9 +33,12 @@ CURRENT_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 GRAPHIT_PATH := $(_REPO_ROOT)/../graphit
 -include $(_REPO_ROOT)/environment.mk
 
-GRAPH_PATH := $(GRAPHIT_PATH)/test/graphs/graph500.16.16.el
-FRONTIER_PATH := $(GRAPHIT_PATH)/test/graphs/frontier_dense_graph500.16.16.txt
-PARENT_PATH := $(GRAPHIT_PATH)/test/graphs/parent_dense_graph500.16.16.txt
+GRAPH_PATH := $(GRAPHIT_PATH)/test/graphs/facebook_combined.el
+FRONTIER_PATH := $(GRAPHIT_PATH)/test/graphs/fb-small-frontier.txt.2
+PARENT_PATH := $(GRAPHIT_PATH)/test/graphs/fb-small-parent.txt.2
+#GRAPH_PATH := $(GRAPHIT_PATH)/test/graphs/graph500.18.16.el
+#FRONTIER_PATH := $(GRAPHIT_PATH)/test/graphs/bfs_frontier_iter.18.16.txt.0
+#PARENT_PATH := $(GRAPHIT_PATH)/test/graphs/bfs_parent_iter.18.16.txt.0
 
 ################################################################################
 # Define BSG_MACHINE_PATH, the location of the Makefile.machine.include file
@@ -44,13 +47,14 @@ PARENT_PATH := $(GRAPHIT_PATH)/test/graphs/parent_dense_graph500.16.16.txt
 ################################################################################
 
 BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/4x4_fast_n_fake
+#BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/timing_v0_8_4
 
 ################################################################################
 # Define the range of versions
 ################################################################################
 # Kernel versions. See kernel/README.md for more information.  Version names do
 # not need to use v* and can be any string
-VERSIONS = edge vertex beamer push vertex_llvm 
+VERSIONS = edge vertex beamer push vertex_llvm blocked blocked_llvm cache-aligned vertex-part 
 
 ################################################################################
 # Define any sources that should be used compiled during kernel compilation,
