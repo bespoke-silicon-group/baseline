@@ -32,6 +32,7 @@ _REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 -include $(_REPO_ROOT)/environment.mk
 
 # These variables are used by simlibs.mk
+#BSG_PLATFORM_PATH := $(BSG_F1_DIR)/libraries/platforms/aws-vcs
 LIBRARIES_PATH := $(BSG_F1_DIR)/libraries
 HARDWARE_PATH  := $(BSG_F1_DIR)/hardware
 EXAMPLES_PATH  := $(BSG_F1_DIR)/examples
