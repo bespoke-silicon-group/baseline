@@ -33,16 +33,15 @@
  */
 
 // Matrix sizes:
-#define A_HEIGHT 1024
-#define A_WIDTH 1024
+#define A_HEIGHT 64
+#define A_WIDTH 256
 #define B_HEIGHT A_WIDTH
 #define B_WIDTH  128
 #define C_HEIGHT A_HEIGHT
 #define C_WIDTH  B_WIDTH
 
-#define NUM_ITER 4
-
 #define SPARSE_LIMIT 0.90
+
 
 // Host Matrix multiplication code (to compare results)
 template <typename TA, typename TB, typename TC>
@@ -128,10 +127,8 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
                 tg_dim = { .x = 16, .y = 8 };
                 grid_dim = { .x = 1, .y = A_HEIGHT };
         } else if (!strcmp("v1", test_name)) {
-                block_size_x = 16;
-                block_size_y = 8;
-                tg_dim = { .x = 16, .y = 8 };
-                grid_dim = { .x = 1, .y = A_HEIGHT };
+                tg_dim = { .x = 4, .y = 4 };
+                grid_dim = { .x = 4, .y = 2 };
         } else {
                 bsg_pr_test_err("Invalid version provided!.\n");
                 return HB_MC_INVALID;
@@ -162,7 +159,9 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
         // subnormal numbers, or NANs, filter those out.
         auto res = distribution(generator);
         
-        for (uint64_t i = 0; i < A_HEIGHT * A_WIDTH; i++) {
+        for (uint64_t j = 0; j < A_HEIGHT; j++) {
+            uint32_t nnz = 0;
+            for (uint64_t i = 0; i < A_WIDTH; i++ ) {
                 do{
                     sparsity = sparsity_distribution(sparsity_generator);
                 }while(!std::isnormal(sparsity) ||
@@ -174,10 +173,35 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
                     }while(!std::isnormal(res) ||
                            !std::isfinite(res) ||
                            std::isnan(res)); 
-                    A[i] = static_cast<float>(res);
+                    A[j*A_WIDTH+i] = static_cast<float>(res);
+                    nnz++;
                 }
                 else
-                    A[i] = static_cast<float>(0);
+                    A[j*A_WIDTH+i] = static_cast<float>(0);
+            }
+        //Each row needs to have a number of non zeros % 8 due to loop unrolling 
+            nnz = nnz % 8;
+            if (nnz < 4) {
+                for (uint64_t i = 0; i < A_WIDTH && nnz > 0; i++) {
+                    if (A[j*A_WIDTH+i] != 0) {
+                        A[j*A_WIDTH+i] = static_cast<float>(0);
+                        nnz--;
+                    }
+                }
+            }
+            else {
+                for (uint64_t i = 0; i < A_WIDTH && nnz < 8; i++) {
+                    if (A[j*A_WIDTH+i] == 0) {
+                        do{
+                            res = distribution(generator);
+                        }while(!std::isnormal(res) ||
+                               !std::isfinite(res) ||
+                               std::isnan(res)); 
+                        A[j*A_WIDTH+i] = static_cast<float>(res);
+                        nnz++;
+                    }
+                }
+            }
         }
 
         for (uint64_t i = 0; i < B_HEIGHT * B_WIDTH; i++) {
@@ -209,10 +233,8 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
             rows.push_back(pair_index);
         }
 
-
         // Generate the known-correct results on the host
         matrix_mult (A, B, R, A_HEIGHT, A_WIDTH, B_WIDTH);
-
         // Initialize device, load binary and unfreeze tiles.
         hb_mc_device_t device;
         rc = hb_mc_device_init(&device, test_name, 0);
@@ -267,6 +289,32 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
                 return rc;
         }
 
+        hb_mc_dma_htod_t htod_jobs [] = {
+            {
+                .d_addr = vals_device,
+                .h_addr = &vals.data()[0],
+                .size = vals.size() * sizeof(vals[0])
+            },
+            {
+                .d_addr = rows_device,
+                .h_addr = &rows.data()[0],
+                .size = rows.size() * sizeof(rows[0])
+            },
+            {
+                .d_addr = cols_device,
+                .h_addr = &cols.data()[0],
+                .size = cols.size() * sizeof(cols[0])
+            },
+            {
+                .d_addr = B_device,
+                .h_addr = B,
+                .size = B_HEIGHT * B_WIDTH * sizeof(B[0])
+            }
+        };
+
+        BSG_CUDA_CALL(hb_mc_device_dma_to_device(&device, htod_jobs,4));
+
+        /*
         // Copy A in CSR format from host onto device DRAM.
         void *dst = (void *) ((intptr_t) vals_device);
         void *src = (void *) &vals.data()[0];
@@ -308,7 +356,7 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
                 bsg_pr_test_err("failed to copy memory to device.\n");
                 return rc;
         }
-
+*/
         // Prepare list of input arguments for kernel.
         
         uint32_t cuda_argv[10] = {vals_device, rows_device, cols_device, 
@@ -324,15 +372,20 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
                 return rc;
         }
 
-//        matrix_print(A,A_HEIGHT,A_WIDTH);
-        matrix_csr_print(vals,rows,cols);
         // Launch and execute all tile groups on device and wait for all to finish.
         rc = hb_mc_device_tile_groups_execute(&device);
         if (rc != HB_MC_SUCCESS) {
                 bsg_pr_test_err("failed to execute tile groups.\n");
                 return rc;
         }
+	hb_mc_dma_dtoh_t dtoh_job = {
+		.d_addr = C_device,
+                .h_addr = C,
+                .size   = (C_HEIGHT * C_WIDTH) * sizeof(float)
+        };
 
+	BSG_CUDA_CALL(hb_mc_device_dma_to_host(&device,&dtoh_job,1));
+/*
         // Copy result matrix back from device DRAM into host memory.
         src = (void *) ((intptr_t) C_device);
         dst = (void *) &C[0];
@@ -343,7 +396,7 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
                 bsg_pr_test_err("failed to copy memory from device.\n");
                 return rc;
         }
-
+*/
         // Freeze the tiles and memory manager cleanup.
         rc = hb_mc_device_finish(&device);
         if (rc != HB_MC_SUCCESS) {
@@ -355,6 +408,11 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
         float max = 0.1;
         double sse = matrix_sse(R, C, C_HEIGHT, C_WIDTH);
 
+        delete[] A;
+        delete[] B;
+        delete[] C;
+        delete[] R;
+
         if (std::isnan(sse) || sse > max) {
                 bsg_pr_test_info(BSG_RED("Matrix Mismatch. SSE: %f\n"), sse);
                 return HB_MC_FAIL;
@@ -362,10 +420,6 @@ int kernel_matrix_matrix_multiply (int argc, char **argv) {
 
         bsg_pr_test_info(BSG_GREEN("Matrix Match.\n"));
 
-        delete[] A;
-        delete[] B;
-        delete[] C;
-        delete[] R;
 
         return HB_MC_SUCCESS;
 }

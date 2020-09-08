@@ -38,13 +38,13 @@ INIT_TILE_GROUP_BARRIER(r_barrier, c_barrier,
 
 
 template <typename T>
-void __attribute__ ((noinline)) memcpy_1d_block_to_shmem (T __remote * __restrict vals, uint32_t row_offset, uint32_t nnz, T * __restrict dst,
+void __attribute__ ((noinline)) memcpy_1d_block_to_shmem (bsg_attr_remote T* bsg_attr_noalias vals, uint32_t row_offset, uint32_t nnz, T* bsg_attr_noalias dst,
                                                           uint32_t block_size_y, uint32_t block_size_x, uint32_t phase_num) { 
 
     for(uint32_t iter_y = __bsg_y; iter_y < block_size_y; iter_y += BSG_TILE_GROUP_Y_DIM) { 
         for(uint32_t iter_x = __bsg_x; iter_x < block_size_x; iter_x += BSG_TILE_GROUP_X_DIM) {
             uint32_t index = row_offset + (phase_num * block_size_y * block_size_x) + ((iter_y * block_size_x) + iter_x);
-            // dst[iter_y][iter_x] <-- A[iter_y + start_y][iter_x + start_x]	
+            // dst[iter_y][iter_x] <-- A[iter_y + start_y][iter_x + start_x]
             if(index < (nnz+row_offset)){
                 bsg_tile_group_shared_store (T, dst, (iter_y * block_size_x + iter_x), vals[index]);
             }
@@ -69,7 +69,7 @@ void __attribute__ ((noinline)) memcpy_block_to_shmem_transposed (T *A, T *dst, 
 }
 
 template <typename T>
-void __attribute__ ((noinline)) memcpy_shmem_to_1d_block (T __remote * __restrict A, T * __restrict src, uint32_t N, uint32_t block_size_y, uint32_t block_size_x) { 
+void __attribute__ ((noinline)) memcpy_shmem_to_1d_block (bsg_attr_remote T* bsg_attr_noalias A, T* bsg_attr_noalias src, uint32_t N, uint32_t block_size_y, uint32_t block_size_x) { 
 
     for (uint32_t iter_y = __bsg_y; iter_y < block_size_y; iter_y += BSG_TILE_GROUP_Y_DIM) { 
         for (uint32_t iter_x = __bsg_x; iter_x < block_size_x; iter_x += BSG_TILE_GROUP_X_DIM) {
@@ -90,27 +90,27 @@ void __attribute__ ((noinline)) memcpy_shmem_to_1d_block (T __remote * __restric
 
 
 template <typename TA, typename TB, typename TC>
-void __attribute__ ((noinline)) subblock_shmem_matrix_mul (TA * __restrict A_vals, uint32_t * __restrict A_cols, uint32_t nnz,
-                                                           TB __remote * __restrict B, TC * __restrict C, uint32_t P,
+void __attribute__ ((noinline)) subblock_shmem_matrix_mul (TA* bsg_attr_noalias A_vals, uint32_t* bsg_attr_noalias A_cols, uint32_t nnz,
+                                                           bsg_attr_remote TB* bsg_attr_noalias B, TC* bsg_attr_noalias C, uint32_t P,
                                                            uint32_t block_size_y, uint32_t block_size_x, uint32_t phase_num) { 
 
     for (uint32_t iter_y = __bsg_y; iter_y < block_size_y; iter_y += BSG_TILE_GROUP_Y_DIM) { 
         for (uint32_t iter_x = __bsg_x; iter_x < block_size_x; iter_x += BSG_TILE_GROUP_X_DIM) { 
             uint32_t numThreads = block_size_y * block_size_x;
-            TC sum = static_cast<TC>(0); 
             TA lc_A_val;
             uint32_t lc_A_col;
             TB lc_B;
             TC lc_C;
-            uint32_t numSubPhases = (P / numThreads) + 1;
+            uint32_t numSubPhases = ((P-1) / numThreads) + 1;
             for(uint32_t sub_phase = 0; sub_phase < numSubPhases;sub_phase++) {
                 uint32_t B_index = (sub_phase * block_size_y * block_size_x) + ((iter_y * block_size_x) + iter_x);
+                TC sum = static_cast<TC>(0); 
                 if (B_index < P) {
                     for (uint32_t k = 0; k < numThreads && k+(phase_num * block_size_y * block_size_x) < nnz; k++) {
                         // lc_A <-- A[iter_y][iter_x]
-                        bsg_tile_group_shared_load (TA, A_vals, (k), lc_A_val); 
+                        bsg_tile_group_shared_load (TA, A_vals, (k), lc_A_val);
                         bsg_tile_group_shared_load (uint32_t, A_cols, (k), lc_A_col); 
-                        // lc_B <-- B[iter_y][iter_x] remember, B is transposed
+
                         lc_B = B[(lc_A_col * P) + B_index];
                         sum += lc_A_val * lc_B;
                     }
@@ -119,7 +119,7 @@ void __attribute__ ((noinline)) subblock_shmem_matrix_mul (TA * __restrict A_val
                         bsg_tile_group_shared_store (TC, C, (B_index), sum);
                     }
                     else { 
-                        // C[iter_y][iter_x] += sum
+                        // C[iter_y][iter_x] += su
     		        bsg_tile_group_shared_load (TC, C, (B_index), lc_C);
                         bsg_tile_group_shared_store (TC, C, (B_index), lc_C + sum);
                     }
@@ -131,8 +131,8 @@ void __attribute__ ((noinline)) subblock_shmem_matrix_mul (TA * __restrict A_val
 }
 
 template <typename TA, typename TB, typename TC>
-int __attribute__ ((noinline)) sparse_matrix_multiply_shared_mem(TA __remote * __restrict vals, uint32_t __remote * __restrict rows, uint32_t __remote * __restrict cols,
-                                                                 TB __remote * __restrict B, TC __remote * __restrict C, 
+int __attribute__ ((noinline)) sparse_matrix_multiply_shared_mem(bsg_attr_remote TA* bsg_attr_noalias vals, bsg_attr_remote uint32_t* bsg_attr_noalias rows, bsg_attr_remote uint32_t* bsg_attr_noalias cols,
+                                                                 bsg_attr_remote TB* bsg_attr_noalias B, bsg_attr_remote TC* bsg_attr_noalias C, 
                                                                  uint32_t M, uint32_t N, uint32_t P, 
                                                                  uint32_t block_size_y, uint32_t block_size_x) {
 
@@ -145,8 +145,7 @@ int __attribute__ ((noinline)) sparse_matrix_multiply_shared_mem(TA __remote * _
     uint32_t row_offset = rows[__bsg_tile_group_id_y];
     uint32_t nnz = rows[__bsg_tile_group_id_y + 1] - row_offset;
 
-    uint32_t num_phases = (nnz / (block_size_y * block_size_x)) + 1;
-    
+    uint32_t num_phases = ((nnz-1) / (block_size_y * block_size_x)) + 1;
     for(uint32_t phase_num = 0; phase_num < num_phases ; phase_num++) {
 
         memcpy_1d_block_to_shmem (vals,row_offset, nnz, sh_A_vals, block_size_y, block_size_x, phase_num);

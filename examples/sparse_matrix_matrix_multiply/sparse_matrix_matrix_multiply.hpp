@@ -37,6 +37,7 @@
 #include <algorithm>
 #include <bsg_manycore_errno.h>
 #include <bsg_manycore_cuda.h>
+#include <bsg_manycore_printing.h>
 #include "../common.h"
 
 #endif //__SPARSE_MATRIX_MATRIX_MULTIPLY_HPP
