@@ -13,3 +13,8 @@ vc_hdrs.h
 *.dis
 *.rva
 *.a
+*.json
+frontier_verify.txt
+*.daidir*
+*.tmp*
+*-iteration-*
