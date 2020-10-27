@@ -30,15 +30,15 @@
 ################################################################################
 _REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 CURRENT_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-GRAPHIT_PATH := $(_REPO_ROOT)/../graphit
+GRAPHIT_PATH := $(_REPO_ROOT)/../graphit-new
 -include $(_REPO_ROOT)/environment.mk
 
 GRAPH_PATH := $(GRAPHIT_PATH)/test/graphs/facebook_combined.el
 FRONTIER_PATH := $(GRAPHIT_PATH)/test/graphs/fb-small-frontier.txt.2
 PARENT_PATH := $(GRAPHIT_PATH)/test/graphs/fb-small-parent.txt.2
-#GRAPH_PATH := $(GRAPHIT_PATH)/test/graphs/graph500.18.16.el
-#FRONTIER_PATH := $(GRAPHIT_PATH)/test/graphs/bfs_frontier_iter.18.16.txt.0
-#PARENT_PATH := $(GRAPHIT_PATH)/test/graphs/bfs_parent_iter.18.16.txt.0
+#GRAPH_PATH := $(GRAPHIT_PATH)/test/graphs/graph500.16.16.el
+#FRONTIER_PATH := $(GRAPHIT_PATH)/test/graphs/bfs_frontier_iter.16.16.txt.1
+#PARENT_PATH := $(GRAPHIT_PATH)/test/graphs/bfs_parent_iter.16.16.txt.1
 
 ################################################################################
 # Define BSG_MACHINE_PATH, the location of the Makefile.machine.include file
@@ -46,15 +46,16 @@ PARENT_PATH := $(GRAPHIT_PATH)/test/graphs/fb-small-parent.txt.2
 # is set in environment.mk) uses the same machine as in bsg_replicant.
 ################################################################################
 
+#BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/16x8_fast_n_fake
 BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/4x4_fast_n_fake
-#BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/timing_v0_8_4
+#BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/timing_v0_16_8
 
 ################################################################################
 # Define the range of versions
 ################################################################################
 # Kernel versions. See kernel/README.md for more information.  Version names do
 # not need to use v* and can be any string
-VERSIONS = edge vertex beamer push vertex_llvm blocked blocked_llvm cache-aligned vertex-part 
+VERSIONS = edge vertex beamer push vertex_llvm blocked blocked_llvm cache-aligned vertex-part atomic-pull atomics-test atomic-push 
 
 ################################################################################
 # Define any sources that should be used compiled during kernel compilation,
@@ -73,7 +74,7 @@ VERSIONS = edge vertex beamer push vertex_llvm blocked blocked_llvm cache-aligne
 # C++ Libraries
 KERNEL_CXXLIBRARIES +=
 
-KERNEL_INCLUDES     += -I$(CURRENT_PATH)/kernel/include -I$(GRAPHIT_PATH)/src/runtime_lib/hammerblade/device/
+KERNEL_INCLUDES     += -I$(CURRENT_PATH)/kernel/include -I$(GRAPHIT_PATH)/src/runtime_lib/infra_hb/device/
 
 # Define the default kernel.cpp file. If KERNEL_DEFAULT is not defined it will
 # be set to kernel.cpp in the same directory as this Makefile.
