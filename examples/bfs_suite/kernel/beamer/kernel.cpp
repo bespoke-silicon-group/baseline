@@ -13,7 +13,7 @@ bsg_barrier<bsg_tiles_X, bsg_tiles_Y> barrier;
 #include <cstring>
 #include <local_range.h>
 #include <calculate_direction.h>
-
+#define DEBUG
 #ifdef DEBUG
 #define pr_dbg(fmt, ...)                        \
     bsg_printf(fmt, ##__VA_ARGS__)
@@ -126,27 +126,24 @@ extern "C" int  __attribute__ ((noinline)) reset_kernel(int * parent, int V, int
 }
 extern "C" int __attribute__ ((noinline)) edgeset_apply_pull_parallel_from_vertexset_to_filter_func_with_frontier_call(int *in_indices, int *in_neighbors, int * frontier, int * next_frontier, int * parent, int V, int E, int block_size_x) {
   barrier.sync();
-  bsg_cuda_print_stat_start(1);
 	edgeset_apply_pull_parallel_from_vertexset_to_filter_func_with_frontier(in_indices, in_neighbors, frontier, next_frontier, parent, toFilter(), updateEdge(), V, E, block_size_x);
-	bsg_cuda_print_stat_end(1);
 	barrier.sync();
 	return 0;
 }
 
 extern "C" int __attribute__ ((noinline)) edgeset_apply_push_serial_from_vertexset_to_filter_func_with_frontier_call(int *out_indices, int *out_neighbors, int *frontier, int *next_frontier, int *parent, int V, int E, int block_size_x) {
   barrier.sync();
-  bsg_cuda_print_stat_start(1);
   edgeset_apply_push_serial_from_vertexset_to_filter_func_with_frontier(out_indices, out_neighbors, frontier, next_frontier, parent, toFilter(), updateEdge(), V, E, block_size_x);
-  bsg_cuda_print_stat_end(1);
   barrier.sync();
   return 0;
 }
 
-extern "C" int __attribute__ ((noinline)) edgeset_apply_hybrid_parallel_call(int *out_indices, int *out_neighbors, int * in_indices, int * in_neighbors, int *frontier, int *next_frontier, int *parent, int V, int E, int block_size_x) { 
+extern "C" int __attribute__ ((noinline)) edgeset_apply_hybrid_parallel_call(int *out_indices, int *out_neighbors, int * in_indices, int * in_neighbors, int *frontier, int *next_frontier, int *parent, int V, int E, int block_size_x, int iter) { 
   barrier.sync();
-  if(bsg_id == 1) bsg_printf("calculate direction: \n");
+  if(bsg_id == 1) bsg_printf("calculate direction: %i \n", iter);
+  //bsg_cuda_print_stat_start(iter);
   int pull = calculate_direction(frontier, out_indices, V, E);
-  bsg_cuda_print_stat_start(1);
+  bsg_cuda_print_stat_start(iter);
   if(pull == 1) {
     if(bsg_id == 1) bsg_printf("pull direction\n");
 	  edgeset_apply_pull_parallel_from_vertexset_to_filter_func_with_frontier(in_indices, in_neighbors, frontier, next_frontier, parent, toFilter(), updateEdge(), V, E, block_size_x);
@@ -155,7 +152,7 @@ extern "C" int __attribute__ ((noinline)) edgeset_apply_hybrid_parallel_call(int
     if(bsg_id == 1) bsg_printf("push direction\n");
     edgeset_apply_push_serial_from_vertexset_to_filter_func_with_frontier(out_indices, out_neighbors, frontier, next_frontier, parent, toFilter(), updateEdge(), V, E, block_size_x);
   }
-  bsg_cuda_print_stat_end(1);
+  bsg_cuda_print_stat_end(iter);
   barrier.sync();
   return 0;
 }

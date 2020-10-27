@@ -24,11 +24,10 @@ bsg_barrier<bsg_tiles_X, bsg_tiles_Y> barrier;
 template <typename TO_FUNC , typename APPLY_FUNC> int edgeset_apply_pull_parallel_from_vertexset_to_filter_func_with_frontier(int *in_indices , int *in_neighbors, int * frontier, int * next_frontier, int * parent, TO_FUNC to_func, APPLY_FUNC apply_func, int V, int E, int block_size_x) 
 {
 
-  if(bsg_id == 0) pr_dbg("degree of 0 : %i - %i\n", in_indices[1], in_indices[0]);
   //bsg_cuda_print_stat_start(1);
   int start, end;
   edge_aware_local_range(V, E, &start, &end, in_indices);
-  //pr_dbg("start: %i, end: %i, bsg id: %i, edges: %i\n", start, end, bsg_id, E);
+  pr_dbg("start: %i, end: %i, bsg id: %i, vertices: %i\n", start, end, bsg_id, V);
   //if(bsg_id == 0) pr_dbg("start: %i, end: %i, edges: %i - %i\n", start, end, in_neighbors[in_indices[V]], in_neighbors[in_indices[0]]);
   //return 0;
   for ( int d = start; d < end; d++) {

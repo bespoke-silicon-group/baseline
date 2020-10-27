@@ -1,8 +1,8 @@
 #ifndef __BFS_PULL_BENCHMARK_HPP
 #define __BFS_PULL_BENCHMARK_HPP
 
-#include "builtins_hammerblade.h"
-#include "hammerblade/host/arg_parser.hpp"
+#include "hb_intrinsics.h"
+#include "infra_hb/host/arg_parser.hpp"
 #include <string.h>
 #include <stdio.h>
 #include <fstream> 

@@ -2,7 +2,7 @@
 // before bsg_manycore.h and bsg_tile_group_barrier.h are
 // included. bsg_tiles_X and bsg_tiles_Y must also be defined for
 // legacy reasons, but they are deprecated.
-#define BSG_TILE_GROUP_X_DIM 4
+#define BSG_TILE_GROUP_X_DIM 8
 #define BSG_TILE_GROUP_Y_DIM 4
 #define bsg_tiles_X BSG_TILE_GROUP_X_DIM
 #define bsg_tiles_Y BSG_TILE_GROUP_Y_DIM
@@ -63,7 +63,7 @@ __attribute__ ((noinline)) int edgeset_apply_pull_parallel_from_vertexset_to_fil
           } //end of loop on in neighbors
         } //end of to filtering
   } //end of outer for loop
-  pr_dbg("reached end of loop %i\n", bsg_id);
+//  pr_dbg("reached end of loop %i\n", bsg_id);
 //  pr_dbg("traversed %i\n", traversed);
   bsg_cuda_print_stat_end(part);
   return 0;

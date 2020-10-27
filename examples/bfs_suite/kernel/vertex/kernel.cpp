@@ -2,8 +2,8 @@
 // before bsg_manycore.h and bsg_tile_group_barrier.h are
 // included. bsg_tiles_X and bsg_tiles_Y must also be defined for
 // legacy reasons, but they are deprecated.
-#define BSG_TILE_GROUP_X_DIM 8
-#define BSG_TILE_GROUP_Y_DIM 4
+#define BSG_TILE_GROUP_X_DIM 16
+#define BSG_TILE_GROUP_Y_DIM 8
 #define bsg_tiles_X BSG_TILE_GROUP_X_DIM
 #define bsg_tiles_Y BSG_TILE_GROUP_Y_DIM
 #include <bsg_manycore.h>
@@ -39,7 +39,7 @@ __attribute__ ((noinline)) int edgeset_apply_pull_parallel_from_vertexset_to_fil
   //bsg_cuda_print_stat_start(1);
   int traversed = 0;
   if(bsg_id == 0) pr_dbg("partition: %i vs %i\n", V, V/PARTITIONS);
-  UNROLL(4) for ( int d = start; d < end; d++) {
+  for ( int d = start; d < end; d++) {
         //if (to_func(d)){ 
         if (parent[d] == -1){ 
           int degree = in_indices[d + 1] - in_indices[d];
