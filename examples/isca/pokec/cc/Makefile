@@ -30,7 +30,7 @@
 ################################################################################
 _REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 CURRENT_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-GRAPHIT_PATH := $(_REPO_ROOT)/../graphit-new
+GRAPHIT_PATH := $(_REPO_ROOT)/../graphit
 -include $(_REPO_ROOT)/environment.mk
 
 GRAPH_PATH := $(GRAPHIT_PATH)/test/graphs/isca/pokec.el
@@ -53,7 +53,7 @@ BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/timing_v0_16_8
 # Kernel versions. See kernel/README.md for more information.  Version names do
 # not need to use v* and can be any string
 # BASE_VERSIONS = pull-vertex 
-BASE_VERSIONS = push-vertex 
+BASE_VERSIONS = vertex 
 
 ITERATIONS := 0 1 2 3 4
 
