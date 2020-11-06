@@ -5,7 +5,7 @@
 
 #define VERIFY true
 
-#define ROOT 0
+#define ROOT 5
 
 GraphHB edges; 
 GlobalScalar<hb_mc_eva_t> num_paths_dev;
