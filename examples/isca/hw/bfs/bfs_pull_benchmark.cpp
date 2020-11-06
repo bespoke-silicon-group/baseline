@@ -107,6 +107,12 @@ int launch(int argc, char * argv[]){
   }
   int num_items = std::count(h_frontier.begin(), h_frontier.end(), 1);
   std::cerr << "elems in frontier: " << num_items << std::endl;
+  int dir = calculate_direction(num_items, h_frontier, edges, edges.num_nodes(), edges.num_edges());
+  if(dir){
+    version = 0; 
+  } else {
+    version = 1;
+  }
   std::vector<int>().swap(h_next);
   std::vector<int> zeros(edges.num_nodes(), 0);
   next_frontier_dev.copyToDevice(zeros.data(), edges.num_nodes());

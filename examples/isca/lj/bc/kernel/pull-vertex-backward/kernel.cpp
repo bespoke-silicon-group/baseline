@@ -7,7 +7,7 @@
 bsg_barrier<bsg_tiles_X, bsg_tiles_Y> barrier;
 #include <bc.hpp>
 
-//#define DEBUG
+#define DEBUG
 #ifdef DEBUG
 #define pr_dbg(fmt, ...)	\
 	bsg_printf(fmt, ##__VA_ARGS__)
@@ -18,27 +18,6 @@ bsg_barrier<bsg_tiles_X, bsg_tiles_Y> barrier;
 __attribute__((section(".dram"))) float  *  num_paths;
 __attribute__((section(".dram"))) float  *  dependences;
 __attribute__((section(".dram"))) int  * __restrict visited;
-
-template <typename TO_FUNC, typename APPLY_FUNC> int edgeset_apply_push_parallel(int * out_indices, int *out_neighbors, int *from_vertexset, int *next_frontier, TO_FUNC to_func, APPLY_FUNC apply_func, int V, int E, int block_size_x)
-{
-  int start, end;
-  local_range(V, &start, &end);
-  for(int s = start; s < end; s++) {
-    if(from_vertexset[s]) {
-      int degree = out_indices[s+1] - out_indices[s];
-      int *neighbors = &out_neighbors[s];
-      for(int d = 0; d < degree; d++) {
-        if(to_func(neighbors[d])) {
-          if(apply_func(s, neighbors[d])) {
-            next_frontier[d] = 1;
-          }
-        }
-      }
-    } 
-  }
-  barrier.sync();
-  return 0;
-}
 
 template <typename TO_FUNC , typename APPLY_FUNC> int edgeset_apply_pull_parallel_deduplicated_from_vertexset_to_filter_func_with_frontier(int *in_indices , int *in_neighbors, int* from_vertexset, int * next_frontier, TO_FUNC to_func, APPLY_FUNC apply_func, int V, int E, int block_size_x) 
 { 
@@ -60,7 +39,7 @@ template <typename TO_FUNC , typename APPLY_FUNC> int edgeset_apply_pull_paralle
             if( apply_func (neighbors[s] , d)) { 
               next_frontier[d] = 1; 
               //pr_dbg("%i: added %i to the next frontier\n", bsg_id, d);  
-              //if(!to_func(d)) break;
+              if(!to_func(d)) break;
             }
           }
         } //end of loop on in neighbors
@@ -74,6 +53,10 @@ template <typename TO_FUNC , typename APPLY_FUNC> int edgeset_apply_push_paralle
 { 
       int start, end;
       local_range(V, &start, &end);
+  if(bsg_id == 0) pr_dbg("start: %i end: %i size: %i\n", start, end, V);
+  if(bsg_id == 0) pr_dbg("frontier: 0x%08x\n", &from_vertexset[0]);
+  if(bsg_id == 0) pr_dbg("frontier: %i\n", from_vertexset[0]);
+  if(bsg_id == 0) pr_dbg("visited: %i\n", visited[0]);
       for ( int s = start; s < end; s++) {
         if(from_vertexset[s]) {
           int degree = out_indices[s + 1] - out_indices[s];
@@ -81,6 +64,7 @@ template <typename TO_FUNC , typename APPLY_FUNC> int edgeset_apply_push_paralle
           for(int d = 0; d < degree; d++) { 
             if(to_func(neighbors[d])) { 
               apply_func ( s, neighbors[d] );
+              pr_dbg("%i: updated: %i\n", bsg_id, neighbors[d]);
             } //end of to func
           } //end of for loop on neighbors
         }
@@ -118,18 +102,6 @@ struct forward_update
     bool output4 ;
     bool num_paths_trackving_var_3 = (bool) 0;
     num_paths[dst] += num_paths[src];
-    num_paths_trackving_var_3 = true ; 
-    output4 = num_paths_trackving_var_3;
-    return output4;
-  };
-};
-struct forward_update_atomic
-{
-  bool operator() (int src, int dst)
-  {
-    bool output4 ;
-    bool num_paths_trackving_var_3 = (bool) 0;
-    writeAdd(num_paths[dst], num_paths[src]);
     num_paths_trackving_var_3 = true ; 
     output4 = num_paths_trackving_var_3;
     return output4;
@@ -224,24 +196,14 @@ extern "C" int  __attribute__ ((noinline)) visited_generated_vector_op_apply_fun
 	return 0;
 }
 extern "C" int __attribute__ ((noinline)) edgeset_apply_pull_parallel_deduplicated_from_vertexset_to_filter_func_with_frontier_call(int *in_indices, int *in_neighbors, int *frontier, int *output, int V, int E, int block_size_x) {
-        barrier.sync();
-        bsg_cuda_print_stat_start(1);
 	edgeset_apply_pull_parallel_deduplicated_from_vertexset_to_filter_func_with_frontier(in_indices, in_neighbors, frontier, output, visited_vertex_filter(), forward_update(), V, E, block_size_x);
-        bsg_cuda_print_stat_end(1);
 	return 0;
 }
-extern "C" int __attribute__ ((noinline)) edgeset_apply_push_parallel_deduplicated_from_vertexset_to_filter_func_with_frontier_call(int *out_indices, int *out_neighbors, int *frontier, int *output, int V, int E, int block_size_x) {
-        barrier.sync();
-        bsg_cuda_print_stat_start(1);
-	edgeset_apply_push_parallel(out_indices, out_neighbors, frontier, output, visited_vertex_filter(), forward_update_atomic(), V, E, block_size_x);
-        bsg_cuda_print_stat_end(1);
-	return 0;
-}
-extern "C" int  __attribute__ ((noinline)) mark_visited_kernel(int * output, int V) {
+extern "C" int  __attribute__ ((noinline)) mark_visited_kernel(int V) {
 	int start, end;
 	local_range(V, &start, &end);
 	for (int iter_x = start; iter_x < end; iter_x++) {
-		if(output[iter_x] == 1) mark_visited()(iter_x);
+		mark_visited()(iter_x);
 	}
 	barrier.sync();
 	return 0;
@@ -255,11 +217,11 @@ extern "C" int  __attribute__ ((noinline)) mark_unvisited_kernel(int V) {
 	barrier.sync();
 	return 0;
 }
-extern "C" int  __attribute__ ((noinline)) backward_vertex_f_kernel(int V) {
+extern "C" int  __attribute__ ((noinline)) backward_vertex_f_kernel(int * front, int V) {
 	int start, end;
 	local_range(V, &start, &end);
 	for (int iter_x = start; iter_x < end; iter_x++) {
-		backward_vertex_f()(iter_x);
+	       	if(front[iter_x]) backward_vertex_f()(iter_x);
 	}
 	barrier.sync();
 	return 0;
