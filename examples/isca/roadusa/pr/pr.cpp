@@ -37,7 +37,11 @@ int launch(int argc, char * argv[]){
   std::cerr << "load graph" << std::endl;
 
   std::string graph_f = input.getCmdOption("-g");
-  edges = hammerblade::builtin_loadEdgesFromFileToHB (graph_f.c_str()); 
+  if(version == 0) { 
+    edges = hammerblade::builtin_loadEdgesFromFileToHB (graph_f.c_str(), true, true);
+  } else {
+    edges = hammerblade::builtin_loadEdgesFromFileToHB (graph_f.c_str());
+  } 
  
   float tmp_rank_val = (float) 1 / edges.num_edges();
   std::vector<float> zerosf(edges.num_nodes(), 0.0);
