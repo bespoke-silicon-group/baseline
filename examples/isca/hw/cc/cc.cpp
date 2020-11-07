@@ -127,9 +127,9 @@ int launch(int argc, char * argv[]){
   for(auto i = 0; i < edges.num_nodes(); i++) {
     h_ids[i] = i;
   }
-  std::vector<int32_t> h_update(1, 0);
-  std::vector<int32_t> h_frontier(edges.num_nodes(), 1);
-  std::vector<int32_t> h_next(edges.num_nodes(), 0);
+  std::vector<int32_t> h_update(1);
+  std::vector<int32_t> h_frontier(edges.num_nodes());
+  std::vector<int32_t> h_next(edges.num_nodes());
   if(version == 1) {
     host_cc_pull(h_frontier, h_next, h_ids, h_update, iter);
   } else {
@@ -137,6 +137,12 @@ int launch(int argc, char * argv[]){
   }
   int num_items = std::count(h_frontier.begin(), h_frontier.end(), 1);
   std::cerr << "num elems in frontier after host compute: " << num_items << std::endl;
+  int dir = calculate_direction(num_items, h_frontier, edges, edges.num_nodes(), edges.num_edges());
+  if(dir) {
+     version = 0;
+  } else {
+     version = 1;
+  }
   std::vector<int>().swap(h_next);
   std::vector<int> zeros(edges.num_nodes(), 0);
   next_frontier_dev.copyToDevice(zeros.data(), edges.num_nodes());
@@ -180,13 +186,19 @@ int launch(int argc, char * argv[]){
         device->runJobs();
         std::cerr << "doing pointer jumping\n";
         int h_upd[1] = {0};
-        hammerblade::read_global_buffer(h_upd, update_dev, 1);
+        hammerblade::read_global_buffer_dma<int>(h_upd, update_dev, 1);
+          device->freeze_cores();
+          device->read_dma();
+          device->unfreeze_cores();
         int tag = 1;
         while(h_upd[0] != 0) {
           hammerblade::insert_val(0, 0, update_dev);
           device->enqueueJob("pjump_kernel", hb_mc_dimension(X,Y), {edges.num_nodes(), tag});
           device->runJobs();
-          hammerblade::read_global_buffer(h_upd, update_dev, 1);
+          hammerblade::read_global_buffer_dma<int>(h_upd, update_dev, 1);
+          device->freeze_cores();
+          device->read_dma();
+          device->unfreeze_cores();
           std::cerr << "finished round, h: " << h_upd[0] << std::endl;
           tag++;
         }
@@ -212,13 +224,19 @@ int launch(int argc, char * argv[]){
         device->runJobs();
         std::cerr << "doing pointer jumping\n";
         int h_upd[1] = {0};
-        hammerblade::read_global_buffer(h_upd, update_dev, 1);
+        hammerblade::read_global_buffer_dma<int>(h_upd, update_dev, 1);
+          device->freeze_cores();
+          device->read_dma();
+          device->unfreeze_cores();
         int tag = 1;
         while(h_upd[0] != 0) {
           hammerblade::insert_val(0, 0, update_dev);
           device->enqueueJob("pjump_kernel", hb_mc_dimension(X,Y), {edges.num_nodes(), tag});
           device->runJobs();
-          hammerblade::read_global_buffer(h_upd, update_dev, 1);
+          hammerblade::read_global_buffer_dma<int>(h_upd, update_dev, 1);
+          device->freeze_cores();
+          device->read_dma();
+          device->unfreeze_cores();
           std::cerr << "finished round, h: " << h_upd[0] << std::endl;
           tag++;
         }
