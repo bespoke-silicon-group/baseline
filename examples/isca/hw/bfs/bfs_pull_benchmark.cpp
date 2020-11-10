@@ -5,7 +5,7 @@
 #define NUM_LOCKS 1024
 #define VERIFY false
 
-#define ROOT 0
+#define ROOT 5
 
 GraphHB edges;
 GlobalScalar<hb_mc_eva_t> parent_dev;
@@ -86,7 +86,7 @@ int launch(int argc, char * argv[]){
   std::cerr << "load graph" << std::endl;
 
   std::string graph_f = input.getCmdOption("-g");
-  edges = hammerblade::builtin_loadEdgesFromFileToHB (graph_f.c_str()); 
+  edges = hammerblade::builtin_loadEdgesFromFileToHB (graph_f.c_str(), true, true); 
   std::cerr << "out deg of 0: " << edges.out_degree(0) << "num edges: " << edges.num_edges() << " num vert: " << edges.num_nodes() << std::endl;
   Device::Ptr device = Device::GetInstance();
   std::cerr << "init global arrays" << std::endl;
@@ -108,10 +108,12 @@ int launch(int argc, char * argv[]){
   int num_items = std::count(h_frontier.begin(), h_frontier.end(), 1);
   std::cerr << "elems in frontier: " << num_items << std::endl;
   int dir = calculate_direction(num_items, h_frontier, edges, edges.num_nodes(), edges.num_edges());
-  if(dir){
-    version = 0; 
+  if(dir){ 
+     version = 2;
   } else {
-    version = 1;
+    edges.freeGraphOnDevice();
+    edges = hammerblade::builtin_loadEdgesFromFileToHB (graph_f.c_str(), true, false); 
+    version = 3;
   }
   std::vector<int>().swap(h_next);
   std::vector<int> zeros(edges.num_nodes(), 0);
