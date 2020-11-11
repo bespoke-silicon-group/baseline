@@ -3,4 +3,5 @@
 
 #include <vertex_struct.h>
 #include <local_range.h>
+#include <atomics.h>
 #endif

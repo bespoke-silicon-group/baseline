@@ -54,7 +54,7 @@ BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/timing_v0_16_8
 #BASE_VERSIONS += pull-vertex-forward
 BASE_VERSIONS += pull-vertex-backward
 
-ITERATIONS := 0 1 2 3 4 5 6 7 8 9 10
+ITERATIONS := 0 1 2 3 4 5 6 7 8 9 10 11 12
 v-from-basev-and-iter 	= $1-iteration-$2
 basev-from-v 		= $(word 1,$(subst -iteration-, ,$1))
 iter-from-v		= $(word 2,$(subst -iteration-, ,$1))

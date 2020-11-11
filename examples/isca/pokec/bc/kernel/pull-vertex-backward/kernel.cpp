@@ -53,10 +53,6 @@ template <typename TO_FUNC , typename APPLY_FUNC> int edgeset_apply_push_paralle
 { 
       int start, end;
       local_range(V, &start, &end);
-  if(bsg_id == 0) pr_dbg("start: %i end: %i size: %i\n", start, end, V);
-  if(bsg_id == 0) pr_dbg("frontier: 0x%08x\n", &from_vertexset[0]);
-  if(bsg_id == 0) pr_dbg("frontier: %i\n", from_vertexset[0]);
-  if(bsg_id == 0) pr_dbg("visited: %i\n", visited[0]);
       for ( int s = start; s < end; s++) {
         if(from_vertexset[s]) {
           int degree = out_indices[s + 1] - out_indices[s];
@@ -64,7 +60,6 @@ template <typename TO_FUNC , typename APPLY_FUNC> int edgeset_apply_push_paralle
           for(int d = 0; d < degree; d++) { 
             if(to_func(neighbors[d])) { 
               apply_func ( s, neighbors[d] );
-              pr_dbg("%i: updated: %i\n", bsg_id, neighbors[d]);
             } //end of to func
           } //end of for loop on neighbors
         }
@@ -72,6 +67,22 @@ template <typename TO_FUNC , typename APPLY_FUNC> int edgeset_apply_push_paralle
       barrier.sync();
       return 0;
 } //end of edgeset apply function 
+
+template <typename TO_FUNC, typename APPLY_FUNC> int edgeset_apply_pull_parallel(int *in_indices, int *in_neighbors, int * from_vertexset, TO_FUNC to_func, APPLY_FUNC apply_func, int V, int E, int block_size_x) {
+  int start, end;
+  local_range(V, &start, &end);
+  for(int d = start; d < end; d++) {
+    if(to_func(d)) {
+      int degree = in_indices[d+1] - in_indices[d];
+      int * neighbors = &in_neighbors[in_indices[d]];
+      for(int s = 0; s < degree; s++) {
+        if(from_vertexset[neighbors[s]]) {
+          apply_func(neighbors[s], d);
+        }
+      }
+    }
+  }
+}
 
 
 struct visited_generated_vector_op_apply_func_2
@@ -143,6 +154,13 @@ struct backward_update
   void operator() (int src, int dst)
   {
     dependences[dst] += dependences[src]; 
+  };
+};
+struct backward_update_atomic
+{
+  void operator() (int src, int dst)
+  {
+    writeAdd(dependences[dst], dependences[src]);
   };
 };
 struct final_vertex_f
@@ -227,7 +245,11 @@ extern "C" int  __attribute__ ((noinline)) backward_vertex_f_kernel(int * front,
 	return 0;
 }
 extern "C" int __attribute__ ((noinline)) edgeset_apply_push_parallel_from_vertexset_to_filter_func_call(int *out_indices, int *out_neighbors, int *frontier, int V, int E, int block_size_x) {
-	edgeset_apply_push_parallel_from_vertexset_to_filter_func(out_indices, out_neighbors, frontier, visited_vertex_filter(), backward_update(), V, E, block_size_x);
+	edgeset_apply_push_parallel_from_vertexset_to_filter_func(out_indices, out_neighbors, frontier, visited_vertex_filter(), backward_update_atomic(), V, E, block_size_x);
+	return 0;
+}
+extern "C" int __attribute__ ((noinline)) edgeset_apply_pull_parallel_from_vertexset_to_filter_func_call(int *out_indices, int *out_neighbors, int *frontier, int V, int E, int block_size_x) {
+	edgeset_apply_pull_parallel(out_indices, out_neighbors, frontier, visited_vertex_filter(), backward_update(), V, E, block_size_x);
 	return 0;
 }
 extern "C" int  __attribute__ ((noinline)) final_vertex_f_kernel(int V) {
