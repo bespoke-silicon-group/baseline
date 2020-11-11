@@ -5,7 +5,7 @@
 
 #define VERIFY true
 
-#define ROOT 0
+#define ROOT 5
 
 GraphHB edges; 
 GlobalScalar<hb_mc_eva_t> num_paths_dev;
@@ -35,8 +35,8 @@ void forward_call(std::vector<int> &front, std::vector<int> &next, std::vector<f
 
 void backward_call(std::vector<int> & front, std::vector<float> deps, std::vector<int> visited) {
  auto g = edges.getHostGraph();
- int * out_neigh = g.out_neighbors_shared_.get();
- int ** out_index = g.out_index_shared_.get();
+ int * out_neigh = g.in_neighbors_shared_.get(); //effectively the transpose of the graph
+ int ** out_index = g.in_index_shared_.get(); //swapping in/out
  for(int s = 0; s < g.num_nodes(); s++) {
    if(front[s]) {
      int degree = g.in_degree(s);
@@ -165,11 +165,18 @@ int launch(int argc, char * argv[]){
     host_bc_forward(h_frontier, h_next, h_paths, h_visited, iter);
   } else {
     host_bc_forward_back(h_frontier, h_next, h_paths, h_dependences, h_visited, iter);
+    edges.transpose();
   }
 
   int num_items = std::count(h_frontier.begin(), h_frontier.end(), 1);
   std::cerr << "elems in frontier: " << num_items << std::endl;
-  std::cerr << "dependences of 0: " << h_dependences[0] << std::endl;
+  int dir = calculate_direction(num_items, h_frontier, edges, edges.num_nodes(), edges.num_edges());
+  if(!dir && version == 0) {
+    version = 2;
+  }
+  else if(!dir && version == 1) {
+    version = 3;
+  }
   frontier = Vector<int32_t> (edges.num_nodes());
   next_frontier_dev = Vector<int32_t> (edges.num_nodes());
   std::vector<int>().swap(h_next);
@@ -195,11 +202,30 @@ int launch(int argc, char * argv[]){
     }
     case 1: { // backward pull
   
+    device->enqueueJob("edgeset_apply_pull_parallel_from_vertexset_to_filter_func_call", hb_mc_dimension(X,Y),{edges.getInIndicesAddr() , edges.getInNeighborsAddr(), frontier.getAddr(), edges.num_nodes(), edges.num_edges(), edges.num_nodes()}); 
+    device->runJobs();
+    device->enqueueJob("backward_vertex_f_kernel",hb_mc_dimension(X,Y),{frontier.getAddr(), edges.num_nodes()});
+    device->runJobs();
+    if(iter == 12) {
+      device->enqueueJob("final_vertex_f_kernel",hb_mc_dimension(X,Y),{hammerblade::builtin_getVerticesHB(edges)});
+      device->runJobs();
+    }
+    break;
+    }
+    case 2: { // forward push
+    device->enqueueJob("edgeset_apply_push_parallel_deduplicated_from_vertexset_to_filter_func_with_frontier_call", hb_mc_dimension(X,Y),{edges.getOutIndicesAddr() , edges.getOutNeighborsAddr(), frontier.getAddr(), next_frontier_dev.getAddr(), edges.num_nodes(), edges.num_edges(), edges.num_nodes()}); 
+    device->runJobs();
+    device->enqueueJob("mark_visited_kernel",hb_mc_dimension(X,Y),{next_frontier_dev.getAddr(), edges.num_nodes()});
+    device->runJobs();
+    break;
+    }
+    case 3: { // backward push
+    std::cout << "doing backward push\n"; 
     device->enqueueJob("edgeset_apply_push_parallel_from_vertexset_to_filter_func_call", hb_mc_dimension(X,Y),{edges.getOutIndicesAddr() , edges.getOutNeighborsAddr(), frontier.getAddr(), edges.num_nodes(), edges.num_edges(), edges.num_nodes()}); 
     device->runJobs();
     device->enqueueJob("backward_vertex_f_kernel",hb_mc_dimension(X,Y),{frontier.getAddr(), edges.num_nodes()});
     device->runJobs();
-    if(iter == 10) {
+    if(iter == 12) {
       device->enqueueJob("final_vertex_f_kernel",hb_mc_dimension(X,Y),{hammerblade::builtin_getVerticesHB(edges)});
       device->runJobs();
     }
