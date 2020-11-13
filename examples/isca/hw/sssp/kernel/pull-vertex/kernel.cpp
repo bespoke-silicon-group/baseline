@@ -7,7 +7,7 @@
 bsg_barrier<bsg_tiles_X, bsg_tiles_Y> barrier;
 #include <sssp.hpp>
 
-#define DEBUG
+//#define DEBUG
 #ifdef DEBUG
 #define pr_dbg(fmt, ...)	\
 	bsg_printf(fmt, ##__VA_ARGS__)
@@ -17,6 +17,25 @@ bsg_barrier<bsg_tiles_X, bsg_tiles_Y> barrier;
 
 
 __attribute__((section(".dram"))) int  * __restrict dist;
+
+template <typename APPLY_FUNC> int edgeset_apply_push_parallel(int * out_indices, WNode *out_neighbors, int *from_vertexset, int *next_frontier, APPLY_FUNC apply_func, int V, int E, int block_size_x) {
+  int start, end;
+  local_range(V, &start, &end);
+  pr_dbg("%i: %i to %i\n", bsg_id, start, end);
+  for(int s = start; s < end; s++) {
+    //if(s % 100 == 0) pr_dbg("%i on vtx %i\n", bsg_id, s);
+    if(s < V && from_vertexset[s]) 
+    { pr_dbg("working on src: %i\n", s);
+      int degree = out_indices[s+1] - out_indices[s];
+      WNode * neighbors = &out_neighbors[out_indices[s]];
+      for(int d = 0; d < degree; d++) {
+        if(apply_func(s, neighbors[d].vertex, neighbors[d].weight)) {
+          next_frontier[d] = 1;
+        }
+      }
+    }
+  }
+}
 
 template <typename APPLY_FUNC > int edgeset_apply_pull_parallel_weighted_deduplicated_from_vertexset_with_frontier(int *in_indices , WNode *in_neighbors, int* from_vertexset, int * next_frontier, APPLY_FUNC apply_func, int V, int E, int block_size_x) 
 { 
@@ -59,6 +78,17 @@ struct updateEdge
     return output3;
   };
 };
+struct updateEdgeAtomic
+{
+  bool operator() (int src, int dst, int weight)
+  {
+    bool output1;
+    int new_dist = (dist[src] + weight);
+    output1 = writeMin(dist[dst], new_dist);
+    return output1;
+  }
+};
+
 struct printDist
 {
   void operator() (int v)
@@ -92,9 +122,18 @@ extern "C" int  __attribute__ ((noinline)) reset_kernel(int V) {
 	barrier.sync();
 	return 0;
 }
-extern "C" int __attribute__ ((noinline)) edgeset_apply_pull_parallel_weighted_deduplicated_from_vertexset_with_frontier_call(int *in_indices, WNode *in_neighbors, int *frontier, int *modified_vertexsubset1, int V, int E, int block_size_x) {
+extern "C" int __attribute__ ((noinline)) edgeset_apply_pull_parallel_weighted_deduplicated_from_vertexset_with_frontier_call(int *in_indices, WNode *in_neighbors,int *out_indices, WNode *out_neighbors, int *frontier, int *modified_vertexsubset1, int V, int E, int block_size_x) {
         if(bsg_id == 0) pr_dbg("inside the kernel\n");
-	edgeset_apply_pull_parallel_weighted_deduplicated_from_vertexset_with_frontier(in_indices, in_neighbors, frontier, modified_vertexsubset1, updateEdge(), V, E, block_size_x);
+        barrier.sync();
+        bsg_cuda_print_stat_start(1);
+        if(calculate_direction(frontier, out_indices, V, E)){
+        if(bsg_id == 0) pr_dbg("pull\n");
+	  edgeset_apply_pull_parallel_weighted_deduplicated_from_vertexset_with_frontier(in_indices, in_neighbors, frontier, modified_vertexsubset1, updateEdge(), V, E, block_size_x);
+        } else {
+        if(bsg_id == 0) pr_dbg("push\n");
+          edgeset_apply_push_parallel(out_indices, out_neighbors, frontier, modified_vertexsubset1, updateEdgeAtomic(), V, E, block_size_x);
+        }
+        bsg_cuda_print_stat_end(1);
 	return 0;
 }
 

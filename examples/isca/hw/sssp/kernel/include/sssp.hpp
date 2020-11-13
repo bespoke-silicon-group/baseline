@@ -5,4 +5,5 @@
 #include <local_range.h>
 #include <atomics.h>
 #include <wnode.h>
+#include <calculate_direction.h>
 #endif
