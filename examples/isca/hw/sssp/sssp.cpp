@@ -2,7 +2,7 @@
 #define X 16 
 #define Y 8
 #define NUM_LOCKS 1024
-#define VERIFY true 
+#define VERIFY false 
 #define ROOT 0
 #define DELTA 32
 
@@ -124,7 +124,7 @@ int launch(int argc, char * argv[]){
   device->unfreeze_cores();
   hammerblade::insert_val<int>(start_vertex, 0, dist_dev); 
   std::cerr << "init pq" << std::endl;
-  BucketPriorityQueue<int> pq = BucketPriorityQueue<int>(edges.num_nodes(), &dist_dev, (hammerblade::BucketOrder)1, (hammerblade::PriorityOrder)0, (int) 128, (int) 32);
+  BucketPriorityQueue<int> pq = BucketPriorityQueue<int>(edges.num_nodes(), &dist_dev, (hammerblade::BucketOrder)1, (hammerblade::PriorityOrder)0, (int) 128, (int) DELTA);
 
   std::cerr << "host side compute up to current iter: \n";
   std::vector<int> h_dist(edges.num_nodes(), 2147483647);
@@ -149,6 +149,8 @@ int launch(int argc, char * argv[]){
      
 	std::cerr << "doing SSSP Delta Stepping kernel" << std::endl;
         //Vector<int32_t> frontier = hammerblade::getBucketWithGraphItVertexSubset<int>(pq);
+        int tmp_size = pq.checkBucketSize(0);
+        std::cerr << "size of 0: " << tmp_size << std::endl;
         Vector<int32_t> frontier = pq.popDenseReadyVertexSet(); 
         std::cerr << "got frontier from pq\n";
         next_frontier_dev = Vector<int32_t>(edges.num_nodes());
@@ -163,6 +165,8 @@ int launch(int argc, char * argv[]){
                          hb_mc_dimension(X,Y),
                         {edges.getInIndicesAddr(),
                          edges.getInNeighborsAddr(),
+                         edges.getOutIndicesAddr(),
+                         edges.getOutNeighborsAddr(),
                          frontier.getAddr(),
                          next_frontier_dev.getAddr(),  
                          edges.num_nodes(),
