@@ -55,8 +55,9 @@ BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/timing_v0_16_8
 # not need to use v* and can be any string
 # BASE_VERSIONS += pull-block 
 # BASE_VERSIONS += push-block 
-BASE_VERSIONS += pull-vertex 
-# BASE_VERSIONS += push-vertex 
+# BASE_VERSIONS += pull-vertex 
+#BASE_VERSIONS += push-vertex 
+BASE_VERSIONS += cache-aligned 
 
 ITERATIONS := 0 1 2 3 4 5 6 7 8 9 10
 v-from-basev-and-iter = $1-iteration-$2

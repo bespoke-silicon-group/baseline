@@ -78,7 +78,10 @@ int launch(int argc, char * argv[]){
   else if(ucode_path.find("pull-vertex") != std::string::npos) {
     version = 2;
   }
-  if(ucode_path.find("push-vertex") != std::string::npos) {
+  else if(ucode_path.find("cache-alogned") != std::string::npos) {
+    version = 2;
+  }
+  else if(ucode_path.find("push-vertex") != std::string::npos) {
     version = 3;
   }
   std::cerr << "load microcode" << std::endl;
