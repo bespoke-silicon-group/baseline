@@ -46,7 +46,7 @@ stats: vanilla_stats.csv vcache_stats.csv
 	PYTHONPATH=$(BSG_MANYCORE_DIR)/software/py/vanilla_parser/.. python3 -m vanilla_parser --only stats_parser --stats vanilla_stats.csv --vcache-stats vcache_stats.csv --tile #--tile_group --per_vcache
 
 %/stats: %/vanilla_stats.csv %/vcache_stats.csv
-	cd $(dir $<) && PYTHONPATH=$(BSG_MANYCORE_DIR)/software/py/vanilla_parser/.. python3 -m vanilla_parser --only stats_parser --vanilla vanilla_stats.csv --vcache-stats vcache_stats.csv --tile #--tile_group --per_vcache
+	cd $(dir $<) && PYTHONPATH=$(BSG_MANYCORE_DIR)/software/py/vanilla_parser/.. python3 -m vanilla_parser --only stats_parser --stats vanilla_stats.csv --vcache-stats vcache_stats.csv --tile #--tile_group --per_vcache
 
 _HELP_STRING += "    graphs | kernel/<version>/graphs :\n"
 _HELP_STRING += "        - Run the Operation Trace Parser on the output of $(HOST_TARGET).cosim\n"
