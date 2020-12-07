@@ -13,3 +13,4 @@ vc_hdrs.h
 *.dis
 *.rva
 *.a
+dramsim3epoch.json

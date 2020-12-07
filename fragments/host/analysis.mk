@@ -93,7 +93,7 @@ pc_stats: vanilla_operation_trace.csv
 
 analysis.clean:
 	rm -rf vanilla_stats.csv vanilla_operation_trace.csv
-	rm -rf vanilla.log vcache_non_blocking_stats.log vcache_blocking_stats.log
+	rm -rf vanilla.log vcache_non_blocking_stats.log vcache_blocking_stats.log vcache_stats.csv vcache_operation_trace.csv
 	rm -rf *.dis
 	rm -rf stats pc_stats
 	rm -rf blood_abstract.png blood_detailed.png
