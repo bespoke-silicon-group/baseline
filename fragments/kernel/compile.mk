@@ -61,7 +61,6 @@ RISCV_CCPPFLAGS += -march=$(ARCH_OP)
 RISCV_CCPPFLAGS += -static
 RISCV_CCPPFLAGS += -ffast-math
 RISCV_CCPPFLAGS += -fno-common
-RISCV_CCPPFLAGS += -ffp-contract=off
 
 RISCV_CFLAGS   += -std=gnu99 $(RISCV_CCPPFLAGS)
 RISCV_CXXFLAGS += -std=c++11 $(RISCV_CCPPFLAGS)
