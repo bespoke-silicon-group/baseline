@@ -1,4 +1,4 @@
-RISCV_CCPPFLAGS += -mno-fdiv -frerun-cse-after-loop -fweb -frename-registers
+RISCV_CCPPFLAGS += -frerun-cse-after-loop -fweb -frename-registers
 
 %.rvo: RISCV_INCLUDES += $(KERNEL_INCLUDES)
 
