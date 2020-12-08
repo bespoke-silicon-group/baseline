@@ -74,7 +74,7 @@ inline void store_block_and_reset(float * bsg_attr_noalias src,
         for (int i = 0; i < BY; i++) {
                 bsg_unroll(16)
                 for (int j = 0 ; j < BX; j ++){
-                        //dest[i * dest_strides[0] + j] = src[i * BX + j];
+                        dest[i * dest_strides[0] + j] = src[i * BX + j];
                         src[i * BX + j] = 0.0f;
                 }
         }
