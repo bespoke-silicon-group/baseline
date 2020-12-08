@@ -67,7 +67,7 @@ $(VERSIONS): %: kernel/%/$(HOST_TARGET).log
 # run. They are aliases for running $(HOST_TARGET).log. We use empty an
 # make recipe for aliases for reasons described here:
 # https://www.gnu.org/software/make/manual/html_node/Empty-Recipes.html
-ALIASES = vanilla_stats.csv vcache_stats.csv \
+ALIASES = vanilla_stats.csv vcache_stats.csv
 $(ALIASES): $(HOST_TARGET).log ;
 $(HOST_TARGET).log: kernel.riscv $(HOST_TARGET)
 	./$(HOST_TARGET) +ntb_random_seed_automatic +rad \
