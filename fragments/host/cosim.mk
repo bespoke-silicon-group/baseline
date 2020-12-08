@@ -54,7 +54,7 @@ _REPO_ROOT ?= $(shell git rev-parse --show-toplevel)
 
 # This rule defines the `make <version name>` rule (e.g. `make v2`). For all
 # kernel versions defined in $(VERSIONS) you can run `make <version name` and
-# the cosimulation results ($(HOST_TARGET).log, $(HOST_TARGET).vpd,
+# the cosimulation results ($(HOST_TARGET).log
 # vanilla_operation_trace.csv, vanila_stats.csv, etc) will be put in the
 # kernel/<version name>/ directory.
 $(VERSIONS): %: kernel/%/$(HOST_TARGET).log
@@ -68,11 +68,9 @@ $(VERSIONS): %: kernel/%/$(HOST_TARGET).log
 # make recipe for aliases for reasons described here:
 # https://www.gnu.org/software/make/manual/html_node/Empty-Recipes.html
 ALIASES = vanilla_stats.csv vcache_stats.csv \
-	vanilla_operation_trace.csv vcache_operation_trace.csv
-vanilla_operation_trace.csv vcache_operation_trace.csv: SIM_ARGS += +trace
 $(ALIASES): $(HOST_TARGET).log ;
 $(HOST_TARGET).log: kernel.riscv $(HOST_TARGET)
-	./$(HOST_TARGET) +ntb_random_seed_automatic +rad $(SIM_ARGS) \
+	./$(HOST_TARGET) +ntb_random_seed_automatic +rad \
 		+c_args="kernel.riscv $(DEFAULT_VERSION)" | tee $@
 
 ################################################################################
@@ -100,8 +98,7 @@ kernel/%/$(HOST_TARGET).log: kernel/%/kernel.riscv $(HOST_TARGET)
 	$(eval KERNEL_PATH := $(CURRENT_PATH)/$(EXEC_PATH))
 	$(eval _VERSION    := $(notdir $(EXEC_PATH)))
 	cd $(EXEC_PATH) && \
-	$(CURRENT_PATH)/$(HOST_TARGET) +ntb_random_seed_automatic +trace \
-		+vpdfile+$(HOST_TARGET).vpd \
+	$(CURRENT_PATH)/$(HOST_TARGET) +ntb_random_seed_automatic \
 		+c_args="$(KERNEL_PATH)/kernel.riscv $(_VERSION)" | tee $(notdir $@)
 
 cosim.clean: host.link.clean host.compile.clean
