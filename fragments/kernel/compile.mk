@@ -51,7 +51,7 @@ _BSG_MANYCORE_COMMON_PATH = $(_BSG_MANYCORE_SPMD_PATH)/common/
 ################################################################################
 # C/C++ Compilation Flags
 ################################################################################
-OPT_LEVEL ?= -O2
+OPT_LEVEL ?= -O3
 ARCH_OP   := rv32imaf
 DEBUG_FLAGS := -g
 # CCPPFLAGS are common between GCC and G++
