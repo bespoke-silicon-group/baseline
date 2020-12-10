@@ -1,4 +1,4 @@
-RISCV_CCPPFLAGS += -frerun-cse-after-loop -fweb -frename-registers
+RISCV_CCPPFLAGS += -frerun-cse-after-loop -fweb -frename-registers -mtune=bsg_vanilla_2020
 
 %.rvo: RISCV_INCLUDES += $(KERNEL_INCLUDES)
 
