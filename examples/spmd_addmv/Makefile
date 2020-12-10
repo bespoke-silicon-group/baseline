@@ -72,6 +72,9 @@ KERNEL_INCLUDES     += -I$(CURRENT_PATH)/kernel/include
 DEFAULT_VERSION     := v2
 KERNEL_DEFAULT      := kernel/$(DEFAULT_VERSION)/kernel.cpp
 
+kernel.riscv: kernel/v2/kernel-c.rvo
+kernel/v2/kernel.riscv: kernel/v2/kernel-c.rvo
+
 ################################################################################
 # Include the kernel build rules (This must be included after KERNEL_*LIBRARIES,
 # KERNEL_DEFAULT, KERNEL_INCLUDES, etc)
