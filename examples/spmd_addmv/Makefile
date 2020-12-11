@@ -39,14 +39,14 @@ CURRENT_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 # is set in environment.mk) uses the same machine as in bsg_replicant.
 ################################################################################
 
-BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/4x4_fast_n_fake
+BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/timing_v0_16_8
 
 ################################################################################
 # Define the range of versions
 ################################################################################
 # Kernel versions. See kernel/README.md for more information.  Version names do
 # not need to use v* and can be any string
-VERSIONS = v0 v1 v2
+VERSIONS = v0 v1 v2 v3
 
 ################################################################################
 # Define any sources that should be used compiled during kernel compilation,
@@ -69,17 +69,17 @@ KERNEL_INCLUDES     += -I$(CURRENT_PATH)/kernel/include
 
 # Define the default kernel.cpp file. If KERNEL_DEFAULT is not defined it will
 # be set to kernel.cpp in the same directory as this Makefile.
-DEFAULT_VERSION     := v2
+DEFAULT_VERSION     := v3
 KERNEL_DEFAULT      := kernel/$(DEFAULT_VERSION)/kernel.cpp
 
-kernel.riscv: kernel/v2/kernel-c.rvo
-kernel/v2/kernel.riscv: kernel/v2/kernel-c.rvo
+# kernel.riscv: kernel/v2/kernel-c.rvo
+#kernel/v2/kernel.riscv: kernel/v2/kernel-c.rvo
 
 ################################################################################
 # Include the kernel build rules (This must be included after KERNEL_*LIBRARIES,
 # KERNEL_DEFAULT, KERNEL_INCLUDES, etc)
 ################################################################################
-_KERNEL_COMPILER=GCC
+_KERNEL_COMPILER=CLANG
 -include $(FRAGMENTS_PATH)/kernel/cudalite.mk
 
 ################################################################################
@@ -113,6 +113,7 @@ HOST_INCLUDES       := -I$(CURRENT_PATH)
 ################################################################################
 version.clean:
 	rm -rf kernel/*/*{.csv,.log,.rvo,.riscv,.vpd,.key,.png,.dis}
+	rm -rf kernel/*/*{.ll,ll.s}
 	rm -rf kernel/*/{stats,pc_stats}
 
 custom.clean: version.clean
