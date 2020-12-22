@@ -6,8 +6,8 @@
 // before bsg_manycore.h and bsg_tile_group_barrier.h are
 // included. bsg_tiles_X and bsg_tiles_Y must also be defined for
 // legacy reasons, but they are deprecated.
-#define BSG_TILE_GROUP_X_DIM 2
-#define BSG_TILE_GROUP_Y_DIM 2
+#define BSG_TILE_GROUP_X_DIM 4
+#define BSG_TILE_GROUP_Y_DIM 1
 #define bsg_tiles_X BSG_TILE_GROUP_X_DIM
 #define bsg_tiles_Y BSG_TILE_GROUP_Y_DIM
 #include <bsg_manycore.h>
@@ -27,13 +27,14 @@ extern "C" {
                       uint32_t A_HEIGHT, uint32_t A_WIDTH, uint32_t B_WIDTH,
                       uint32_t block_size_y, uint32_t block_size_x) {
                 int rc;
+                asm volatile ("addi zero,zero,1");
                 bsg_cuda_print_stat_kernel_start();
                 bsg_cuda_print_stat_start(0);
                 rc = matrix_multiply_group(A, B, C,
                                            A_HEIGHT, A_WIDTH, B_WIDTH,
                                            block_size_y, block_size_x);
                 bsg_cuda_print_stat_end(0);
-
+                asm volatile ("addi zero,zero,2");
                 bsg_tile_group_barrier(&r_barrier, &c_barrier);
 
                 bsg_cuda_print_stat_kernel_end();
