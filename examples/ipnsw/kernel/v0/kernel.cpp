@@ -66,6 +66,10 @@ extern "C" {
         return 0;
     }
 
+// Uncomment to turn on debugging
+//#define DEBUG_GREEDY_VCURR_TR
+//#define DEBUG_GREEDY_VIS_TR
+
     int ipnsw_greedy_search (const graph *Gs, const float *database, const float *query, int *seen)
     {
         float q[VSIZE];
@@ -73,9 +77,13 @@ extern "C" {
 
         int   v_curr = V_ENTRY;
         float d_curr = 0;
-        //bsg_printf("&database[%d]=%08x\n", v_curr, &database[v_curr]);
 
-        d_curr = inner_product<BSG_TILE_GROUP_X_DIM, BSG_TILE_GROUP_Y_DIM>(q, q);//&database[v_curr*VSIZE]);
+        d_curr = -1 * inner_product<BSG_TILE_GROUP_X_DIM, BSG_TILE_GROUP_Y_DIM>(q, &database[v_curr*VSIZE]);
+
+#if defined(DEBUG_GREEDY_VCURR_TR) || defined(DEBUG_GREEDY_VIS_TR)
+        bsg_print_int(v_curr);
+        bsg_print_float(d_curr);
+#endif
 
         for (int i = 0; i < NG-1; i++) {
             struct graph G = Gs[i];
@@ -84,15 +92,26 @@ extern "C" {
                 changed = false;
                 // fetch neighbors
                 int dst_0 = G.offsets[v_curr];
-                int degree = v_curr == G.V-1 ? G.E - dst_0 : G.offsets[v_curr+1]- dst_0;
+                int degree = v_curr == G.V-1 ? G.E - dst_0 : G.offsets[v_curr+1] - dst_0;
                 for (int dst_i = 0; dst_i < degree; dst_i++) {
                     int dst = G.neighbors[dst_0+dst_i];
                     // calc. iproduct
-                    float d = inner_product<BSG_TILE_GROUP_X_DIM,BSG_TILE_GROUP_Y_DIM>(q, &database[dst*VSIZE]);
+                    float d = -1 * inner_product<BSG_TILE_GROUP_X_DIM,BSG_TILE_GROUP_Y_DIM>(q, &database[dst*VSIZE]);
+
+#if defined(DEBUG_GREEDY_VIS_TR)
+                    bsg_print_int(dst);
+                    bsg_print_float(d);
+#endif
+
                     if (d < d_curr) {
                         d_curr = d;
                         v_curr = dst;
                         changed = true;
+
+#if defined(DEBUG_GREEDY_VIS_TR)
+                        bsg_print_int(v_curr);
+                        bsg_print_float(d_curr);
+#endif
                     }
                 }
             }
