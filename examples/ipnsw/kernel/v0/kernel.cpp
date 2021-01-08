@@ -87,7 +87,7 @@ extern "C" {
 #if defined(DEBUG_GREEDY_VCURR_TR) || defined(DEBUG_GREEDY_VIS_TR)
         bsg_print_int(v_curr);
         bsg_print_float(d_curr);
-#endif
+#endif // #if defined(DEBUG_GREEDY_VCURR_TR) || defined(DEBUG_GREEDY_VIS_TR)
 
         for (int i = 0; i < NG-1; i++) {
             struct graph G = Gs[i];
@@ -105,7 +105,7 @@ extern "C" {
 #if defined(DEBUG_GREEDY_VIS_TR)
                     bsg_print_int(dst);
                     bsg_print_float(d);
-#endif
+#endif // #if defined(DEBUG_GREEDY_VIS_TR)
 
                     if (d < d_curr) {
                         d_curr = d;
@@ -115,7 +115,7 @@ extern "C" {
 #if defined(DEBUG_GREEDY_VIS_TR)
                         bsg_print_int(v_curr);
                         bsg_print_float(d_curr);
-#endif
+#endif // #if defined(DEBUG_GREEDY_VIS_TR)
                     }
                 }
             }
