@@ -71,7 +71,7 @@ ALIASES = vanilla_stats.csv vcache_stats.csv
 $(ALIASES): $(HOST_TARGET).log ;
 $(HOST_TARGET).log: kernel.riscv $(HOST_TARGET).profile
 	./$(HOST_TARGET).profile +ntb_random_seed_automatic +rad \
-		+c_args="kernel.riscv $(DEFAULT_VERSION)" | tee $@
+		+c_args="kernel.riscv $(DEFAULT_VERSION) $(ARGS)" | tee $@
 
 ################################################################################
 # Define rules for version-specific cosimulation execution. EXEC_PATH and
@@ -99,7 +99,7 @@ kernel/%/$(HOST_TARGET).log: kernel/%/kernel.riscv $(HOST_TARGET).profile
 	$(eval _VERSION    := $(notdir $(EXEC_PATH)))
 	cd $(EXEC_PATH) && \
 	$(CURRENT_PATH)/$(HOST_TARGET).profile +ntb_random_seed_automatic \
-		+c_args="$(KERNEL_PATH)/kernel.riscv $(_VERSION)" | tee $(notdir $@)
+		+c_args="$(KERNEL_PATH)/kernel.riscv $(_VERSION) $(ARGS)" | tee $(notdir $@)
 
 cosim.clean: host.link.clean host.compile.clean
 	rm -rf *{.daidir,.tmp,.log} 64
