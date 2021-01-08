@@ -1,5 +1,5 @@
 /*
- * This kernel prints the Hello World message 
+ * This kernel prints the Hello World message
  */
 
 // BSG_TILE_GROUP_X_DIM and BSG_TILE_GROUP_Y_DIM must be defined
@@ -12,15 +12,92 @@
 #define bsg_tiles_Y BSG_TILE_GROUP_Y_DIM
 #include <bsg_manycore.h>
 #include <bsg_tile_group_barrier.h>
-
-#include <hello_world.hpp>
+#include <string.h>
+#include <queue>
+//#include <hello_world.hpp>
+#include "inner_product.hpp"
+//#include "inner_product.h"
 
 /* We wrap all external-facing C++ kernels with `extern "C"` to
- * prevent name mangling 
+ * prevent name mangling
  */
+
+//#define V  1000000
+#define VSIZE 100
+#define NG 4
+#define V_ENTRY 82026
+
+#define G_0 3
+#define G_1 2
+#define G_2 1
+#define G_3 0
+
+struct graph {
+    const int *offsets;
+    const int *neighbors;
+    int V;
+    int E;
+};
+
+#ifdef __cplusplus
 extern "C" {
-    int ipnsw_greedy_search (int arg)
-    {       
+#endif
+
+    int input_test(const graph *Gs, const float *database, const float *query, int *seen)
+    {
+        bsg_printf("Gs = %08x\n",       Gs);
+        bsg_printf("database = %08x\n", database);
+        bsg_printf("query = %08x\n",    query);
+        bsg_printf("seen  = %08x\n",    seen);
+
+        struct graph G;
+        int v_i [] = {G_0, G_1, G_2, G_3};
+        for (int j = 0; j < 4; ++j) {
+            int i = v_i[j];
+            memcpy(&G, &Gs[i], sizeof(G));
+            bsg_printf("G[%d].offsets   = %08x\n", j, G.offsets);
+            bsg_printf("G[%d].neighbors = %08x\n", j, G.neighbors);
+            bsg_printf("G[%d].V = %d\n", j, G.V);
+            bsg_printf("G[%d].E = %d\n", j, G.E);
+        }
+
+        //int degree = G0.offsets[V_ENTRY+1]-G0.offsets[V_ENTRY];
+        //bsg_printf("degree(%d) in G0=%d\n", V_ENTRY, degree);
+        return 0;
+    }
+
+    int ipnsw_greedy_search (const graph *Gs, const float *database, const float *query, int *seen)
+    {
+        float q[VSIZE];
+        memcpy(q, query, sizeof(q));
+
+        int   v_curr = V_ENTRY;
+        float d_curr = 0;
+        //bsg_printf("&database[%d]=%08x\n", v_curr, &database[v_curr]);
+
+        d_curr = inner_product<BSG_TILE_GROUP_X_DIM, BSG_TILE_GROUP_Y_DIM>(q, q);//&database[v_curr*VSIZE]);
+
+        for (int i = 0; i < NG-1; i++) {
+            struct graph G = Gs[i];
+            bool changed = true;
+            while (changed) {
+                changed = false;
+                // fetch neighbors
+                int dst_0 = G.offsets[v_curr];
+                int degree = v_curr == G.V-1 ? G.E - dst_0 : G.offsets[v_curr+1]- dst_0;
+                for (int dst_i = 0; dst_i < degree; dst_i++) {
+                    int dst = G.neighbors[dst_0+dst_i];
+                    // calc. iproduct
+                    float d = inner_product<BSG_TILE_GROUP_X_DIM,BSG_TILE_GROUP_Y_DIM>(q, &database[dst*VSIZE]);
+                    if (d < d_curr) {
+                        d_curr = d;
+                        v_curr = dst;
+                        changed = true;
+                    }
+                }
+            }
+        }
+        *seen = v_curr;
         return 0;
     }
 
@@ -28,4 +105,27 @@ extern "C" {
     {
         return 0;
     }
+
+    //DECL_inner_product(1, 1, float, 100, 10)
+
+    int inner_product_ubmk(const float *database, const float *query)
+    {
+        const int N = 1;
+        float q[VSIZE];
+        float r = 0;
+
+        memcpy(q, query, sizeof(q));
+
+        bsg_cuda_print_stat_start(0);
+        // perform a random inner product N times
+        for (int i = 0; i < N; ++i) {
+            const float *b = &database[i*2*VSIZE];
+            r += inner_product<BSG_TILE_GROUP_X_DIM, BSG_TILE_GROUP_Y_DIM>(q,b);
+            //r += inner_product_1_1(q, b);
+        }
+        bsg_cuda_print_stat_end(0);
+        return (int)(r);
+    }
+#ifdef __cplusplus
 }
+#endif
