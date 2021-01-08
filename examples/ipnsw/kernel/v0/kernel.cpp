@@ -70,6 +70,10 @@ extern "C" {
 //#define DEBUG_GREEDY_VCURR_TR
 //#define DEBUG_GREEDY_VIS_TR
 
+#define distance(v0, v1)                                                \
+    (-1 * inner_product<BSG_TILE_GROUP_X_DIM, BSG_TILE_GROUP_Y_DIM>(v0, v1))
+
+
     int ipnsw_greedy_search (const graph *Gs, const float *database, const float *query, int *seen)
     {
         float q[VSIZE];
@@ -78,7 +82,7 @@ extern "C" {
         int   v_curr = V_ENTRY;
         float d_curr = 0;
 
-        d_curr = -1 * inner_product<BSG_TILE_GROUP_X_DIM, BSG_TILE_GROUP_Y_DIM>(q, &database[v_curr*VSIZE]);
+        d_curr = distance(q, &database[v_curr*VSIZE]);
 
 #if defined(DEBUG_GREEDY_VCURR_TR) || defined(DEBUG_GREEDY_VIS_TR)
         bsg_print_int(v_curr);
@@ -96,7 +100,7 @@ extern "C" {
                 for (int dst_i = 0; dst_i < degree; dst_i++) {
                     int dst = G.neighbors[dst_0+dst_i];
                     // calc. iproduct
-                    float d = -1 * inner_product<BSG_TILE_GROUP_X_DIM,BSG_TILE_GROUP_Y_DIM>(q, &database[dst*VSIZE]);
+                    float d = distance(q, &database[dst*VSIZE]);
 
 #if defined(DEBUG_GREEDY_VIS_TR)
                     bsg_print_int(dst);
