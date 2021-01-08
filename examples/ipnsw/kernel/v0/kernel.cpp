@@ -43,26 +43,30 @@ struct graph {
 extern "C" {
 #endif
 
+//#define DEBUG_INPUT_TEST
+
     int input_test(const graph *Gs, const float *database, const float *query, int *seen)
     {
+#if defined(DEBUG_INPUT_TEST)
         bsg_printf("Gs = %08x\n",       Gs);
         bsg_printf("database = %08x\n", database);
         bsg_printf("query = %08x\n",    query);
         bsg_printf("seen  = %08x\n",    seen);
+#endif // #if defined(DEBUG_INPUT_TEST)
 
         struct graph G;
         int v_i [] = {G_0, G_1, G_2, G_3};
         for (int j = 0; j < 4; ++j) {
             int i = v_i[j];
             memcpy(&G, &Gs[i], sizeof(G));
+#if defined(DEBUG_INPUT_TEST)
             bsg_printf("G[%d].offsets   = %08x\n", j, G.offsets);
             bsg_printf("G[%d].neighbors = %08x\n", j, G.neighbors);
             bsg_printf("G[%d].V = %d\n", j, G.V);
             bsg_printf("G[%d].E = %d\n", j, G.E);
+#endif // #if defined(DEBUG_INPUT_TEST)
         }
 
-        //int degree = G0.offsets[V_ENTRY+1]-G0.offsets[V_ENTRY];
-        //bsg_printf("degree(%d) in G0=%d\n", V_ENTRY, degree);
         return 0;
     }
 
