@@ -109,14 +109,27 @@ ARGS += $(CURRENT_PATH)/hb-prog-eval/ipnsw/data/music.edges.level_2
 ARGS += $(CURRENT_PATH)/hb-prog-eval/ipnsw/data/music.edges.level_3
 
 -include $(FRAGMENTS_PATH)/host/cosim.mk
-CXXFLAGS += $(libhammerblade-helpers-host-interface-cxxflags)
-LDFLAGS  += $(libhammerblade-helpers-host-interface-ldflags)
+
+
+GRAPH-TOOLS := $(CURRENT_PATH)/graph-tools
+graphtools-dir := $(GRAPH-TOOLS)
+
+include $(GRAPH-TOOLS)/libgraphtools.mk
 
 HB-HELPERS := $(_REPO_ROOT)/../hammerblade-helpers
 include $(HB-HELPERS)/libhammerblade-helpers-host.mk
 
-$(HOST_TARGET): $(libhammerblade-helpers-host-interface-headers)
+CXXFLAGS += $(libhammerblade-helpers-host-interface-cxxflags)
+CXXFLAGS += $(libgraphtools-interface-cxxflags)
 
+LDFLAGS  += $(libhammerblade-helpers-host-interface-ldflags)
+LDFLAGS  += $(libgraphtools-interface-ldflags)
+
+$(HOST_TARGET): $(libhammerblade-helpers-host-interface-headers)
+$(HOST_TARGET): $(libgraphtools-interface-headers)
+$(HOST_TARGET): $(libgraphtools-interface-libraries)
+ipnsw.o: IO.hpp
+ipnsw.o: IPNSWGraph.hpp
 ################################################################################
 # Define the clean rules. clean calls the makefile-specific cleans, whereas
 # users can add commands and dependencies to custom.clean.
