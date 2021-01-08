@@ -78,7 +78,8 @@ extern "C" {
     (-1 * inner_product<BSG_TILE_GROUP_X_DIM, BSG_TILE_GROUP_Y_DIM>(v0, v1))
 
 
-    int ipnsw_greedy_search (const graph *Gs, const float *database, const float *query, int *seen)
+    int ipnsw_greedy_search (const graph *Gs, const float *database, const float *query, int *seen,
+                             int *v_curr_o, float *d_curr_o)
     {
         float q[VSIZE];
         memcpy(q, query, sizeof(q));
@@ -124,7 +125,10 @@ extern "C" {
                 }
             }
         }
-        *seen = v_curr;
+
+        *v_curr_o = v_curr;
+        *d_curr_o = d_curr;
+
         return 0;
     }
 
