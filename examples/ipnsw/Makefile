@@ -101,6 +101,13 @@ HOST_INCLUDES       := -I$(CURRENT_PATH)
 # HOST_*SOURCES, HOST_TARGET, HOST_INCLUDES, etc)
 ################################################################################
 
+ARGS += $(CURRENT_PATH)/hb-prog-eval/ipnsw/data/database_music100.bin
+ARGS += $(CURRENT_PATH)/hb-prog-eval/ipnsw/data/query_music100.bin
+ARGS += $(CURRENT_PATH)/hb-prog-eval/ipnsw/data/music.edges.level_0
+ARGS += $(CURRENT_PATH)/hb-prog-eval/ipnsw/data/music.edges.level_1
+ARGS += $(CURRENT_PATH)/hb-prog-eval/ipnsw/data/music.edges.level_2
+ARGS += $(CURRENT_PATH)/hb-prog-eval/ipnsw/data/music.edges.level_3
+
 -include $(FRAGMENTS_PATH)/host/cosim.mk
 CXXFLAGS += $(libhammerblade-helpers-host-interface-cxxflags)
 LDFLAGS  += $(libhammerblade-helpers-host-interface-ldflags)
