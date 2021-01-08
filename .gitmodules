@@ -1,3 +1,6 @@
 [submodule "examples/ipnsw/hb-prog-eval"]
 	path = examples/ipnsw/hb-prog-eval
 	url = git@github.com:bespoke-silicon-group/hb-prog-eval
+[submodule "y"]
+	path = examples/ipnsw/graph-tools
+	url = git@github.com:mrutt92/graph-tools
