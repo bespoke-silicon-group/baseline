@@ -53,7 +53,7 @@ int Main(int argc, char *argv[])
 
     std::cout << "Pushing write jobs" << std::endl;
     hb->push_write(db_dev, &db[0], db.size() * sizeof(db[0]));
-    hb->push_write(q_dev,  &queries[QUERY], sizeof(queries[0]));
+    hb->push_write(q_dev,  &queries[QUERY], sizeof(queries[QUERY]));
 
     for (auto &g : Gs) g.initialize_on_device();
     // syncs
