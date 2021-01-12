@@ -15,7 +15,10 @@ int Main(int argc, char *argv[])
     args.parse(argc, argv);
 
     std::unique_ptr<IPNSWRunner> runner;
-    runner = std::unique_ptr<IPNSWRunner>(new IPNSWRunner(args));
+    std::unique_ptr<IPNSWKernelRunner> kr;
+    //kr = std::unique_ptr<IPNSWKernelRunner>(new GreedyWalkKernelRunner);
+    kr = std::unique_ptr<IPNSWKernelRunner>(new IProductUBmkKernelRunner);
+    runner = std::unique_ptr<IPNSWRunner>(new IPNSWRunner(args, kr));
     runner->run();
 
     return 0;
