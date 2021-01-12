@@ -2,6 +2,8 @@
 #include "IO.hpp"
 #include "HammerBlade.hpp"
 #include "IPNSWGraph.hpp"
+#include "IPNSWKernelRunner.hpp"
+#include "IPNSWResultReader.hpp"
 #include <memory>
 
 namespace ipnsw {
@@ -12,8 +14,11 @@ namespace ipnsw {
         using HammerBlade = hammerblade::host::HammerBlade;
         using Dim = hammerblade::host::Dim;
 
-        IPNSWRunner(const Parser &p, std::unique_ptr<IPNSWKernelRunner> & kr):
-            _kernel_runner(std::move(kr)) {
+        IPNSWRunner(const Parser &p,
+                    std::unique_ptr<IPNSWKernelRunner> & kr,
+                    std::unique_ptr<IPNSWResultReader> & rr):
+            _kernel_runner(std::move(kr)),
+            _result_reader(std::move(rr)) {
             _io = std::unique_ptr<IO>(new IO(p));
             _hb = HammerBlade::Get();
         }
@@ -85,16 +90,9 @@ namespace ipnsw {
             _kernel_runner->runKernel(*this);
         }
 
-        void reportResults() {
-            int v_curr;
-            float d_curr;
+        void readResults() {
+            _result_reader->readResults(*this);
 
-            _hb->read(_v_curr_dev, &v_curr, sizeof(int));
-            _hb->read(_d_curr_dev, &d_curr, sizeof(float));
-
-            std::cout << "Greedy walk (v_curr,d_curr) = "
-                      << "(" << v_curr << "," << d_curr << ")"
-                      << std::endl;
         }
 
         void run() {
@@ -102,7 +100,7 @@ namespace ipnsw {
             loadProgram();
             initializeDeviceMemory();
             runKernel();
-            reportResults();
+            readResults();
         }
 
         /////////////
@@ -141,50 +139,6 @@ namespace ipnsw {
 
         // composites
         std::unique_ptr<IPNSWKernelRunner> _kernel_runner;
-    };
-
-
-    class GreedyWalkKernelRunner : public IPNSWKernelRunner {
-        std::string kernelName(const IPNSWRunner & runner) const {
-            return "ipnsw_greedy_search";
-        }
-
-        std::vector<hb_mc_eva_t> argv(const IPNSWRunner & runner) const {
-            std::vector<hb_mc_eva_t> argv = {
-                runner.graph_metadata_dev(),
-                runner.db_dev(),
-                runner.query_dev(),
-                runner.seen_dev(),
-                runner.v_curr_dev(),
-                runner.d_curr_dev(),
-            };
-            return argv;
-        };
-        Dim gd(const IPNSWRunner &runner) const {return Dim(1,1);}
-        Dim tgd(const IPNSWRunner &runner) const {return Dim(1,1);}
-    };
-
-    class IProductUBmkKernelRunner : public IPNSWKernelRunner {
-        IProductUBmkKernelRunner(int iterations) :
-            IPNSWKernelRunner(),
-            _iterations(iterations) {
-        }
-
-        std::string kernelName(const IPNSWRunner & runner, int iterations=100) const {
-            return "inner_product_ubmk";
-        }
-
-        std::vector<hb_mc_eva_t> argv(const IPNSWRunner & runner) const {
-            std::vector<hb_mc_eva_t> argv = {
-                runner.db_dev(), // database
-                runner.query_dev(), // query
-                100, // number of inner products
-            };
-            return argv;
-        };
-        Dim gd(const IPNSWRunner &runner) const {return Dim(1,1);}
-        Dim tgd(const IPNSWRunner &runner) const {return Dim(1,1);}
-
-        int _iterations;
+        std::unique_ptr<IPNSWResultReader> _result_reader;
     };
 }
