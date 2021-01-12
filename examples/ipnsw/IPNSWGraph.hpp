@@ -1,3 +1,4 @@
+#pragma once
 #include <HammerBlade.hpp>
 #include <Graph.hpp>
 #include <Graph500Data.hpp>

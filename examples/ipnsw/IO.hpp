@@ -1,3 +1,4 @@
+#pragma once
 #include <vector>
 #include <string>
 #include <sstream>
@@ -108,6 +109,8 @@ namespace ipnsw {
             using array = std::array<T,N>;
             return read<array>(_parser._queries);
         }
+
+        std::string ucode() const { return _parser._ucode; }
 
         Parser _parser;
     };
