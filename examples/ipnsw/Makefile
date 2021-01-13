@@ -130,6 +130,12 @@ $(HOST_TARGET): $(libgraphtools-interface-headers)
 $(HOST_TARGET): $(libgraphtools-interface-libraries)
 ipnsw.o: IO.hpp
 ipnsw.o: IPNSWGraph.hpp
+ipnsw.o: IPNSWRunner.hpp
+ipnsw.o: IPNSWKernelRunner.hpp
+ipnsw.o: GreedyWalkKernelRunner.hpp
+ipnsw.o: IProductUBmkKernelRunner.hpp
+ipnsw.o: IPNSWResultReader.hpp
+ipnsw.o: GreedyWalkResultReader.hpp
 ################################################################################
 # Define the clean rules. clean calls the makefile-specific cleans, whereas
 # users can add commands and dependencies to custom.clean.

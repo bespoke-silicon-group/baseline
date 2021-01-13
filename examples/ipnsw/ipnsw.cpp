@@ -5,6 +5,10 @@
 #include "IO.hpp"
 #include "IPNSWGraph.hpp"
 #include "IPNSWRunner.hpp"
+#include "IProductUBmkKernelRunner.hpp"
+#include "IProductUBmkResultReader.hpp"
+#include "GreedyWalkKernelRunner.hpp"
+#include "GreedyWalkResultReader.hpp"
 #include <iostream>
 #include <memory>
 using namespace ipnsw;
@@ -16,9 +20,17 @@ int Main(int argc, char *argv[])
 
     std::unique_ptr<IPNSWRunner> runner;
     std::unique_ptr<IPNSWKernelRunner> kr;
-    //kr = std::unique_ptr<IPNSWKernelRunner>(new GreedyWalkKernelRunner);
-    kr = std::unique_ptr<IPNSWKernelRunner>(new IProductUBmkKernelRunner);
-    runner = std::unique_ptr<IPNSWRunner>(new IPNSWRunner(args, kr));
+    std::unique_ptr<IPNSWResultReader> rr;
+
+    if (args._version == "v0") {
+        kr = std::unique_ptr<IPNSWKernelRunner>(new GreedyWalkKernelRunner);
+        rr = std::unique_ptr<IPNSWResultReader>(new GreedyWalkResultReader);
+    } else if (args._version == "iproduct_ubmk") {
+        kr = std::unique_ptr<IPNSWKernelRunner>(new IProductUBmkKernelRunner(500));
+        rr = std::unique_ptr<IPNSWResultReader>(new IPNSWResultReader);
+    }
+
+    runner = std::unique_ptr<IPNSWRunner>(new IPNSWRunner(args, kr, rr));
     runner->run();
 
     return 0;
