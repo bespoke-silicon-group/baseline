@@ -11,6 +11,12 @@ namespace ipnsw {
     class IPNSWRunner {
     public:
         static constexpr int QUERY = 276;
+        //static constexpr int QUERY = 229;
+        //static constexpr int QUERY = 490;
+        //static constexpr int QUERY = 16;
+        //static constexpr int QUERY = 461;
+        //static constexpr int QUERY = 470;
+
         using HammerBlade = hammerblade::host::HammerBlade;
         using Dim = hammerblade::host::Dim;
 
