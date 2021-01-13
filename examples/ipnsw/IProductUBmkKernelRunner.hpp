@@ -18,7 +18,7 @@ namespace ipnsw {
             std::vector<hb_mc_eva_t> argv = {
                 runner.db_dev(), // database
                 runner.query_dev(), // query
-                100, // number of inner products
+                static_cast<hb_mc_eva_t>(_iterations), // number of inner products
             };
             return argv;
         };
