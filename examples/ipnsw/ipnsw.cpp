@@ -7,10 +7,15 @@
 #include "IPNSWRunner.hpp"
 #include "IProductUBmkKernelRunner.hpp"
 #include "IProductUBmkResultReader.hpp"
+#include "BeamSearchKernelRunner.hpp"
 #include "GreedyWalkKernelRunner.hpp"
 #include "GreedyWalkResultReader.hpp"
+#include "GreedyWalkResults.hpp"
 #include <iostream>
 #include <memory>
+
+#include "GreedyWalkResults.cpp"
+
 using namespace ipnsw;
 
 int Main(int argc, char *argv[])
@@ -22,12 +27,17 @@ int Main(int argc, char *argv[])
     std::unique_ptr<IPNSWKernelRunner> kr;
     std::unique_ptr<IPNSWResultReader> rr;
 
-    if (args._version == "v0") {
+    if (args._version == "greedy_walk") {
         kr = std::unique_ptr<IPNSWKernelRunner>(new GreedyWalkKernelRunner);
         rr = std::unique_ptr<IPNSWResultReader>(new GreedyWalkResultReader);
+    } else if (args._version == "beam_search") {
+        kr = std::unique_ptr<IPNSWKernelRunner>(new BeamSearchKernelRunner);
+        rr = std::unique_ptr<IPNSWResultReader>(new IPNSWResultReader);
     } else if (args._version == "iproduct_ubmk") {
         kr = std::unique_ptr<IPNSWKernelRunner>(new IProductUBmkKernelRunner(500));
         rr = std::unique_ptr<IPNSWResultReader>(new IPNSWResultReader);
+    } else {
+        return 0;
     }
 
     runner = std::unique_ptr<IPNSWRunner>(new IPNSWRunner(args, kr, rr));
@@ -60,6 +70,3 @@ int main(int argc, char ** argv) {
     return Main(argc, argv);
 }
 #endif
-
-
-

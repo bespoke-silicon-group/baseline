@@ -2,29 +2,24 @@
 #include <array>
 #include <algorithm>
 
-template <int N>
+template <int N, typename T, typename Comparitor>
 class Heap {
 public:
-    using item = std::pair<float, int>;
-    class compare {
-    public:
-        bool operator()(const item &i0, const item &i1) {
-            return i0.first > i1.first;
-        }
-    };
-    
-    Heap():_n(0){}
+    Heap(T *data):
+        _data(data),
+        _n(0){
+    }
 
     void push(item i) {
         _data[_n++] = i;
-        std::push_heap(_data.begin(), _data.begin()+_n, compare());
+        std::push_heap(_data.begin(), _data.begin()+_n, Comparitor());
     }
 
     item pop() {
-        std::pop_heap(_data.begin(), _data.end()+_n, compare());
+        std::pop_heap(_data.begin(), _data.end()+_n, Comparitor());
         return _data[_n--];
     }
-    
-    int                 _n;
-    std::array<item, N> _data;
+
+    int _n;
+    T  *_data;
 };
