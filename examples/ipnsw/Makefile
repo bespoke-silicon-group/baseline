@@ -46,7 +46,7 @@ BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/timing_v0_8_4
 ################################################################################
 # Kernel versions. See kernel/README.md for more information.  Version names do
 # not need to use v* and can be any string
-VERSIONS = v0 
+VERSIONS = greedy_walk iproduct_ubmk beam_search
 
 ################################################################################
 # Define any sources that should be used compiled during kernel compilation,
@@ -93,7 +93,7 @@ KERNEL_DEFAULT      := kernel/$(DEFAULT_VERSION)/kernel.cpp
 
 HOST_TARGET         := ipnsw
 HOST_CSOURCES       := 
-HOST_CXXSOURCES     := Main.cpp 
+HOST_CXXSOURCES     += GreedyWalkResults.cpp
 HOST_INCLUDES       := -I$(CURRENT_PATH)
 
 ################################################################################
@@ -124,15 +124,22 @@ CXXFLAGS += $(libgraphtools-interface-cxxflags)
 
 LDFLAGS  += $(libhammerblade-helpers-host-interface-ldflags)
 LDFLAGS  += $(libgraphtools-interface-ldflags)
+VSOURCES += GreedyWalkResults.cpp
 
 $(HOST_TARGET): $(libhammerblade-helpers-host-interface-headers)
 $(HOST_TARGET): $(libgraphtools-interface-headers)
 $(HOST_TARGET): $(libgraphtools-interface-libraries)
+$(HOST_TARGET): GreedyWalkResults.o
+
+GreedyWalkResults.o: GreedyWalkResults.cpp
+GreedyWalkResults.o: GreedyWalkResults.hpp
+
 ipnsw.o: IO.hpp
 ipnsw.o: IPNSWGraph.hpp
 ipnsw.o: IPNSWRunner.hpp
 ipnsw.o: IPNSWKernelRunner.hpp
 ipnsw.o: GreedyWalkKernelRunner.hpp
+ipnsw.o: BeamSearchKernelRunner.hpp
 ipnsw.o: IProductUBmkKernelRunner.hpp
 ipnsw.o: IPNSWResultReader.hpp
 ipnsw.o: GreedyWalkResultReader.hpp

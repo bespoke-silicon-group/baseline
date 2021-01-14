@@ -14,8 +14,11 @@
 #include <bsg_tile_group_barrier.h>
 #include <string.h>
 #include <queue>
+#include <algorithm>
+#include <array>
 //#include <hello_world.hpp>
 #include "inner_product.hpp"
+#include "heap.hpp"
 //#include "inner_product.h"
 
 /* We wrap all external-facing C++ kernels with `extern "C"` to
@@ -26,6 +29,9 @@
 #define VSIZE 100
 #define NG 4
 #define V_ENTRY 82026
+
+#define EF        128
+#define N_RESULTS 10
 
 #define G_0 3
 #define G_1 2
@@ -82,6 +88,9 @@ extern "C" {
                              int *v_curr_o, float *d_curr_o)
     {
         float q[VSIZE];
+
+        bsg_cuda_print_stat_start(0);
+
         memcpy(q, query, sizeof(q));
 
         int   v_curr = V_ENTRY;
@@ -129,34 +138,10 @@ extern "C" {
         *v_curr_o = v_curr;
         *d_curr_o = d_curr;
 
-        return 0;
-    }
-
-    int ipnsw_beam_search(int arg)
-    {
-        return 0;
-    }
-
-    //DECL_inner_product(1, 1, float, 100, 10)
-
-    int inner_product_ubmk(const float *database, const float *query)
-    {
-        const int N = 1;
-        float q[VSIZE];
-        float r = 0;
-
-        memcpy(q, query, sizeof(q));
-
-        bsg_cuda_print_stat_start(0);
-        // perform a random inner product N times
-        for (int i = 0; i < N; ++i) {
-            const float *b = &database[i*2*VSIZE];
-            r += inner_product<BSG_TILE_GROUP_X_DIM, BSG_TILE_GROUP_Y_DIM>(q,b);
-            //r += inner_product_1_1(q, b);
-        }
         bsg_cuda_print_stat_end(0);
-        return (int)(r);
+        return 0;
     }
+
 #ifdef __cplusplus
 }
 #endif
