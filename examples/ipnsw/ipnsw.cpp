@@ -8,6 +8,7 @@
 #include "IProductUBmkKernelRunner.hpp"
 #include "IProductUBmkResultReader.hpp"
 #include "BeamSearchKernelRunner.hpp"
+#include "BeamSearchResultReader.hpp"
 #include "GreedyWalkKernelRunner.hpp"
 #include "GreedyWalkResultReader.hpp"
 #include "GreedyWalkResults.hpp"
@@ -32,7 +33,7 @@ int Main(int argc, char *argv[])
         rr = std::unique_ptr<IPNSWResultReader>(new GreedyWalkResultReader);
     } else if (args._version == "beam_search") {
         kr = std::unique_ptr<IPNSWKernelRunner>(new BeamSearchKernelRunner);
-        rr = std::unique_ptr<IPNSWResultReader>(new IPNSWResultReader);
+        rr = std::unique_ptr<IPNSWResultReader>(new BeamSearchResultReader);
     } else if (args._version == "iproduct_ubmk") {
         kr = std::unique_ptr<IPNSWKernelRunner>(new IProductUBmkKernelRunner(500));
         rr = std::unique_ptr<IPNSWResultReader>(new IPNSWResultReader);

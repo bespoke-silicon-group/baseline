@@ -19,9 +19,6 @@ namespace ipnsw {
             hb->write(runner.v_curr_dev(), &v_curr, sizeof(v_curr));
             hb->write(runner.d_curr_dev(), &d_curr, sizeof(d_curr));
 
-            hb_mc_eva_t candidates_dev = hb->alloc(sizeof(GreedyWalkResult) * 512);
-            hb_mc_eva_t results_dev    = hb->alloc(sizeof(GreedyWalkResult) * 128);
-
             std::vector<hb_mc_eva_t> argv = {
                 runner.graph_metadata_dev(),
                 runner.db_dev(),
@@ -29,8 +26,9 @@ namespace ipnsw {
                 runner.seen_dev(),
                 runner.v_curr_dev(),
                 runner.d_curr_dev(),
-                candidates_dev,
-                results_dev,
+                runner.candidates_dev(),
+                runner.results_dev(),
+                runner.n_results_dev(),
             };
             return argv;
         };

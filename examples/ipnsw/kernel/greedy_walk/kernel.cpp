@@ -45,6 +45,7 @@ struct graph {
     int E;
 };
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -82,7 +83,6 @@ extern "C" {
 
 #define distance(v0, v1)                                                \
     (-1 * inner_product<BSG_TILE_GROUP_X_DIM, BSG_TILE_GROUP_Y_DIM>(v0, v1))
-
 
     int ipnsw_greedy_search (const graph *Gs, const float *database, const float *query, int *seen,
                              int *v_curr_o, float *d_curr_o)

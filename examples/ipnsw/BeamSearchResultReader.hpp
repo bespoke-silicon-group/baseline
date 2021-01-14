@@ -1,21 +1,25 @@
 #pragma once
 #include "IPNSWRunner.hpp"
 #include "IPNSWResultReader.hpp"
+#include "GreedyWalkResults.hpp"
 
 namespace ipnsw {
-    class GreedyWalkResultReader : public IPNSWResultReader {
+    class BeamSearchResultReader : public IPNSWResultReader {
     public:
         void readResults(const IPNSWRunner & runner) {
             HammerBlade::Ptr hb = HammerBlade::Get();
-            int v_curr;
-            float d_curr;
 
-            hb->read(runner.v_curr_dev(), &v_curr, sizeof(int));
-            hb->read(runner.d_curr_dev(), &d_curr, sizeof(float));
+            int n_results;
+            hb->read(runner.n_results_dev(), &n_results, sizeof(int));
 
-            std::cout << "Greedy walk (v_curr,d_curr) = "
-                      << "(" << v_curr << "," << d_curr << ")"
-                      << std::endl;
+            std::vector<GreedyWalkResult> results(n_results);
+            hb->push_read(runner.results_dev(), &results[0], n_results * sizeof(GreedyWalkResult));
+            hb->sync_read();
+
+            std::cout << "Beam search:" << std::endl;
+            for (auto & r : results) {
+                std::cout << "{" << std::get<0>(r) << "," << std::get<1>(r) << "}" << std::endl;
+            }
         }
     };
 }

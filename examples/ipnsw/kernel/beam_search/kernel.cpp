@@ -19,13 +19,14 @@
 //#include <hello_world.hpp>
 #include "inner_product.hpp"
 #include "heap.hpp"
+#include "set.hpp"
 //#include "inner_product.h"
 
 /* We wrap all external-facing C++ kernels with `extern "C"` to
  * prevent name mangling
  */
 
-//#define V  1000000
+#define N_V  1000000
 #define VSIZE 100
 #define NG 4
 #define V_ENTRY 82026
@@ -43,6 +44,20 @@ struct graph {
     const int *neighbors;
     int V;
     int E;
+};
+
+class LT {
+public:
+    bool operator()(const std::pair<float, int> &lhs, const std::pair<float, int> &rhs) {
+        return  std::get<0>(lhs) < std::get<0>(rhs);
+    }
+};
+
+class GT {
+public:
+    bool operator()(const std::pair<float, int> &lhs, const std::pair<float, int> &rhs) {
+        return std::get<0>(lhs) > std::get<0>(rhs);
+    }
 };
 
 #ifdef __cplusplus
@@ -83,30 +98,81 @@ extern "C" {
 #define distance(v0, v1)                                                \
     (-1 * inner_product<BSG_TILE_GROUP_X_DIM, BSG_TILE_GROUP_Y_DIM>(v0, v1))
 
-
-    int ipnsw_beam_search(const graph *Gs, const float *database, const float *query, int *seen,
+    int ipnsw_beam_search(const graph *Gs, const float *database, const float *query, int *seen_mem,
                           int *v_curr_o, float *d_curr_o,
-                          std::pair<float, int> *candidates,
-                          std::pair<float, int> *results)
+                          std::pair<float, int> *candidates_mem,
+                          std::pair<float, int> *results_mem,
+                          int *n_results)
     {
+        // keep track of vertices seen
+        DynSet<int, std::less<int>> seen(seen_mem, N_V);
+
+        // fetch graph and q out of memory
         struct graph G = Gs[G_0];
         float q[VSIZE];
         memcpy(q, query, sizeof(q));
 
+        // retrieve results from greedy walk
         int v_curr   = *v_curr_o;
         float d_curr = *d_curr_o;
-        bsg_print_int(v_curr);
-        bsg_print_float(d_curr);
+        //bsg_print_int(v_curr);
+        //bsg_print_float(d_curr);
 
-        using result_t = std::pair<int, float>;
+        // initialize priority queues
+        DynHeap<std::pair<float, int>, GT> candidates(candidates_mem, 512);
+        DynHeap<std::pair<float, int>, LT> results(results_mem, 128);
 
-        int n_candidates = 0;
-        std::array<result_t, EF> candidates;
-        candidates[n_candidates++] = {d_curr, v_curr};
+        candidates.push({d_curr, v_curr});
+        results.push({d_curr, v_curr});
 
-        int n_results = 0;
-        std::array<result_t, EF> results;
-        results[n_results++] = {-d_curr, v_curr};
+        float d_worst = d_curr;
+        seen.insert(v_curr);
+
+        while (!candidates.empty()) {
+            int   v_best;
+            float d_best;
+
+            auto best = candidates.pop();
+            v_best = std::get<1>(best);
+            d_best = std::get<0>(best);
+
+            d_worst = std::get<0>(results.top());
+            //v_worst = std::get<1>(results.top());
+            bsg_print_int(-v_best);
+
+            if (d_best > d_worst) {
+                break;
+            }
+
+            // traverse neighbors of v_best
+            int dst_0 = G.offsets[v_best];
+            int degree = v_curr == G.V-1 ? G.E - dst_0 : G.offsets[v_best+1] - dst_0;
+            for (int dst_i = 0; dst_i < degree; dst_i++) {
+                int dst = G.neighbors[dst_0+dst_i];
+                bsg_print_int(dst);
+                if (!seen.in(dst)) {
+                    // mark as seen
+                    seen.insert(dst);
+                    float d_neib = distance(q, &database[dst*VSIZE]);
+                    d_worst = std::get<0>(results.top());
+                    // if there's room for new result or this distance is promising
+                    if ((results.size() < EF) || (d_neib < d_worst)) {
+                        // push onto candidates and results
+                        candidates.push({d_neib, dst});
+                        results.push({d_neib, dst});
+
+                        // prune down to recall
+                        if (results.size() > EF)
+                            results.pop();
+                    }
+                }
+            }
+
+        }
+
+        int n_res = std::min(results.size(), N_RESULTS);
+        std::sort(results_mem, results_mem+n_res, LT());
+        *n_results = n_res;
 
         return 0;
     }
