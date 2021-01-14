@@ -4,6 +4,7 @@
 #include "IPNSWGraph.hpp"
 #include "IPNSWKernelRunner.hpp"
 #include "IPNSWResultReader.hpp"
+#include "GreedyWalkResults.hpp"
 #include <memory>
 
 namespace ipnsw {
@@ -79,6 +80,18 @@ namespace ipnsw {
             _d_curr_dev = _hb->alloc(sizeof(float));
         }
 
+        void initializeDeviceCandidateDev() {
+            _candidates_dev = _hb->alloc(sizeof(GreedyWalkResult)*513);
+        }
+
+        void initializeDeviceResultsDev() {
+            _results_dev = _hb->alloc(sizeof(GreedyWalkResult) * 129);
+        }
+
+        void initializeDeviceNResultsDev() {
+            _n_results_dev = _hb->alloc(sizeof(int));
+        }
+
         void initializeDeviceMemory() {
             initializeDeviceMemoryDB();
             initializeDeviceMemoryQuery();
@@ -86,6 +99,9 @@ namespace ipnsw {
             initializeDeviceMemoryGraphs();
             initializeDeviceVCurr();
             initializeDeviceDCurr();
+            initializeDeviceCandidateDev();
+            initializeDeviceResultsDev();
+            initializeDeviceNResultsDev();
             // sync
             std::cout << "Starting DMA" << std::endl;
             _hb->sync_rw();
@@ -122,7 +138,9 @@ namespace ipnsw {
         hb_mc_eva_t v_curr_dev() const { return _v_curr_dev; }
         hb_mc_eva_t d_curr_dev() const { return _d_curr_dev; }
         hb_mc_eva_t graph_metadata_dev() const { return _graph_metadata_dev; }
-
+        hb_mc_eva_t candidates_dev() const { return _candidates_dev; }
+        hb_mc_eva_t results_dev() const { return _results_dev; }
+        hb_mc_eva_t n_results_dev() const { return _n_results_dev; }
 
         /////////////
         // Setters //
@@ -142,6 +160,9 @@ namespace ipnsw {
         hb_mc_eva_t _v_curr_dev;
         hb_mc_eva_t _d_curr_dev;
         hb_mc_eva_t _graph_metadata_dev;
+        hb_mc_eva_t _candidates_dev;
+        hb_mc_eva_t _results_dev;
+        hb_mc_eva_t _n_results_dev;
 
         // composites
         std::unique_ptr<IPNSWKernelRunner> _kernel_runner;
