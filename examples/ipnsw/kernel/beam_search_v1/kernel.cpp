@@ -92,11 +92,11 @@ extern "C" {
     }
 
 // Uncomment to turn on debugging
-//#define DEBUG_GREEDY_VCURR_TR
-//#define DEBUG_GREEDY_VIS_TR
+//#define DEBUG_BEAM_SEARCH_TRAVERSED_TRACE
 
 #define distance(v0, v1)                                                \
     (-1 * inner_product<BSG_TILE_GROUP_X_DIM, BSG_TILE_GROUP_Y_DIM>(v0, v1))
+
 
     int ipnsw_beam_search(const graph *Gs, const float *database, const float *query, int *seen_mem,
                           int *v_curr_o, float *d_curr_o,
@@ -110,6 +110,7 @@ extern "C" {
         // fetch graph and q out of memory
         struct graph G = Gs[G_0];
         float q[VSIZE];
+        bsg_cuda_print_stat_start(0);
         memcpy(q, query, sizeof(q));
 
         // retrieve results from greedy walk
@@ -137,8 +138,9 @@ extern "C" {
             d_best = std::get<0>(best);
 
             d_worst = std::get<0>(results.top());
-            //v_worst = std::get<1>(results.top());
+#ifdef DEBUG_BEAM_SEARCH_TRAVERSED_TRACE
             bsg_print_int(-v_best);
+#endif
 
             if (d_best > d_worst) {
                 break;
@@ -149,7 +151,9 @@ extern "C" {
             int degree = v_curr == G.V-1 ? G.E - dst_0 : G.offsets[v_best+1] - dst_0;
             for (int dst_i = 0; dst_i < degree; dst_i++) {
                 int dst = G.neighbors[dst_0+dst_i];
+#ifdef DEBUG_BEAM_SEARCH_TRAVERSED_TRACE
                 bsg_print_int(dst);
+#endif
                 if (!seen.in(dst)) {
                     // mark as seen
                     seen.insert(dst);
@@ -172,6 +176,8 @@ extern "C" {
 
         int n_res = std::min(results.size(), N_RESULTS);
         std::sort(results_mem, results_mem+n_res, LT());
+        bsg_cuda_print_stat_end(0);
+
         *n_results = n_res;
 
         return 0;
