@@ -46,7 +46,8 @@ BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/timing_v0_8_4
 ################################################################################
 # Kernel versions. See kernel/README.md for more information.  Version names do
 # not need to use v* and can be any string
-VERSIONS = greedy_walk iproduct_ubmk beam_search
+VERSIONS := greedy_walk iproduct_ubmk
+VERSIONS += beam_search beam_search_v1
 
 ################################################################################
 # Define any sources that should be used compiled during kernel compilation,

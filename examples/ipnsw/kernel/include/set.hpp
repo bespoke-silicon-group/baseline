@@ -26,3 +26,22 @@ public:
     int   _n;
     int   _data_N;
 };
+
+template<typename T>
+class DenseSet {
+public:
+    DenseSet(int *data):
+        _data(data) {
+    }
+
+    void insert(T i) {
+        _data[i] = 1;
+    }
+
+    bool in(T i) {
+        return _data[i] == 1;
+    }
+
+    int *_data;
+};
+
