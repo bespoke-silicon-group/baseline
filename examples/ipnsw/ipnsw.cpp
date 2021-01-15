@@ -32,7 +32,7 @@ int Main(int argc, char *argv[])
 
     if (args._version == "greedy_walk") {
         factory = std::unique_ptr<IPNSWFactory>(new GreedyWalkFactory);
-    } else if (args._version == "beam_search") {
+    } else if (args._version.rfind("beam_search", 0) == 0) {
         factory = std::unique_ptr<IPNSWFactory>(new BeamSearchFactory);
     } else if (args._version == "iproduct_ubmk") {
         factory = std::unique_ptr<IPNSWFactory>(new IProductUBmkFactory(100));

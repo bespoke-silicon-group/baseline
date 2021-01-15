@@ -65,7 +65,7 @@ namespace ipnsw {
 
         void initializeDeviceMemorySeen() {
             std::cout << "Initializing seen set " << std::endl;
-            _seen_dev = _hb->alloc(sizeof(_db.size() * sizeof(int)));
+            _seen_dev = _hb->alloc(_db.size() * sizeof(int));
         }
 
         void initializeDeviceMemoryGraphs() {
