@@ -1,3 +1,4 @@
+#pragma once
 #include "IPNSWKernelRunner.hpp"
 #include "IPNSWRunner.hpp"
 

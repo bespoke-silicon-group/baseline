@@ -2,6 +2,7 @@
 #include "IO.hpp"
 #include "HammerBlade.hpp"
 #include "IPNSWGraph.hpp"
+#include "IPNSWFactory.hpp"
 #include "IPNSWKernelRunner.hpp"
 #include "IPNSWResultReader.hpp"
 #include "GreedyWalkResults.hpp"
@@ -11,7 +12,8 @@ namespace ipnsw {
 
     class IPNSWRunner {
     public:
-        static constexpr int QUERY = 276;
+        //static constexpr int QUERY = 276; // fewest dot products for greedy walk
+        static constexpr int QUERY = 472; // fewest dot products for beam search
         //static constexpr int QUERY = 229;
         //static constexpr int QUERY = 490;
         //static constexpr int QUERY = 16;
@@ -22,12 +24,12 @@ namespace ipnsw {
         using Dim = hammerblade::host::Dim;
 
         IPNSWRunner(const Parser &p,
-                    std::unique_ptr<IPNSWKernelRunner> & kr,
-                    std::unique_ptr<IPNSWResultReader> & rr):
-            _kernel_runner(std::move(kr)),
-            _result_reader(std::move(rr)) {
+                    std::unique_ptr<IPNSWFactory> & fact):
+            _factory(std::move(fact)) {
             _io = std::unique_ptr<IO>(new IO(p));
             _hb = HammerBlade::Get();
+            _kernel_runner = _factory->KernelRunner();
+            _result_reader = _factory->ResultReader();
         }
 
         virtual ~IPNSWRunner() { delete _hb; }
@@ -167,5 +169,6 @@ namespace ipnsw {
         // composites
         std::unique_ptr<IPNSWKernelRunner> _kernel_runner;
         std::unique_ptr<IPNSWResultReader> _result_reader;
+        std::unique_ptr<IPNSWFactory>      _factory;
     };
 }
