@@ -7,10 +7,13 @@
 #include "IPNSWRunner.hpp"
 #include "IProductUBmkKernelRunner.hpp"
 #include "IProductUBmkResultReader.hpp"
+#include "IProductUBmkFactory.hpp"
 #include "BeamSearchKernelRunner.hpp"
 #include "BeamSearchResultReader.hpp"
+#include "BeamSearchFactory.hpp"
 #include "GreedyWalkKernelRunner.hpp"
 #include "GreedyWalkResultReader.hpp"
+#include "GreedyWalkFactory.hpp"
 #include "GreedyWalkResults.hpp"
 #include <iostream>
 #include <memory>
@@ -25,23 +28,19 @@ int Main(int argc, char *argv[])
     args.parse(argc, argv);
 
     std::unique_ptr<IPNSWRunner> runner;
-    std::unique_ptr<IPNSWKernelRunner> kr;
-    std::unique_ptr<IPNSWResultReader> rr;
+    std::unique_ptr<IPNSWFactory> factory;
 
     if (args._version == "greedy_walk") {
-        kr = std::unique_ptr<IPNSWKernelRunner>(new GreedyWalkKernelRunner);
-        rr = std::unique_ptr<IPNSWResultReader>(new GreedyWalkResultReader);
+        factory = std::unique_ptr<IPNSWFactory>(new GreedyWalkFactory);
     } else if (args._version == "beam_search") {
-        kr = std::unique_ptr<IPNSWKernelRunner>(new BeamSearchKernelRunner);
-        rr = std::unique_ptr<IPNSWResultReader>(new BeamSearchResultReader);
+        factory = std::unique_ptr<IPNSWFactory>(new BeamSearchFactory);
     } else if (args._version == "iproduct_ubmk") {
-        kr = std::unique_ptr<IPNSWKernelRunner>(new IProductUBmkKernelRunner(500));
-        rr = std::unique_ptr<IPNSWResultReader>(new IPNSWResultReader);
+        factory = std::unique_ptr<IPNSWFactory>(new IProductUBmkFactory(100));
     } else {
         return 0;
     }
 
-    runner = std::unique_ptr<IPNSWRunner>(new IPNSWRunner(args, kr, rr));
+    runner = std::unique_ptr<IPNSWRunner>(new IPNSWRunner(args, factory));
     runner->run();
 
     return 0;

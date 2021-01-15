@@ -143,6 +143,12 @@ ipnsw.o: BeamSearchKernelRunner.hpp
 ipnsw.o: IProductUBmkKernelRunner.hpp
 ipnsw.o: IPNSWResultReader.hpp
 ipnsw.o: GreedyWalkResultReader.hpp
+ipnsw.o: BeamSearchResultReader.hpp
+ipnsw.o: GreedyWalkResults.hpp
+ipnsw.o: IPNSWFactory.hpp
+ipnsw.o: GreedyWalkFactory.hpp
+ipnsw.o: BeamSearchFactory.hpp
+ipnsw.o: IProductUBmkFactory.hpp
 ################################################################################
 # Define the clean rules. clean calls the makefile-specific cleans, whereas
 # users can add commands and dependencies to custom.clean.
