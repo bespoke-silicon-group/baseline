@@ -63,8 +63,14 @@ namespace ipnsw {
 
         void initializeDeviceMemoryQuery() {
             std::cout << "Initializing query "  << std::endl;
-            _query_dev = _hb->alloc(sizeof(_queries[QUERY]));
-            _hb->push_write(_query_dev, &_queries[QUERY], sizeof(_queries[QUERY]));
+            int query = QUERY;
+
+            auto do_queries = _io->do_queries();
+            if (!do_queries.empty())
+                query = do_queries[0];
+
+            _query_dev = _hb->alloc(sizeof(_queries[query]));
+            _hb->push_write(_query_dev, &_queries[query], sizeof(_queries[query]));
         }
 
         void initializeDeviceMemorySeen() {

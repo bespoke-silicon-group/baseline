@@ -46,9 +46,15 @@ BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/timing_v0_8_4
 ################################################################################
 # Kernel versions. See kernel/README.md for more information.  Version names do
 # not need to use v* and can be any string
-VERSIONS := greedy_walk iproduct_ubmk
-VERSIONS += beam_search beam_search_v1
+VERSIONS := greedy_walk    #  inner product with ipc=0.3 (8x4)
+VERSIONS += greedy_walk_v1 #  inner product with ipc=0.43 (8x4)
+VERSIONS += beam_search    #  very slow - uses a very dumb sparse set
+VERSIONS += beam_search_v1 #  dense set - inner product with ipc=0.3  (8x4)
+VERSIONS += beam_search_v2 #  dense set - inner product with ipc=0.43 (8x4)
+VERSIONS += debug
+VERSIONS += iproduct_ubmk iproduct_ubmk_v1
 
+_KERNEL_COMPILER = CLANG
 ################################################################################
 # Define any sources that should be used compiled during kernel compilation,
 # including the source file with the kernel itself. kernel.riscv will
@@ -109,8 +115,133 @@ ARGS += $(CURRENT_PATH)/hb-prog-eval/ipnsw/data/music.edges.level_1
 ARGS += $(CURRENT_PATH)/hb-prog-eval/ipnsw/data/music.edges.level_2
 ARGS += $(CURRENT_PATH)/hb-prog-eval/ipnsw/data/music.edges.level_3
 
--include $(FRAGMENTS_PATH)/host/cosim.mk
 
+################################
+# Inner Product U-Benchmarking #
+################################
+# number iproducts
+N-IPRODUCTS := 150 500 1000 1500 2000 3000
+IPRODUCT-BASENAME := iproduct_ubmk_v1
+
+define IPRODUCT-UBMK-RULE
+# creates run directory from template
+kernel/iproduct_ubmk-$(1)/kernel.cpp: kernel/$(IPRODUCT-BASENAME)/kernel.cpp
+	mkdir -p $$(dir $$@)
+	cp $$< $$@
+
+# adds arguments
+kernel/iproduct_ubmk-$(1)/$(HOST_TARGET).log: ARGS += --num-iproducts $(1)
+
+# adds to list of iproduct u-bmk
+IPRODUCT-UBMK-VERSIONS += iproduct_ubmk-$(1)
+endef
+
+# Expand rule for each inner product input
+$(foreach nip,$(N-IPRODUCTS),$(eval $(call IPRODUCT-UBMK-RULE,$(nip))))
+
+.PHONY: create-iproduct-ubmk
+.PHONY: purge-iproduct-ubmk
+.PHONY: iproduct-ubmk-stats
+
+# create rule
+create-iproduct-ubmk: $(foreach v,$(IPRODUCT-UBMK-VERSIONS),kernel/$v/kernel.cpp)
+
+# purge rule
+purge-iproduct-ubmk:
+	rm -rf $(foreach v,$(IPRODUCT-UBMK-VERSIONS),kernel/$v)
+
+# collect stats for all
+iproduct-ubmk-stats: create-iproduct-ubmk
+iproduct-ubmk-stats: $(foreach v,$(IPRODUCT-UBMK-VERSIONS),kernel/$v/stats)
+
+# Add to versions
+VERSIONS += $(IPRODUCT-UBMK-VERSIONS)
+
+####################
+# Greedy Walk Runs #
+####################
+GREEDY-WALK-QUERIES := 4 16 229 276 461 470 490
+GREEDY-WALK-BASENAME := greedy_walk_v1
+define GREEDY-WALK-RULE
+# creates run directory from template
+kernel/greedy_walk-query$(1)/kernel.cpp: kernel/$(GREEDY-WALK-BASENAME)/kernel.cpp
+	mkdir -p $$(dir $$@)
+	cp $$< $$@
+
+# adds arguments
+kernel/greedy_walk-query$(1)/$(HOST_TARGET).log: ARGS += --queries $(1)
+
+# adds to list of greedy walk versions
+GREEDY-WALK-VERSIONS += greedy_walk-query$(1)
+endef
+
+# Expand rule for each query
+$(foreach q,$(GREEDY-WALK-QUERIES),$(eval $(call GREEDY-WALK-RULE,$(q))))
+
+.PHONY: create-greedy-walk
+.PHONY: purge-greedy-walk
+.PHONY: greedy-walk-stats
+
+# create rule
+create-greedy-walk: $(foreach v,$(GREEDY-WALK-VERSIONS),kernel/$v/kernel.cpp)
+
+# purge rule
+purge-greedy-walk:
+	rm -rf $(foreach v,$(GREEDY-WALK-VERSIONS),kernel/$v)
+
+# collect stats for all
+greedy-walk-stats: create-greedy-walk
+greedy-walk-stats: $(foreach v,$(GREEDY-WALK-VERSIONS),kernel/$v/stats)
+
+# Add to versions
+VERSIONS += $(GREEDY-WALK-VERSIONS)
+
+####################
+# Beam Search Runs #
+####################
+BEAM-SEARCH-QUERIES := 2 188 229 355 427 472
+BEAM-SEARCH-BASENAME := beam_search_v2
+
+define BEAM-SEARCH-RULE
+# creates run directory from template
+kernel/beam_search-query$(1)/kernel.cpp: kernel/$(BEAM-SEARCH-BASENAME)/kernel.cpp
+	mkdir -p $$(dir $$@)
+	cp $$< $$@
+
+# adds arguments
+kernel/beam_search-query$(1)/$(HOST_TARGET).log: ARGS += --queries $(1)
+
+# adds to list of greedy walk versions
+BEAM-SEARCH-VERSIONS += beam_search-query$(1)
+endef
+
+
+# Expand rule for each query
+$(foreach q,$(BEAM-SEARCH-QUERIES),$(eval $(call BEAM-SEARCH-RULE,$(q))))
+
+.PHONY: create-beam-search
+.PHONY: purge-beam-search
+.PHONY: beam-search-stats
+
+# create rule
+create-beam-search: $(foreach v,$(BEAM-SEARCH-VERSIONS),kernel/$v/kernel.cpp)
+
+# purge rule
+purge-beam-search:
+	rm -rf $(foreach v,$(BEAM-SEARCH-VERSIONS),kernel/$v)
+
+# collect stats for all
+beam-search-stats: create-beam-search
+beam-search-stats: $(foreach v,$(BEAM-SEARCH-VERSIONS),kernel/$v/stats)
+
+# Add to versions
+VERSIONS += $(BEAM-SEARCH-VERSIONS)
+
+########################################
+# Continue including cosim build rules #
+########################################
+
+-include $(FRAGMENTS_PATH)/host/cosim.mk
 
 GRAPH-TOOLS := $(CURRENT_PATH)/graph-tools
 graphtools-dir := $(GRAPH-TOOLS)
@@ -150,6 +281,7 @@ ipnsw.o: IPNSWFactory.hpp
 ipnsw.o: GreedyWalkFactory.hpp
 ipnsw.o: BeamSearchFactory.hpp
 ipnsw.o: IProductUBmkFactory.hpp
+ipnsw.o: StringHelpers.hpp
 ################################################################################
 # Define the clean rules. clean calls the makefile-specific cleans, whereas
 # users can add commands and dependencies to custom.clean.
