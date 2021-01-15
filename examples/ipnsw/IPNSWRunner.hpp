@@ -13,7 +13,11 @@ namespace ipnsw {
     class IPNSWRunner {
     public:
         //static constexpr int QUERY = 276; // fewest dot products for greedy walk
-        static constexpr int QUERY = 472; // fewest dot products for beam search
+        //static constexpr int QUERY = 472; // fewest dot products for beam search
+        //static constexpr int QUERY = 427;
+        //static constexpr int QUERY = 355;
+        //static constexpr int QUERY = 2;
+        static constexpr int QUERY = 188;
         //static constexpr int QUERY = 229;
         //static constexpr int QUERY = 490;
         //static constexpr int QUERY = 16;
