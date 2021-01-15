@@ -15,6 +15,7 @@
 #include "GreedyWalkResultReader.hpp"
 #include "GreedyWalkFactory.hpp"
 #include "GreedyWalkResults.hpp"
+#include "StringHelpers.hpp"
 #include <iostream>
 #include <memory>
 
@@ -35,7 +36,19 @@ int Main(int argc, char *argv[])
     } else if (args._version.rfind("beam_search", 0) == 0) {
         factory = std::unique_ptr<IPNSWFactory>(new BeamSearchFactory);
     } else if (args._version == "iproduct_ubmk") {
-        factory = std::unique_ptr<IPNSWFactory>(new IProductUBmkFactory(100));
+        /* parse the number of inner products */
+        int n_iproducts = args.num_iproducts();
+        factory = std::unique_ptr<IPNSWFactory>(new IProductUBmkFactory(n_iproducts));
+    } else if (args._version == "debug") {
+        /* just for debugging */
+        std::cout << "--num-iproducts=" << args.num_iproducts() << std::endl;
+        std::cout << "--queries=";
+        auto do_queries = args.do_queries();
+        for (auto q : do_queries) {
+            std::cout << q << " ";
+        }
+        std::cout << std::endl;
+        return 0;
     } else {
         return 0;
     }
