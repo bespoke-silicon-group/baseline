@@ -31,12 +31,13 @@ int Main(int argc, char *argv[])
     std::unique_ptr<IPNSWRunner> runner;
     std::unique_ptr<IPNSWFactory> factory;
 
-    if (args._version == "greedy_walk") {
+    if (ipnsw::startswith(args.version(), "greedy_walk")) {
         factory = std::unique_ptr<IPNSWFactory>(new GreedyWalkFactory);
-    } else if (args._version.rfind("beam_search", 0) == 0) {
+    } else if (ipnsw::startswith(args.version(), "beam_search")) {
         factory = std::unique_ptr<IPNSWFactory>(new BeamSearchFactory);
-    } else if (args._version == "iproduct_ubmk") {
+    } else if (ipnsw::startswith(args.version(), "iproduct_ubmk")) {
         /* parse the number of inner products */
+        std::cout << "num inner products " << args.num_iproducts() << std::endl;
         int n_iproducts = args.num_iproducts();
         factory = std::unique_ptr<IPNSWFactory>(new IProductUBmkFactory(n_iproducts));
     } else if (args._version == "debug") {

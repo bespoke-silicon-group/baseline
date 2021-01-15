@@ -215,6 +215,7 @@ namespace ipnsw {
         }
 
         std::string ucode() const { return _parser._ucode; }
+        std::vector<int> do_queries() const  { return _parser.do_queries(); }
 
         Parser _parser;
     };
