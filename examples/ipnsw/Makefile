@@ -48,15 +48,18 @@ BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/timing_v0_8_4
 # not need to use v* and can be any string
 VERSIONS := greedy_walk    #  inner product with ipc=0.3 (8x4)
 VERSIONS += greedy_walk_v1 #  inner product with ipc=0.43 (8x4)
-VERSIONS += greedy_walk_v2 #  inner product with FLOPS/cycle=0.2 (8x4)
+VERSIONS += greedy_walk_v2 #  inner product with FLOPS/cycle=0.2  (8x4)
+VERSIONS += greedy_walk_v3 #  inner product with FLOPS/cycle=0.26 (8x4)
 VERSIONS += beam_search    #  very slow - uses a very dumb sparse set
 VERSIONS += beam_search_v1 #  dense set - inner product with ipc=0.3  (8x4)
 VERSIONS += beam_search_v2 #  dense set - inner product with ipc=0.43 (8x4)
-VERSIONS += beam_search_v3 #  + inner_product_v2 (flops/cycle=0.2039)
+VERSIONS += beam_search_v3 #  + inner_product_v2 (flops/cycle=0.2039) (8x4)
+VERSIONS += beam_search_v4 #  + inner_product_v3 (flops/cycle=0.2663) (8x4)
 VERSIONS += debug
 VERSIONS += iproduct_ubmk # baseline - ipc = 0.3
 VERSIONS += iproduct_ubmk_v1 # using clang and NBLs, ipc = 0.43, flops/cycle = 0.1867
 VERSIONS += iproduct_ubmk_v2 # + FMA, ipc = 0.386, flops/cycle = 0.2039
+VERSIONS += iproduct_ubmk_v3 # + explicit parallel fma (ipc=0.45,flops/cycle = 0.2663) (8x4)
 
 _KERNEL_COMPILER = CLANG
 ################################################################################
@@ -126,7 +129,7 @@ ARGS += $(CURRENT_PATH)/hb-prog-eval/ipnsw/data/music.edges.level_3
 ################################
 # number iproducts
 N-IPRODUCTS := 150 500 1000 1500 2000 3000
-IPRODUCT-BASENAME := iproduct_ubmk_v2
+IPRODUCT-BASENAME := iproduct_ubmk_v3
 
 define IPRODUCT-UBMK-RULE
 # creates run directory from template
@@ -166,7 +169,7 @@ VERSIONS += $(IPRODUCT-UBMK-VERSIONS)
 # Greedy Walk Runs #
 ####################
 GREEDY-WALK-QUERIES := 4 16 229 276 461 470 490
-GREEDY-WALK-BASENAME := greedy_walk_v2
+GREEDY-WALK-BASENAME := greedy_walk_v3
 define GREEDY-WALK-RULE
 # creates run directory from template
 kernel/greedy_walk-query$(1)/kernel.cpp: kernel/$(GREEDY-WALK-BASENAME)/kernel.cpp
@@ -205,7 +208,7 @@ VERSIONS += $(GREEDY-WALK-VERSIONS)
 # Beam Search Runs #
 ####################
 BEAM-SEARCH-QUERIES := 2 188 229 355 427 472
-BEAM-SEARCH-BASENAME := beam_search_v3
+BEAM-SEARCH-BASENAME := beam_search_v4
 
 define BEAM-SEARCH-RULE
 # creates run directory from template
