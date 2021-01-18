@@ -1,5 +1,6 @@
 #pragma once
 #include <algorithm>
+#include <atomic>
 template<typename T, typename Comparitor>
 class DynSet {
 public:
@@ -42,6 +43,31 @@ public:
         return _data[i] == 1;
     }
 
+    int *_data;
+};
+
+template<typename T>
+class DenseSet_v1 {
+public:
+    DenseSet_v1(int *data) :
+        _data(data){
+    }
+
+    void insert(T i) {
+        _data[word(i)] |= (1 << bit(i));
+    }
+
+    bool in(T i) {
+        return _data[word(i)] & (1 << bit(i));
+    }
+
+    int word(T i) const {
+        return  i >> 5;
+    }
+
+    int bit(T i) const {
+        return i & 31;
+    }
     int *_data;
 };
 

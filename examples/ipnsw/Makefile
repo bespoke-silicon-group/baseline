@@ -55,6 +55,7 @@ VERSIONS += beam_search_v1 #  dense set - inner product with ipc=0.3  (8x4)
 VERSIONS += beam_search_v2 #  dense set - inner product with ipc=0.43 (8x4)
 VERSIONS += beam_search_v3 #  + inner_product_v2 (flops/cycle=0.2039) (8x4)
 VERSIONS += beam_search_v4 #  + inner_product_v3 (flops/cycle=0.2663) (8x4)
+VERSIONS += beam_search_v5 #  + Bit vector for dense set
 VERSIONS += debug
 VERSIONS += iproduct_ubmk # baseline - ipc = 0.3
 VERSIONS += iproduct_ubmk_v1 # using clang and NBLs, ipc = 0.43, flops/cycle = 0.1867
@@ -209,7 +210,7 @@ VERSIONS += $(GREEDY-WALK-VERSIONS)
 # Beam Search Runs #
 ####################
 BEAM-SEARCH-QUERIES := 2 188 229 355 427 472
-BEAM-SEARCH-BASENAME := beam_search_v4
+BEAM-SEARCH-BASENAME := beam_search_v5
 
 define BEAM-SEARCH-RULE
 # creates run directory from template
