@@ -60,6 +60,7 @@ VERSIONS += iproduct_ubmk # baseline - ipc = 0.3
 VERSIONS += iproduct_ubmk_v1 # using clang and NBLs, ipc = 0.43, flops/cycle = 0.1867
 VERSIONS += iproduct_ubmk_v2 # + FMA, ipc = 0.386, flops/cycle = 0.2039
 VERSIONS += iproduct_ubmk_v3 # + explicit parallel fma (ipc=0.45,flops/cycle = 0.2663) (8x4)
+VERSIONS += iproduct_ubmk_v4 # Slightly cleaner code than v3 - similar performance
 
 _KERNEL_COMPILER = CLANG
 ################################################################################
@@ -129,7 +130,7 @@ ARGS += $(CURRENT_PATH)/hb-prog-eval/ipnsw/data/music.edges.level_3
 ################################
 # number iproducts
 N-IPRODUCTS := 150 500 1000 1500 2000 3000
-IPRODUCT-BASENAME := iproduct_ubmk_v3
+IPRODUCT-BASENAME := iproduct_ubmk_v4
 
 define IPRODUCT-UBMK-RULE
 # creates run directory from template
