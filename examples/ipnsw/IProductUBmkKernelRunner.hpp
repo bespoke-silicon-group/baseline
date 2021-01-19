@@ -22,10 +22,9 @@ namespace ipnsw {
                 static_cast<hb_mc_eva_t>(_iterations), // number of inner products
             };
             return argv;
-        };
-        Dim gd(const IPNSWRunner &runner) const {return Dim(1,1);}
-        Dim tgd(const IPNSWRunner &runner) const {return Dim(1,1);}
+        }
 
+    private:
         int _iterations;
     };
 }

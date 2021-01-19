@@ -18,8 +18,7 @@ namespace ipnsw {
                 runner.d_curr_dev(),
             };
             return argv;
-        };
-        Dim gd(const IPNSWRunner &runner) const {return Dim(1,1);}
-        Dim tgd(const IPNSWRunner &runner) const {return Dim(1,1);}
+        }
+
     };
 }
