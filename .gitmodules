@@ -4,3 +4,6 @@
 [submodule "y"]
 	path = examples/ipnsw/graph-tools
 	url = git@github.com:mrutt92/graph-tools
+[submodule "examples/ipnsw/hammerblade-helpers"]
+	path = examples/ipnsw/hammerblade-helpers
+	url = git@github.com:mrutt92/hammerblade-helpers

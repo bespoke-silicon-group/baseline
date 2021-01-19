@@ -258,7 +258,7 @@ graphtools-dir := $(GRAPH-TOOLS)
 
 include $(GRAPH-TOOLS)/libgraphtools.mk
 
-HB-HELPERS := $(_REPO_ROOT)/../hammerblade-helpers
+HB-HELPERS := $(CURRENT_PATH)/hammerblade-helpers
 include $(HB-HELPERS)/libhammerblade-helpers-host.mk
 
 CXXFLAGS += $(libhammerblade-helpers-host-interface-cxxflags)
