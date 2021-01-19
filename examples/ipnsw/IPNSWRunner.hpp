@@ -24,6 +24,10 @@ namespace ipnsw {
         //static constexpr int QUERY = 461;
         //static constexpr int QUERY = 470;
 
+
+        static constexpr size_t CANDIDATES_MAX = 513;
+        static constexpr size_t RESULTS_MAX    = 129;
+
         using HammerBlade = hammerblade::host::HammerBlade;
         using Dim = hammerblade::host::Dim;
 
@@ -63,14 +67,20 @@ namespace ipnsw {
 
         void initializeDeviceMemoryQuery() {
             std::cout << "Initializing query "  << std::endl;
-            int query = QUERY;
 
-            auto do_queries = _io->do_queries();
-            if (!do_queries.empty())
-                query = do_queries[0];
+            std::vector<int> do_queries = _io->do_queries();
+            if (do_queries.empty()) {
+                do_queries = {QUERY};
+            }
 
-            _query_dev = _hb->alloc(sizeof(_queries[query]));
-            _hb->push_write(_query_dev, &_queries[query], sizeof(_queries[query]));
+            _query_dev = _hb->alloc(sizeof(_queries[0]) * do_queries.size());
+
+            for (hb_mc_eva_t qidx = 0; qidx < do_queries.size(); ++qidx) {
+                int query = do_queries[qidx];
+                _hb->push_write(_query_dev + qidx * sizeof(_queries[query]),
+                                &queries[query],
+                                sizeof(_queries[query]));
+            }
         }
 
         void initializeDeviceMemorySeen() {
