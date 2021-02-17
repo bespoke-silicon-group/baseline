@@ -8,6 +8,7 @@
 #include "IProductUBmkKernelRunner.hpp"
 #include "IProductUBmkResultReader.hpp"
 #include "IProductUBmkFactory.hpp"
+#include "IProductUBmkParallelFactory.hpp"
 #include "BeamSearchKernelRunner.hpp"
 #include "BeamSearchResultReader.hpp"
 #include "BeamSearchFactory.hpp"

@@ -12,10 +12,10 @@ namespace ipnsw {
             std::vector<hb_mc_eva_t> argv = {
                 runner.graph_metadata_dev(),
                 runner.db_dev(),
-                runner.query_dev(),
-                runner.seen_dev(),
-                runner.v_curr_dev(),
-                runner.d_curr_dev(),
+                runner.query_dev(0),
+                runner.seen_dev(0),
+                runner.v_curr_dev(0),
+                runner.d_curr_dev(0),
             };
             return argv;
         }
