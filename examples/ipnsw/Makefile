@@ -62,6 +62,8 @@ VERSIONS += iproduct_ubmk_v1 # using clang and NBLs, ipc = 0.43, flops/cycle = 0
 VERSIONS += iproduct_ubmk_v2 # + FMA, ipc = 0.386, flops/cycle = 0.2039
 VERSIONS += iproduct_ubmk_v3 # + explicit parallel fma (ipc=0.45,flops/cycle = 0.2663) (8x4)
 VERSIONS += iproduct_ubmk_v4 # Slightly cleaner code than v3 - similar performance
+VERSIONS += iproduct_ubmk_parallel #...
+VERSIONS += iproduct_ubmk-parallel_v1 #...
 
 _KERNEL_COMPILER = CLANG
 ################################################################################
@@ -166,6 +168,52 @@ iproduct-ubmk-stats: $(foreach v,$(IPRODUCT-UBMK-VERSIONS),kernel/$v/stats)
 
 # Add to versions
 VERSIONS += $(IPRODUCT-UBMK-VERSIONS)
+
+#########################################
+# Parallel Inner Product U-Benchmarking #
+#########################################
+# number iproducts
+N-IPRODUCTS := 1500
+GRID-X := 1 2 4 8
+GRID-Y := 1 2 4
+
+IPRODUCT-PARALLEL-BASENAME := iproduct_ubmk-parallel_v1
+
+define IPRODUCT-UBMK-PARALLEL-RULE
+# creates run directory from template
+kernel/iproduct_ubmk-parallel-$(1)-gx$(2)-gy$(3)/kernel.cpp: kernel/$(IPRODUCT-PARALLEL-BASENAME)/kernel.cpp
+	mkdir -p $$(dir $$@)
+	cp $$< $$@
+
+# adds arguments
+kernel/iproduct_ubmk-parallel-$(1)-gx$(2)-gy$(3)/$(HOST_TARGET).log: ARGS += --num-iproducts $(1)
+kernel/iproduct_ubmk-parallel-$(1)-gx$(2)-gy$(3)/$(HOST_TARGET).log: ARGS += --grid-x $(2)
+kernel/iproduct_ubmk-parallel-$(1)-gx$(2)-gy$(3)/$(HOST_TARGET).log: ARGS += --grid-y $(3)
+
+# adds to list of iproduct u-bmk
+IPRODUCT-UBMK-PARALLEL-VERSIONS += iproduct_ubmk-parallel-$(1)-gx$(2)-gy$(3)
+endef
+
+# Expand rule for each inner product input
+$(foreach gy,$(GRID-Y),$(foreach gx,$(GRID-X),$(foreach nip,$(N-IPRODUCTS), $(eval $(call IPRODUCT-UBMK-PARALLEL-RULE,$(nip),$(gx),$(gy))))))
+
+.PHONY: create-iproduct-ubmk-parallel
+.PHONY: purge-iproduct-ubmk-parallel
+.PHONY: iproduct-ubmk-parallel-stats
+
+# create rule
+create-iproduct-ubmk-parallel: $(foreach v,$(IPRODUCT-UBMK-PARALLEL-VERSIONS),kernel/$v/kernel.cpp)
+
+# purge rule
+purge-iproduct-ubmk-parallel:
+	rm -rf $(foreach v,$(IPRODUCT-UBMK-PARALLEL-VERSIONS),kernel/$v)
+
+# collect stats for all
+iproduct-ubmk-parallel-stats: create-iproduct-ubmk-parallel
+iproduct-ubmk-parallel-stats: $(foreach v,$(IPRODUCT-UBMK-PARALLEL-VERSIONS),kernel/$v/stats)
+
+# Add to versions
+VERSIONS += $(IPRODUCT-UBMK-PARALLEL-VERSIONS)
 
 ####################
 # Greedy Walk Runs #
@@ -283,6 +331,7 @@ ipnsw.o: IPNSWKernelRunner.hpp
 ipnsw.o: GreedyWalkKernelRunner.hpp
 ipnsw.o: BeamSearchKernelRunner.hpp
 ipnsw.o: IProductUBmkKernelRunner.hpp
+ipnsw.o: IProductUBmkParallelKernelRunner.hpp
 ipnsw.o: IPNSWResultReader.hpp
 ipnsw.o: GreedyWalkResultReader.hpp
 ipnsw.o: BeamSearchResultReader.hpp
@@ -291,6 +340,7 @@ ipnsw.o: IPNSWFactory.hpp
 ipnsw.o: GreedyWalkFactory.hpp
 ipnsw.o: BeamSearchFactory.hpp
 ipnsw.o: IProductUBmkFactory.hpp
+ipnsw.o: IProductUBmkParallelFactory.hpp
 ipnsw.o: StringHelpers.hpp
 ################################################################################
 # Define the clean rules. clean calls the makefile-specific cleans, whereas
