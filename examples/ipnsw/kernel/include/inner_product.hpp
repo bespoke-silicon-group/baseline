@@ -2,6 +2,8 @@
 #include "bsg_striped_array.hpp"
 #include <cmath>
 #include <numeric>
+#include <bsg_manycore.hpp>
+#include "sleep_until_valid.hpp"
 
 template<std::size_t TG_X, std::size_t TG_Y, typename FLOAT_T=float, std::size_t VSIZE=100, std::size_t BSIZE=10>
 __attribute__((noinline))
@@ -72,8 +74,8 @@ __attribute__((noinline))
 FLOAT_T inner_product_v4(const FLOAT_T *__restrict a,
                          bsg_attr_remote const FLOAT_T *__restrict b)
 {
-    register FLOAT_T r[UNROLL];
-    for (int i = __bsg_id * BSIZE; i < VSIZE; i += UNROLL * BSIZE * TG_X * TG_Y) {
+    register FLOAT_T r[UNROLL] = {0};
+    for (int i = __bsg_id * BSIZE * UNROLL; i < VSIZE; i += UNROLL * BSIZE * TG_X * TG_Y) {
 #pragma bsg_unroll(32)
         for (int j = 0; j < BSIZE; ++j) {
 #pragma bsg_unroll(32)
@@ -82,7 +84,7 @@ FLOAT_T inner_product_v4(const FLOAT_T *__restrict a,
             }
         }
     }
-    int rs = 0.0;
+    FLOAT_T rs = 0.0;
     for (int i = 0; i < UNROLL; ++i)
         rs += r[i];
     return rs;
@@ -110,3 +112,82 @@ FLOAT_T inner_product_parallel_v1(const FLOAT_T *__restrict a,
 
     return rs;
 }
+
+template <std::size_t TG_X, std::size_t TG_Y>
+class InnerProductParallel_v1 {
+public:
+    static constexpr std::size_t VSIZE = 100;
+    static constexpr std::size_t TG_N = TG_X * TG_Y;
+    static constexpr int SYNC_DONE = -2;
+    static constexpr int SYNC_INV  = -1;
+
+    InnerProductParallel_v1(bsg_attr_remote const float *t1, const float *t2) {
+        _inf = INFINITY;
+        for (int i = 0; i < TG_N; ++i)
+            _partial[i] = _inf;
+
+        for (int x = 0; x < TG_X; ++x)
+            for (int y = 0; y < TG_Y; ++y)
+                _t1_idx_group[bsg_x_y_to_id(x,y)]
+                    = bsg_tile_group_remote_pointer(x,y,&_t1_idx);
+
+        _t1 = t1;
+        _t2 = t2;
+        _t1_idx = SYNC_INV;
+    }
+
+    void init() {
+        if (__bsg_id == 0) {
+            return;
+        }
+
+        float p = 0.0;
+        int t1_idx;
+        float *partial_result = bsg_tile_group_remote_pointer(0, 0, &_partial[__bsg_id]);
+
+        while (true) {
+            t1_idx = sleep_until_valid(&_t1_idx, SYNC_INV);
+            if (t1_idx == SYNC_DONE)
+                break;
+
+            p = inner_product_parallel_v1<TG_X,TG_Y>(_t2, &_t1[t1_idx * VSIZE]);
+            *partial_result = p;
+        }
+    }
+
+    float inner_product(int idx) {
+        if (__bsg_id != 0)
+            return 0.0;
+
+        for (int tile = 0; tile < TG_X*TG_Y; ++tile)
+            *_t1_idx_group[tile] = idx;
+
+        _partial[__bsg_id] = inner_product_parallel_v1<TG_X,TG_Y>(_t2, &_t1[idx * VSIZE]);
+
+        float r = 0.0;
+        for (int tile = 0; tile <TG_X*TG_Y; ++tile) {
+            float tmp = sleep_until_valid(&_partial[tile], _inf);
+            r += tmp;
+        }
+
+        return r;
+    }
+
+    void exit() {
+        if (__bsg_id != 0)
+            return;
+
+        for (int tile = 0; tile < TG_X*TG_Y; ++tile)
+            *_t1_idx_group[tile] = SYNC_DONE;
+
+        return;
+    }
+
+    bsg_attr_remote const float   *_t1;
+    const float                   *_t2;
+    int                            _t1_idx;
+    int                           *_t1_idx_group[TG_N];
+    float                          _partial[TG_N];
+    float                          _inf;
+};
+

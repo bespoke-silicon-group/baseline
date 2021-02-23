@@ -92,6 +92,10 @@ beam_search_v5-grp-y := 1
 VERSIONS += beam_search_v6
 beam_search_v6-grp-x := 2
 beam_search_v6-grp-y := 2
+# beam_search_v6 but with 1x2 tile group
+VERSIONS += beam_search_v7
+beam_search_v7-grp-x := 1
+beam_search_v7-grp-y := 2
 
 # debugging this makefile
 VERSIONS += debug
