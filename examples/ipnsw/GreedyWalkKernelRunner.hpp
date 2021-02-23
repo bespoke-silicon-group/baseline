@@ -4,6 +4,17 @@
 
 namespace ipnsw {
     class GreedyWalkKernelRunner : public IPNSWKernelRunner {
+
+        Dim tgd(const IPNSWRunner & runner) const {
+            return Dim(runner.cfg().grp_x(),
+                       runner.cfg().grp_y());
+        }
+
+        Dim gd(const IPNSWRunner & runner) const {
+            return Dim(runner.cfg().grid_x(),
+                       runner.cfg().grid_y());
+        }
+
         std::string kernelName(const IPNSWRunner & runner) const {
             return "ipnsw_greedy_search";
         }

@@ -16,8 +16,12 @@ namespace ipnsw {
         virtual std::vector<hb_mc_eva_t> argv(const IPNSWRunner & runner) const =0;
 
     public:
-        virtual Dim gd(const IPNSWRunner &runner) const {return Dim(1,1); }
-        virtual Dim tgd(const IPNSWRunner &runner) const {return Dim(1,1); }
+        virtual Dim gd(const IPNSWRunner &runner) const {
+            return Dim(1,1);
+        }
+        virtual Dim tgd(const IPNSWRunner &runner) const {
+            return Dim(1,1);
+        }
 
     public:
         virtual void beforeLaunchKernel(const IPNSWRunner &runner) { }

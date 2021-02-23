@@ -32,6 +32,12 @@ int Main(int argc, char *argv[])
     std::unique_ptr<IPNSWRunner> runner;
     std::unique_ptr<IPNSWFactory> factory;
 
+    IPNSWRunnerConfig cfg;
+    cfg.grid_x() = args.grid_x();
+    cfg.grid_y() = args.grid_y();
+    cfg.grp_x()  = args.grp_x();
+    cfg.grp_y()  = args.grp_y();
+
     if (ipnsw::startswith(args.version(), "greedy_walk")) {
         factory = std::unique_ptr<IPNSWFactory>(new GreedyWalkFactory);
     } else if (ipnsw::startswith(args.version(), "beam_search")) {
@@ -40,11 +46,20 @@ int Main(int argc, char *argv[])
         /* parse the number of inner products */
         std::cout << "num inner products " << args.num_iproducts() << std::endl;
         int n_iproducts = args.num_iproducts();
-        factory = std::unique_ptr<IPNSWFactory>(new IProductUBmkFactory(n_iproducts));
+
+        bool parallel = args.version().find("parallel") != std::string::npos;
+        if (parallel) {
+            factory = std::unique_ptr<IPNSWFactory>(new IProductUBmkParallelFactory(n_iproducts));
+        } else {
+            factory = std::unique_ptr<IPNSWFactory>(new IProductUBmkFactory(n_iproducts)) ;
+        }
+
     } else if (args._version == "debug") {
         /* just for debugging */
         std::cout << "--num-iproducts=" << args.num_iproducts() << std::endl;
-        std::cout << "--queries=";
+        std::cout << "--queries=" << std::endl;
+        std::cout << "--group-x=" << args.grp_x() << std::endl;
+        std::cout << "--group-y=" << args.grp_y() << std::endl;
         auto do_queries = args.do_queries();
         for (auto q : do_queries) {
             std::cout << q << " ";
@@ -55,7 +70,7 @@ int Main(int argc, char *argv[])
         return 0;
     }
 
-    runner = std::unique_ptr<IPNSWRunner>(new IPNSWRunner(args, factory));
+    runner = std::unique_ptr<IPNSWRunner>(new IPNSWRunner(args, factory, cfg));
     runner->run();
 
     return 0;

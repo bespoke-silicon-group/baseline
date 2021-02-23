@@ -9,6 +9,15 @@ namespace ipnsw {
             return "ipnsw_beam_search";
         }
 
+        Dim tgd(const IPNSWRunner & runner) const {
+            return Dim(runner.cfg().grp_x(),
+                       runner.cfg().grp_y());
+        }
+
+        Dim gd(const IPNSWRunner & runner) const {
+            return Dim(runner.cfg().grid_x(),
+                       runner.cfg().grid_y());
+        }
         std::vector<hb_mc_eva_t> argv(const IPNSWRunner & runner) const {
             int v_curr;
             float d_curr;
