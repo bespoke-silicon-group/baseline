@@ -310,7 +310,10 @@ namespace ipnsw {
     private:
         IPNSWRunnerConfig                     _cfg;
 
+    public:
         std::unique_ptr<IO>                   _io;
+
+    private:
         std::vector<Graph>                    _graphs;
         std::vector<std::array<float, 100>>   _db;
         std::vector<std::array<float, 100>>   _queries;

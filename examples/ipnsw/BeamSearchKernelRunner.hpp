@@ -21,8 +21,14 @@ namespace ipnsw {
         std::vector<hb_mc_eva_t> argv(const IPNSWRunner & runner) const {
             int v_curr;
             float d_curr;
-            v_curr = std::get<GWR_VERT>(GREEDY_WALK_RESULTS[IPNSWRunner::QUERY]);
-            d_curr = std::get<GWR_DIST>(GREEDY_WALK_RESULTS[IPNSWRunner::QUERY]);
+            std::vector<int> do_queries = runner._io->do_queries();
+            if (do_queries.empty()) {
+                v_curr = std::get<GWR_VERT>(GREEDY_WALK_RESULTS[IPNSWRunner::QUERY]);
+                d_curr = std::get<GWR_DIST>(GREEDY_WALK_RESULTS[IPNSWRunner::QUERY]);
+            } else {
+                v_curr = std::get<GWR_VERT>(GREEDY_WALK_RESULTS[do_queries[0]]);
+                d_curr = std::get<GWR_DIST>(GREEDY_WALK_RESULTS[do_queries[0]]);
+            }
 
             HammerBlade::Ptr hb = HammerBlade::Get();
             hb->write(runner.v_curr_dev(0), &v_curr, sizeof(v_curr));
