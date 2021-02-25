@@ -313,7 +313,7 @@ VERSIONS += $(IPRODUCT-UBMK-PARALLEL-VERSIONS)
 # Greedy Walk Runs #
 ####################
 GREEDY-WALK-QUERIES := 4 16 229 276 461 470 490
-GREEDY-WALK-BASENAME := greedy_walk_v3
+GREEDY-WALK-BASENAME := greedy_walk_v4
 define GREEDY-WALK-RULE
 # creates run directory from template
 kernel/greedy_walk-query$(1)/kernel.cpp: kernel/$(GREEDY-WALK-BASENAME)/kernel.cpp
@@ -354,7 +354,11 @@ VERSIONS += $(GREEDY-WALK-VERSIONS)
 # Beam Search Runs #
 ####################
 BEAM-SEARCH-QUERIES := 2 188 229 355 427 472
-BEAM-SEARCH-BASENAME := beam_search_v5
+BEAM-SEARCH-QUERIES += 25  74  112 140 148 178
+BEAM-SEARCH-QUERIES += 214 244 278 302 331
+BEAM-SEARCH-QUERIES += 396 420 452 489 511
+
+BEAM-SEARCH-BASENAME := beam_search_v8
 
 define BEAM-SEARCH-RULE
 # creates run directory from template
