@@ -96,6 +96,10 @@ beam_search_v6-grp-y := 2
 VERSIONS += beam_search_v7
 beam_search_v7-grp-x := 1
 beam_search_v7-grp-y := 2
+# beam_search_v5 but edges of candidates traversed in parallel
+VERSIONS += beam_search_v8
+beam_search_v8-grp-x := 4
+beam_search_v8-grp-y := 4
 
 # debugging this makefile
 VERSIONS += debug
