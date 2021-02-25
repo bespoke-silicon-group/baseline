@@ -126,7 +126,7 @@ extern "C" {
                         v_curr = dst;
                         changed = true;
 
-#if defined(DEBUG_GREEDY_VIS_TR)
+#if defined(DEBUG_GREEDY_VCURR_TR)
                         bsg_print_int(v_curr);
                         bsg_print_float(d_curr);
 #endif // #if defined(DEBUG_GREEDY_VIS_TR)
