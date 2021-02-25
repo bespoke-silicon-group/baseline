@@ -113,6 +113,28 @@ FLOAT_T inner_product_parallel_v1(const FLOAT_T *__restrict a,
     return rs;
 }
 
+
+template<typename FLOAT_T=float, std::size_t VSIZE=100, std::size_t BSIZE=5, int UNROLL=5>
+__attribute__((noinline))
+FLOAT_T inner_product_v4_serial(const FLOAT_T *__restrict a,
+                         bsg_attr_remote const FLOAT_T *__restrict b)
+{
+    register FLOAT_T r[UNROLL] = {0};
+    for (int i = 0; i < VSIZE; i += UNROLL * BSIZE) {
+#pragma bsg_unroll(32)
+        for (int j = 0; j < BSIZE; ++j) {
+#pragma bsg_unroll(32)
+            for (int k =0 ; k < UNROLL; ++k) {
+                r[k] = fmaf(a[i+j+k*BSIZE], b[i+j+k*BSIZE], r[k]);
+            }
+        }
+    }
+    FLOAT_T rs = 0.0;
+    for (int i = 0; i < UNROLL; ++i)
+        rs += r[i];
+    return rs;
+}
+
 template <std::size_t TG_X, std::size_t TG_Y>
 class InnerProductParallel_v1 {
 public:
