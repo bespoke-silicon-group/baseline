@@ -63,6 +63,10 @@ greedy_walk_v2-grp-y := 1
 VERSIONS += greedy_walk_v3
 greedy_walk_v3-grp-x := 1
 greedy_walk_v3-grp-y := 1
+#  greedy_walk_v3 + ParallelInnerProduct_v1
+VERSIONS += greedy_walk_v4
+greedy_walk_v4-grp-x := 2
+greedy_walk_v4-grp-y := 2
 
 #  very slow - uses a very dumb sparse set
 VERSIONS += beam_search
