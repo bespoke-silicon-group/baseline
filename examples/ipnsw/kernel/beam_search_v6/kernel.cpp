@@ -117,75 +117,76 @@ extern "C" {
         memcpy(q, query, sizeof(q));
         ip.init();
 
-        // retrieve results from greedy walk
-        int v_curr   = *v_curr_o;
-        float d_curr = *d_curr_o;
-        //bsg_print_int(v_curr);
-        //bsg_print_float(d_curr);
+        if (__bsg_id == 0) {
 
-        // initialize priority queues
-        DynHeap<std::pair<float, int>, GT> candidates(candidates_mem, 512);
-        DynHeap<std::pair<float, int>, LT> results(results_mem, 128);
+            // retrieve results from greedy walk
+            int v_curr   = *v_curr_o;
+            float d_curr = *d_curr_o;
+            //bsg_print_int(v_curr);
+            //bsg_print_float(d_curr);
 
-        candidates.push({d_curr, v_curr});
-        results.push({d_curr, v_curr});
+            // initialize priority queues
+            DynHeap<std::pair<float, int>, GT> candidates(candidates_mem, 512);
+            DynHeap<std::pair<float, int>, LT> results(results_mem, 128);
 
-        float d_worst = d_curr;
-        seen.insert(v_curr);
+            candidates.push({d_curr, v_curr});
+            results.push({d_curr, v_curr});
 
-        while (!candidates.empty()) {
-            int   v_best;
-            float d_best;
+            float d_worst = d_curr;
+            seen.insert(v_curr);
 
-            auto best = candidates.pop();
-            v_best = std::get<1>(best);
-            d_best = std::get<0>(best);
+            while (!candidates.empty()) {
+                int   v_best;
+                float d_best;
 
-            d_worst = std::get<0>(results.top());
+                auto best = candidates.pop();
+                v_best = std::get<1>(best);
+                d_best = std::get<0>(best);
+
+                d_worst = std::get<0>(results.top());
 #ifdef DEBUG_BEAM_SEARCH_TRAVERSED_TRACE
-            bsg_print_int(-v_best);
+                bsg_print_int(-v_best);
 #endif
 
-            if (d_best > d_worst) {
-                break;
-            }
+                if (d_best > d_worst) {
+                    break;
+                }
 
-            // traverse neighbors of v_best
-            int dst_0 = G.offsets[v_best];
-            int degree = v_curr == G.V-1 ? G.E - dst_0 : G.offsets[v_best+1] - dst_0;
-            for (int dst_i = 0; dst_i < degree; dst_i++) {
-                int dst = G.neighbors[dst_0+dst_i];
+                // traverse neighbors of v_best
+                int dst_0 = G.offsets[v_best];
+                int degree = v_curr == G.V-1 ? G.E - dst_0 : G.offsets[v_best+1] - dst_0;
+                for (int dst_i = 0; dst_i < degree; dst_i++) {
+                    int dst = G.neighbors[dst_0+dst_i];
 #ifdef DEBUG_BEAM_SEARCH_TRAVERSED_TRACE
-                bsg_print_int(dst);
+                    bsg_print_int(dst);
 #endif
-                if (!seen.in(dst)) {
-                    // mark as seen
-                    seen.insert(dst);
-                    float d_neib = -1 * ip.inner_product(dst);
-                    d_worst = std::get<0>(results.top());
-                    // if there's room for new result or this distance is promising
-                    if ((results.size() < EF) || (d_neib < d_worst)) {
-                        // push onto candidates and results
-                        candidates.push({d_neib, dst});
-                        results.push({d_neib, dst});
+                    if (!seen.in(dst)) {
+                        // mark as seen
+                        seen.insert(dst);
+                        float d_neib = -1 * ip.inner_product(dst);
+                        d_worst = std::get<0>(results.top());
+                        // if there's room for new result or this distance is promising
+                        if ((results.size() < EF) || (d_neib < d_worst)) {
+                            // push onto candidates and results
+                            candidates.push({d_neib, dst});
+                            results.push({d_neib, dst});
 
-                        // prune down to recall
-                        if (results.size() > EF)
-                            results.pop();
+                            // prune down to recall
+                            if (results.size() > EF)
+                                results.pop();
+                        }
                     }
                 }
+
             }
 
+            //ip.exit();
+
+            int n_res = std::min(results.size(), N_RESULTS);
+            std::sort(results_mem, results_mem+results.size(), LT());
+            *n_results = n_res;
         }
-
-        ip.exit();
-
-        int n_res = std::min(results.size(), N_RESULTS);
-        std::sort(results_mem, results_mem+n_res, LT());
         bsg_cuda_print_stat_end(0);
-
-        *n_results = n_res;
-
         return 0;
     }
 
