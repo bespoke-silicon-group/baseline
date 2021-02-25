@@ -39,6 +39,10 @@ public:
         _data[i] = 1;
     }
 
+    void atomic_insert(T i) {
+        insert(i);
+    }
+
     bool in(T i) {
         return _data[i] == 1;
     }
@@ -55,6 +59,16 @@ public:
 
     void insert(T i) {
         _data[word(i)] |= (1 << bit(i));
+    }
+
+    void atomic_insert(T i) {
+        int *ptr = &_data[word(i)];
+        int r    = 1 << bit(i);
+        asm volatile ("amoor.w x0, %[r], %[ptr]" :
+                      :
+                      [r] "r" (r),
+                      [ptr] "m" (*ptr));
+        return;
     }
 
     bool in(T i) {
