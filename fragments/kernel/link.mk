@@ -94,7 +94,7 @@ BSG_ELF_DRAM_EVA_OFFSET = 0x80000000
 # of DRAM (if present), or the Victim Cache address space (if DRAM is
 # disabled/not present).
 ifeq ($(BSG_ELF_DEFAULT_DATA_LOC), LOCAL)
-BSG_ELF_STACK_PTR ?= 0x00001ffc
+BSG_ELF_STACK_PTR ?= 0x00000ffc
 else
   ifeq ($(BSG_ELF_OFF_CHIP_MEM), 1)
   _BSG_ELF_DRAM_LIMIT = $(shell expr $(BSG_ELF_DRAM_EVA_OFFSET) + $(BSG_ELF_DRAM_SIZE))
@@ -110,26 +110,36 @@ endif
 # presence of DRAM/Off-Chip memory, and the location of the .data
 # segment determine which (poorly named) link script will be
 # chosen. Errors are thrown if an incorrect configuration is found
-RISCV_LINK_SCRIPT=foo
+RISCV_LINK_GEN := $(BSG_MANYCORE_DIR)/software/py/bsg_manycore_link_gen.py
+
 ifeq ($(BSG_ELF_OFF_CHIP_MEM), 1)
   ifeq ($(BSG_ELF_DEFAULT_DATA_LOC), LOCAL)
-    RISCV_LINK_SCRIPT := $(BSG_MANYCORE_DIR)/software/spmd/common/link_dmem.ld
+    LINK_GEN_OPTS ?= --default_data_loc=dmem --dram_size=$(BSG_ELF_DRAM_SIZE) --sp=$(BSG_ELF_STACK_PTR)
   else ifeq ($(BSG_ELF_DEFAULT_DATA_LOC), SHARED)
-    RISCV_LINK_SCRIPT := $(BSG_MANYCORE_DIR)/software/spmd/common/link_dram.ld
+    LINK_GEN_OPTS ?= --default_data_loc=dram --dram_size=$(BSG_ELF_DRAM_SIZE) --sp=$(BSG_ELF_STACK_PTR)
   else
-    $(error $(shell echo -e "$(RED)Invalid BSG_ELF_DEFAULT_DATA_LOC = $(BSG_ELF_DEFAULT_DATA_LOC); Only LOCAL and SHARED are valid $(NC)"))
+    $(error Invalid BSG_ELF_DEFAULT_DATA_LOC = $(BSG_ELF_DEFAULT_DATA_LOC); Only LOCAL and SHARED are valid)
   endif
+
+  LINK_GEN_OPTS += --imem_size=0x01000000 # 16MB
 else ifeq ($(BSG_ELF_OFF_CHIP_MEM), 0)
   ifeq ($(BSG_ELF_DEFAULT_DATA_LOC), LOCAL)
-    RISCV_LINK_SCRIPT := $(BSG_MANYCORE_DIR)/software/spmd/common/link_dmem2.ld
+    LINK_GEN_OPTS ?= --default_data_loc=dmem --dram_size=$(BSG_ELF_VCACHE_SIZE) --sp=$(BSG_ELF_STACK_PTR)
   else ifeq ($(BSG_ELF_DEFAULT_DATA_LOC), SHARED)
-    RISCV_LINK_SCRIPT := $(BSG_MANYCORE_DIR)/software/spmd/common/link_dram2.ld
+    LINK_GEN_OPTS ?= --default_data_loc=dram --dram_size=$(BSG_ELF_VCACHE_SIZE) --sp=$(BSG_ELF_STACK_PTR)
   else
-    $(error $(shell echo -e "$(RED)Invalid BSG_ELF_DEFAULT_DATA_LOC = $(BSG_ELF_DEFAULT_DATA_LOC); Only LOCAL and SHARED are valid$(NC)"))
+    $(error Invalid BSG_ELF_DEFAULT_DATA_LOC = $(BSG_ELF_DEFAULT_DATA_LOC); Only LOCAL and SHARED are valid)
   endif
+
+  LINK_GEN_OPTS += --imem_size=0x00008000 # 32KB
 else
-  $(error $(shell echo -e "$(RED)Invalid BSG_ELF_OFF_CHIP_MEM = $(BSG_ELF_OFF_CHIP_MEM); Only 0 and 1 are valid$(NC)"))
+  $(error Invalid BSG_ELF_OFF_CHIP_MEM = $(BSG_ELF_OFF_CHIP_MEM); Only 0 and 1 are valid)
 endif
+
+RISCV_LINK_SCRIPT ?= bsg_link.ld
+bsg_link.ld: $(RISCV_LINK_GEN)
+	$(RISCV_LINK_GEN) $(LINK_GEN_OPTS) --out=$@
+
 
 ################################################################################
 # Linker Flags
@@ -163,10 +173,14 @@ _LINK_HELP_STRING += "    kernel.riscv | kernel/<version>/kernel.riscv :\n"
 _LINK_HELP_STRING += "        - Compile the RISC-V Manycore Kernel from the [default | <version>] \n"
 _LINK_HELP_STRING += "          source file named $(notdir $(KERNEL_DEFAULT)). The default source \n"
 _LINK_HELP_STRING += "          file is $(KERNEL_DEFAULT)\n"
+
+kernel.riscv: $(RISCV_LINK_SCRIPT)
 kernel.riscv: $(MACHINE_CRT_OBJ) main.rvo $(basename $(KERNEL_DEFAULT)).rvo bsg_manycore_lib.a
-	$(RISCV_LD) -T $(RISCV_LINK_SCRIPT) $^ $(RISCV_LDFLAGS) -o $@
+	$(RISCV_LD) -T $(RISCV_LINK_SCRIPT) $(filter %.rvo,$^) $(filter %.a,$^) $(RISCV_LDFLAGS) -o $@
+
+%/kernel.riscv: $(RISCV_LINK_SCRIPT)
 %/kernel.riscv: $(MACHINE_CRT_OBJ) main.rvo $(KERNEL_OBJECTS) %/kernel.rvo bsg_manycore_lib.a
-	$(RISCV_LD) -T $(RISCV_LINK_SCRIPT) $^ $(RISCV_LDFLAGS) -o $@
+	$(RISCV_LD) -T $(RISCV_LINK_SCRIPT) $(filter %.rvo,$^) $(filter %.a,$^) $(RISCV_LDFLAGS) -o $@
 
 kernel.link.clean:
 	rm -rf *.riscv
