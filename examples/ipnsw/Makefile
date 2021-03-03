@@ -39,7 +39,7 @@ CURRENT_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 # is set in environment.mk) uses the same machine as in bsg_replicant.
 ################################################################################
 
-BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/timing_v0_8_4
+BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/pod_X1Y1_ruche_X16Y8_hbm
 
 ################################################################################
 # Define the range of versions
@@ -85,7 +85,7 @@ KERNEL_INCLUDES     += -I$(CURRENT_PATH)/kernel/include
 
 # Define the default kernel.cpp file. If KERNEL_DEFAULT is not defined it will
 # be set to kernel.cpp in the same directory as this Makefile.
-DEFAULT_VERSION     := v0
+DEFAULT_VERSION     := greedy_walk_v3
 KERNEL_DEFAULT      := kernel/$(DEFAULT_VERSION)/kernel.cpp
 #KERNEL_DEFAULT      := kernel/$(DEFAULT_VERSION)/kernel.c
 
@@ -348,3 +348,4 @@ help:
 _HELP_STRING += "\n"
 _HELP_STRING += $(HELP_STRING)
 HELP_STRING := $(_HELP_STRING)
+
