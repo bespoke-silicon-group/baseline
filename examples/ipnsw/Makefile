@@ -108,6 +108,10 @@ beam_search_v8-grp-y := 4
 VERSIONS += beam_search_v9
 beam_search_v9-grp-x := 4
 beam_search_v9-grp-y := 4
+# beam_search_v5 but edges of candidates traversed in parallel
+VERSIONS += beam_search_v10
+beam_search_v10-grp-x := 8
+beam_search_v10-grp-y := 4
 
 # debugging this makefile
 VERSIONS += debug
@@ -362,7 +366,7 @@ BEAM-SEARCH-QUERIES += 25  74  112 140 148 178
 BEAM-SEARCH-QUERIES += 214 244 278 302 331
 BEAM-SEARCH-QUERIES += 396 420 452 489 511
 
-BEAM-SEARCH-BASENAME := beam_search_v8
+BEAM-SEARCH-BASENAME := beam_search_v10
 
 define BEAM-SEARCH-RULE
 # creates run directory from template
