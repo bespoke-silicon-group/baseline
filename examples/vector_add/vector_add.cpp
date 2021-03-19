@@ -359,7 +359,7 @@ int kernel_vector_add (int argc, char **argv) {
         return HB_MC_SUCCESS;
 }
 
-#ifdef COSIM
+#ifdef VCS
 void cosim_main(uint32_t *exit_code, char * args) {
         // We aren't passed command line arguments directly so we parse them
         // from *args. args is a string from VCS - to pass a string of arguments

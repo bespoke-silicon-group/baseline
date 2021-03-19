@@ -69,3 +69,25 @@ RISCV_BIN_DIR=$(BSG_MANYCORE_DIR)/software/riscv-tools/riscv-install/bin/
 
 FRAGMENTS_PATH=$(_REPO_ROOT)/fragments
 
+# These variables are used by simlibs.mk
+LIBRARIES_PATH := $(BSG_F1_DIR)/libraries
+HARDWARE_PATH  := $(BSG_F1_DIR)/hardware
+EXAMPLES_PATH  := $(BSG_F1_DIR)/examples
+# CL_DIR Means "Custom Logic" Directory, and is an AWS-FPGA holdover. cadenv.mk
+# checks that it is set
+CL_DIR         := $(BSG_F1_DIR)
+
+# The following makefile fragment verifies that the tools and CAD environment is
+# configured correctly.
+-include $(BSG_F1_DIR)/cadenv.mk
+
+-include $(BSG_F1_DIR)/machine.mk
+
+-include $(BSG_F1_DIR)/platform.mk
+
+################################################################################
+# Simulation Libraries (C/C++ AND Verilog)
+################################################################################
+# PROJECT defines the Verilog Simulation Library Target
+PROJECT        := baseline
+

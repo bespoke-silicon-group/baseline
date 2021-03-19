@@ -39,7 +39,8 @@ CURRENT_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 # is set in environment.mk) uses the same machine as in bsg_replicant.
 ################################################################################
 
-BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/timing_v0_8_4
+BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/pod_X1Y1_ruche_X16Y8_hbm/
+BSG_PLATFORM ?= bigblade-vcs
 
 ################################################################################
 # Define the range of versions
@@ -91,17 +92,31 @@ KERNEL_DEFAULT      := kernel/$(DEFAULT_VERSION)/kernel.cpp
 # compiled and linked into the executable.
 ################################################################################
 
-HOST_TARGET         := vector_add
-HOST_CSOURCES       := 
-HOST_CXXSOURCES     := $(HOST_TARGET).cpp
-HOST_INCLUDES       := -I$(CURRENT_PATH)
+TEST_TARGET         := vector_add
+TEST_CSOURCES       := 
+TEST_CXXSOURCES     := $(TEST_TARGET).cpp
+TEST_INCLUDES       := -I$(CURRENT_PATH)
 
-################################################################################
-# Include the Cosimulation host build rules (This must be included after
-# HOST_*SOURCES, HOST_TARGET, HOST_INCLUDES, etc)
-################################################################################
+INCLUDES += -I$(LIBRARIES_PATH) -I$(VCS_HOME)/linux64/lib/ $(TEST_INCLUDES)
+DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -DVCS -DCOSIM
+CDEFINES += 
+CXXDEFINES += 
 
--include $(FRAGMENTS_PATH)/host/cosim.mk
+FLAGS     = -g -Wall -Wno-unused-function -Wno-unused-variable
+CFLAGS   += -std=c99 $(FLAGS)
+CXXFLAGS += -std=c++11 $(FLAGS)
+
+# compilation.mk defines rules for compilation of C/C++
+include $(BSG_PLATFORM_PATH)/compilation.mk
+
+###############################################################################
+# Host code link flags and flow
+###############################################################################
+
+LDFLAGS +=
+
+# link.mk defines rules for linking of the final execution binary.
+include $(BSG_PLATFORM_PATH)/link.mk
 
 ################################################################################
 # Define the clean rules. clean calls the makefile-specific cleans, whereas
