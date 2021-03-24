@@ -66,10 +66,12 @@ int kernel_ubenchmarks (int argc, char **argv) {
         int rc;
         char *bin_path, *test_name;
         struct arguments_path args = {NULL, NULL};
+        char kernel_name[24] = "kernel_";
 
         argp_parse (&argp_path, argc, argv, 0, 0, &args);
         bin_path = args.path;
         test_name = args.name;
+        strcat(kernel_name,test_name);
 
         bsg_pr_test_info("Running CUDA ubenchmarks. "
                          "Version %s\n", args.name);
@@ -78,24 +80,8 @@ int kernel_ubenchmarks (int argc, char **argv) {
          * Define tg_dim_x/y: number of tiles in each tile group
          * Calculate grid_dim_x/y: number of tile groups needed
          **********************************************************************/
-        hb_mc_dimension_t tg_dim = { .x = 0, .y = 0 };
-        hb_mc_dimension_t grid_dim = { .x = 0, .y = 0 };
-        if (!strcmp("addi", test_name)){
-                tg_dim = { .x = 1, .y = 1 };
-                grid_dim = { .x = 1, .y = 1 };
-        } else if (!strcmp("v1", test_name)){
-                tg_dim = { .x = 2, .y = 2 };
-                grid_dim = { .x = 1, .y = 1 };
-        } else if (!strcmp("v2", test_name)){
-                tg_dim = { .x = 4, .y = 4 };
-                grid_dim = { .x = 1, .y = 1 };
-        } else if (!strcmp("v3", test_name)){
-                tg_dim = { .x = 2, .y = 2 };
-                grid_dim = { .x = 2, .y = 2 };
-        } else {
-                bsg_pr_test_err("Invalid version provided!.\n");
-                return HB_MC_INVALID;
-        }
+        hb_mc_dimension_t tg_dim = { .x = 1, .y = 1 };
+        hb_mc_dimension_t grid_dim = { .x = 1, .y = 1 };
 
         /**********************************************************************
          * Define path to binary.
@@ -121,7 +107,7 @@ int kernel_ubenchmarks (int argc, char **argv) {
          * sizeof(int8_t) we'll reuse the same buffers for each test
          **********************************************************************/
 
-        rc = run_test(device, "kernel_andi", tg_dim, grid_dim);
+        rc = run_test(device, kernel_name, tg_dim, grid_dim);
         if (rc != HB_MC_SUCCESS) {
                 bsg_pr_test_err("test failed\n");
                 return rc;

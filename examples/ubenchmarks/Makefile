@@ -46,7 +46,7 @@ BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/timing_mesh_1_1
 ################################################################################
 # Kernel versions. See kernel/README.md for more information.  Version names do
 # not need to use v* and can be any string
-VERSIONS = addi
+VERSIONS = andi and add addi auipc beq_nt beq_t div jal li mul mv or ori sll slt sltu sra srl sub xor xori
 
 ################################################################################
 # Define any sources that should be used compiled during kernel compilation,
@@ -69,7 +69,7 @@ KERNEL_INCLUDES     += -I$(CURRENT_PATH)/kernel/include
 
 # Define the default kernel.cpp file. If KERNEL_DEFAULT is not defined it will
 # be set to kernel.cpp in the same directory as this Makefile.
-DEFAULT_VERSION     := addi
+DEFAULT_VERSION     := andi
 KERNEL_DEFAULT      := kernel/$(DEFAULT_VERSION)/kernel.cpp
 
 ################################################################################
