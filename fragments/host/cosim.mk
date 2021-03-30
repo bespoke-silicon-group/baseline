@@ -69,8 +69,8 @@ $(VERSIONS): %: kernel/%/$(HOST_TARGET).log
 # https://www.gnu.org/software/make/manual/html_node/Empty-Recipes.html
 ALIASES = vanilla_stats.csv vcache_stats.csv
 $(ALIASES): $(HOST_TARGET).log ;
-$(HOST_TARGET).log: kernel.riscv $(HOST_TARGET)
-	./$(HOST_TARGET) +ntb_random_seed_automatic +rad \
+$(HOST_TARGET).log: kernel.riscv $(HOST_TARGET).profile
+	./$(HOST_TARGET).profile +ntb_random_seed_automatic +rad \
 		+c_args="kernel.riscv $(DEFAULT_VERSION)" | tee $@
 
 ################################################################################
@@ -93,19 +93,19 @@ $(HOST_TARGET).log: kernel.riscv $(HOST_TARGET)
 KERNEL_ALIASES = $(foreach a,$(ALIASES),kernel/%/$a)
 .PRECIOUS: $(KERNEL_ALIASES)
 $(KERNEL_ALIASES): kernel/%/$(HOST_TARGET).log ;
-kernel/%/$(HOST_TARGET).log: kernel/%/kernel.riscv $(HOST_TARGET)
+kernel/%/$(HOST_TARGET).log: kernel/%/kernel.riscv $(HOST_TARGET).profile
 	$(eval EXEC_PATH   := $(patsubst %/,%,$(dir $@)))
 	$(eval KERNEL_PATH := $(CURRENT_PATH)/$(EXEC_PATH))
 	$(eval _VERSION    := $(notdir $(EXEC_PATH)))
 	cd $(EXEC_PATH) && \
-	$(CURRENT_PATH)/$(HOST_TARGET) +ntb_random_seed_automatic \
+	$(CURRENT_PATH)/$(HOST_TARGET).profile +ntb_random_seed_automatic \
 		+c_args="$(KERNEL_PATH)/kernel.riscv $(_VERSION)" | tee $(notdir $@)
 
 cosim.clean: host.link.clean host.compile.clean
 	rm -rf *{.daidir,.tmp,.log} 64
 	rm -rf vc_hdrs.h ucli.key
 	rm -rf *.vpd *.vcs.log
-	rm -rf $(HOST_TARGET)
+	rm -rf $(HOST_TARGET){.profile,.debug}
 
 _HELP_STRING := "Rules from host/cosim.mk\n"
 _HELP_STRING += "    $(HOST_TARGET).log | kernel/<version>/$(HOST_TARGET).log : \n"

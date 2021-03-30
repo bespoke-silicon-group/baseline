@@ -57,21 +57,21 @@ PROJECT        := baseline
 # that are necessary for running cosimulation. These are dependencies for
 # regression since running $(MAKE) recursively does not prevent parallel builds
 # of identical rules -- which causes errors.
+TEST_CXXSOURCES := $(HOST_CXXSOURCES)
+TEST_CSOURCES   := $(HOST_CSOURCES)
 -include $(EXAMPLES_PATH)/link.mk
-
-
 
 ################################################################################
 # Cosimulation Linker Rules
 ################################################################################
 _HELP_STRING := "Rules from host/link.mk\n"
 
-_HELP_STRING += "    $(HOST_TARGET) :\n"
+_HELP_STRING += "    $(HOST_TARGET).profile $(HOST_TARGET).debug :\n"
 _HELP_STRING += "        - Build the default host executable for RTL Cosimulation using VCS\n"
 _HELP_STRING += "          The same executable is reused to run every kernel version \n"
 
 host.link.clean:
-	rm -rf $(HOST_TARGET)
+	rm -rf $(HOST_TARGET){.profile,.debug}
 	rm -rf *.cosim{.daidir,.tmp,.log,} 64
 	rm -rf vc_hdrs.h ucli.key
 
