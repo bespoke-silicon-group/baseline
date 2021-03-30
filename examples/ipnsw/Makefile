@@ -205,7 +205,8 @@ KERNEL_DEFAULT      := kernel/$(DEFAULT_VERSION)/kernel.cpp
 ################################################################################
 
 HOST_TARGET         := ipnsw
-HOST_CSOURCES       := 
+HOST_CSOURCES       :=
+HOST_CXXSOURCES     += ipnsw.cpp
 HOST_CXXSOURCES     += GreedyWalkResults.cpp
 HOST_INCLUDES       := -I$(CURRENT_PATH)
 
@@ -426,10 +427,10 @@ LDFLAGS  += $(libhammerblade-helpers-host-interface-ldflags)
 LDFLAGS  += $(libgraphtools-interface-ldflags)
 VSOURCES += GreedyWalkResults.cpp
 
-$(HOST_TARGET): $(libhammerblade-helpers-host-interface-headers)
-$(HOST_TARGET): $(libgraphtools-interface-headers)
-$(HOST_TARGET): $(libgraphtools-interface-libraries)
-$(HOST_TARGET): GreedyWalkResults.o
+$(HOST_TARGET).profile $(HOST_TARGET).debug: $(libhammerblade-helpers-host-interface-headers)
+$(HOST_TARGET).profile $(HOST_TARGET).debug: $(libgraphtools-interface-headers)
+$(HOST_TARGET).profile $(HOST_TARGET).debug: $(libgraphtools-interface-libraries)
+$(HOST_TARGET).profile $(HOST_TARGET).debug: GreedyWalkResults.o
 
 GreedyWalkResults.o: GreedyWalkResults.cpp
 GreedyWalkResults.o: GreedyWalkResults.hpp

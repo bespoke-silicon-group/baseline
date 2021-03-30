@@ -20,8 +20,6 @@
 #include <iostream>
 #include <memory>
 
-#include "GreedyWalkResults.cpp"
-
 using namespace ipnsw;
 
 int Main(int argc, char *argv[])
