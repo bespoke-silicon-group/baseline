@@ -66,12 +66,12 @@ TEST_CSOURCES   := $(HOST_CSOURCES)
 ################################################################################
 _HELP_STRING := "Rules from host/link.mk\n"
 
-_HELP_STRING += "    $(HOST_TARGET).profile $(HOST_TARGET).debug :\n"
+_HELP_STRING += "    $(HOST_TARGET).profile $(HOST_TARGET).debug $(HOST_TARGET).saifgen:\n"
 _HELP_STRING += "        - Build the default host executable for RTL Cosimulation using VCS\n"
 _HELP_STRING += "          The same executable is reused to run every kernel version \n"
 
 host.link.clean:
-	rm -rf $(HOST_TARGET){.profile,.debug}
+	rm -rf $(HOST_TARGET){.profile,.debug,.saifgen}
 	rm -rf *.cosim{.daidir,.tmp,.log,} 64
 	rm -rf vc_hdrs.h ucli.key
 

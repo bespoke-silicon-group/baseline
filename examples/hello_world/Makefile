@@ -39,7 +39,7 @@ CURRENT_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 # is set in environment.mk) uses the same machine as in bsg_replicant.
 ################################################################################
 
-BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/timing_v0_8_4
+BSG_MACHINE_PATH=$(BSG_F1_DIR)/machines/pod_X1Y1_ruche_X16Y8_hbm
 
 ################################################################################
 # Define the range of versions
@@ -92,6 +92,7 @@ KERNEL_DEFAULT      := kernel/$(DEFAULT_VERSION)/kernel.cpp
 ################################################################################
 
 HOST_TARGET         := hello_world
+HOST_TARGET_EXE     := $(HOST_TARGET).saifgen
 HOST_CSOURCES       := 
 HOST_CXXSOURCES     := $(HOST_TARGET).cpp
 HOST_INCLUDES       := -I$(CURRENT_PATH)

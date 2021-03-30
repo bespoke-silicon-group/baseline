@@ -20,7 +20,9 @@
  */
 extern "C" {
         int  __attribute__ ((noinline)) kernel_hello_world(int arg) {
+                bsg_saif_start();
                 bsg_printf("Hello World! Tile Group Tile-ID: %d, Arg: %d\n", __bsg_id, arg);
+                bsg_saif_end();
                 return 0;
         }
 }
