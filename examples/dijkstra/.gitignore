@@ -1,0 +1,5 @@
+data/
+dramsim3.*
+*.profile.daidir
+stack.info.*
+dijkstra.profile*
