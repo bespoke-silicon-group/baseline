@@ -120,8 +120,6 @@ LDFLAGS  += $(libhammerblade-interface-ldflags)
 -include $(FRAGMENTS_PATH)/host/cosim.mk
 $(HOST_TARGET_EXE): $(libgraphtools-interface-libraries)
 $(HOST_TARGET_EXE): $(libhammerblade-helpers-host-interface-libraries)
-$(HOST_TARGET).o: DijkstraGraph.hpp
-$(HOST_TARGET).o: Dijkstra.hpp
 $(HOST_TARGET).o: $(libgraphtools-interface-headers)
 $(HOST_TARGET).o: $(libhammerblade-helpers-host-interface-headers)
 
