@@ -20,6 +20,7 @@
 //#define DEBUG_DIJKSTRA
 //#define DEBUG_DIJKSTRA_ROOT_GOAL
 
+// g_mem is reverse graph
 extern "C" int dijkstra(struct graph *g_mem,
                         int root,
                         int goal,
@@ -31,50 +32,43 @@ extern "C" int dijkstra(struct graph *g_mem,
     distance[root] = 0.0;
     path[root] = root;
 
-#ifdef DEBUG_DIJKSTRA
-    bsg_printf("g_mem=0x%08x, root=%4d, goal=%4d\n",
-           reinterpret_cast<unsigned>(g_mem), root, goal);
-#endif
 #ifdef DEBUG_DIJKSTRA_ROOT_GOAL
     bsg_print_int(root);
     bsg_print_int(goal);
 #endif
-    auto cmp = [distance](int lhs, int rhs) {
-        return distance[lhs] > distance[rhs];
-    };
+    
+    //int num_iters = g.V-1;
+    int num_iters = 2; // two iterations for now..
+    // time the second iteration
+            
+    for (int iter = 0; iter < num_iters; iter++) {
+        if (iter == 1)
+            bsg_cuda_print_stat_kernel_start();
 
-    bsg_cuda_print_stat_kernel_start();
-
-    DynHeap<int, decltype(cmp)> queue(queue_mem, g.V, cmp);
-    queue.push(root);
-
-    while (!queue.empty()) {
-        int best = queue.pop();
+        for (int dst = 0; dst < g.V; dst++) {
+            int dst_n = dst == g.V-1 ? g.E-g.offsets[dst] : g.offsets[dst+1]-g.offsets[dst];
+            int dst_0 = g.offsets[dst];
 #ifdef DEBUG_DIJKSTRA_TRACE
-        bsg_print_int(-best);
-#endif        
-        if (best == goal)
-            break;
-
-        float d_best = distance[best];
-
-        int dst_n = best == g.V-1 ? (g.E - g.offsets[best]) : (g.offsets[best+1] - g.offsets[best]);
-        int dst_0 = g.offsets[best];
-        for (int dst_i = 0; dst_i < dst_n; dst_i++) {
-            int dst = g.neighbors[dst_0+dst_i];
-#ifdef DEBUG_DIJKSTRA_TRACE            
-            bsg_print_int(dst);
+            bsg_print_int(-dst);
 #endif
-            float w = g.weights[dst_0+dst_i];            
-            // relax edge
-            if (d_best+w < distance[dst]) {
-                distance[dst] = d_best+w;
-                path[dst] = best;
-                queue.push(dst);                
+            for (int dst_i = 0; dst_i < dst_n; dst_i++) {
+                int src = g.neighbors[dst_0+dst_i];
+#ifdef DEBUG_DIJKSTRA_TRACE
+                bsg_print_int(src);
+#endif
+                float w = g.weights[dst_0+dst_i];
+                if (distance[src]+w < distance[dst]) {
+                    distance[dst] = distance[src]+w;
+                    path[dst] = src;
+                }
             }
         }
-    }
-    bsg_cuda_print_stat_kernel_end();
 
+        if (iter == 1)
+            bsg_cuda_print_stat_kernel_end();
+    }
+    
+    bsg_cuda_print_stat_kernel_end();
+    
     return 0;
 }

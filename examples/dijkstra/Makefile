@@ -127,8 +127,7 @@ $(HOST_TARGET).o: $(libhammerblade-helpers-host-interface-headers)
 # $2 = type
 # $3 = scale
 # $4 = edges
-# $5 = root
-# $6 = goal
+# $5 = hops (how many source nodes need to be explored)
 GENERATED		:=
 VERSIONS-graph500	:=
 VERSIONS-linear		:=
@@ -137,81 +136,97 @@ VERSIONS-small_dijkstra :=
 
 define generate-dijkstra-for-input
 # add to version lists
-VERSIONS           += $(1)-$(2)-scale$(3)-$(4)edges
-VERSIONS-$(1)      += $(1)-$(2)-scale$(3)-$(4)edges
-VERSIONS-$(2)      += $(1)-$(2)-scale$(3)-$(4)edges
-VERSIONS-generated += $(1)-$(2)-scale$(3)-$(4)edges
+VERSIONS           += $(1)-$(2)-scale$(3)-$(4)edges-$(5)maxhops
+VERSIONS-$(1)      += $(1)-$(2)-scale$(3)-$(4)edges-$(5)maxhops
+VERSIONS-$(2)      += $(1)-$(2)-scale$(3)-$(4)edges-$(5)maxhops
+VERSIONS-generated += $(1)-$(2)-scale$(3)-$(4)edges-$(5)maxhops
+
 # rule for generating the kernel directory
-kernel/$(1)-$(2)-scale$(3)-$(4)edges: kernel/$1
+kernel/$(1)-$(2)-scale$(3)-$(4)edges-$(5)maxhops: kernel/$1
 	cp -r $$< $$@
+
 # add command line arguments
-kernel/$(1)-$(2)-scale$(3)-$(4)edges/$(HOST_TARGET).log: C_ARGS += $(2)
-kernel/$(1)-$(2)-scale$(3)-$(4)edges/$(HOST_TARGET).log: C_ARGS += $(3)
-kernel/$(1)-$(2)-scale$(3)-$(4)edges/$(HOST_TARGET).log: C_ARGS += $(4)
+kernel/$(1)-$(2)-scale$(3)-$(4)edges-$(5)maxhops/$(HOST_TARGET).log: C_ARGS += $(2)
+kernel/$(1)-$(2)-scale$(3)-$(4)edges-$(5)maxhops/$(HOST_TARGET).log: C_ARGS += $(3)
+kernel/$(1)-$(2)-scale$(3)-$(4)edges-$(5)maxhops/$(HOST_TARGET).log: C_ARGS += $(4)
+kernel/$(1)-$(2)-scale$(3)-$(4)edges-$(5)maxhops/$(HOST_TARGET).log: C_ARGS += $(5)
 
 # add to generated versions
-GENERATED      += kernel/$(1)-$(2)-scale$(3)-$(4)edges
-GENERATED-$(1) += kernel/$(1)-$(2)-scale$(3)-$(4)edges
-GENERATED-$(2) += kernel/$(1)-$(2)-scale$(3)-$(4)edges
+GENERATED      += kernel/$(1)-$(2)-scale$(3)-$(4)edges-$(5)maxhops
+GENERATED-$(1) += kernel/$(1)-$(2)-scale$(3)-$(4)edges-$(5)maxhops
+GENERATED-$(2) += kernel/$(1)-$(2)-scale$(3)-$(4)edges-$(5)maxhops
 endef
 
-# tiny tree graph
-$(eval $(call generate-dijkstra-for-input,dijkstra,tree,7,128))
-$(eval $(call generate-dijkstra-for-input,small_dijkstra,tree,7,128))
-$(eval $(call generate-dijkstra-for-input,tree_dijkstra,tree,7,128))
-$(eval $(call generate-dijkstra-for-input,small_tree_dijkstra,tree,7,128))
-# tiny list graph
-$(eval $(call generate-dijkstra-for-input,dijkstra,list,7,128))
-$(eval $(call generate-dijkstra-for-input,small_dijkstra,list,7,128))
-$(eval $(call generate-dijkstra-for-input,list_dijkstra,list,7,128))
-$(eval $(call generate-dijkstra-for-input,small_list_dijkstra,list,7,128))
-# tiny graph
-$(eval $(call generate-dijkstra-for-input,dijkstra,graph500,7,128))
-$(eval $(call generate-dijkstra-for-input,small_dijkstra,graph500,7,128))
-# small graph
-$(eval $(call generate-dijkstra-for-input,dijkstra,graph500,10,$(shell echo 4*1024|bc)))
-$(eval $(call generate-dijkstra-for-input,dijkstra-v1,graph500,10,$(shell echo 4*1024|bc)))
-$(eval $(call generate-dijkstra-for-input,dijkstra,graph500,10,512))
-$(eval $(call generate-dijkstra-for-input,tree_dijkstra,tree,10,512))
-$(eval $(call generate-dijkstra-for-input,list_dijkstra,list,10,512))
-# medium graph
-$(eval $(call generate-dijkstra-for-input,dijkstra,graph500,16,$(shell echo  64*1024|bc)))
-$(eval $(call generate-dijkstra-for-input,dijkstra,graph500,16,$(shell echo  32*1024|bc)))
-$(eval $(call generate-dijkstra-for-input,tree_dijkstra,tree,16,$(shell echo 32*1024|bc)))
-$(eval $(call generate-dijkstra-for-input,list_dijkstra,list,16,$(shell echo 32*1024|bc)))
-# medium-large graph
-$(eval $(call generate-dijkstra-for-input,dijkstra,graph500,20,$(shell  echo 16*1024*1024|bc)))
-$(eval $(call generate-dijkstra-for-input,dijkstra,graph500,20,$(shell  echo 512*1024|bc)))
-$(eval $(call generate-dijkstra-for-input,list_dijkstra,list,20,$(shell echo 512*1024|bc)))
-$(eval $(call generate-dijkstra-for-input,tree_dijkstra,tree,20,$(shell echo 512*1024|bc)))
-# large graph
-$(eval $(call generate-dijkstra-for-input,dijkstra,graph500,24,$(shell  echo 256*1024*1024|bc)))
-$(eval $(call generate-dijkstra-for-input,dijkstra,graph500,24,$(shell  echo 8*1024*1024|bc)))
-$(eval $(call generate-dijkstra-for-input,list_dijkstra,list,24,$(shell echo 8*1024*1024|bc)))
-$(eval $(call generate-dijkstra-for-input,tree_dijkstra,tree,24,$(shell echo 8*1024*1024|bc)))
+# $(eval $(call generate-dijkstra-for-input,dijkstra,uniform,$(shell echo 10*1000|bc),$(shell echo  320*1000|bc),4))
+# $(eval $(call generate-dijkstra-for-input,dijkstra,uniform,$(shell echo 10*1000|bc),$(shell echo  320*1000|bc),3))
+# $(eval $(call generate-dijkstra-for-input,dijkstra,uniform,$(shell echo 10*1000|bc),$(shell echo  320*1000|bc),2))
+# $(eval $(call generate-dijkstra-for-input,dijkstra,uniform,$(shell echo 10*1000|bc),$(shell echo  320*1000|bc),1))
+# $(eval $(call generate-dijkstra-for-input,bellman_ford,uniform,$(shell echo 10*1000|bc),$(shell echo  320*1000|bc),1))
+# $(eval $(call generate-dijkstra-for-input,bellman_ford-warmedup,uniform,$(shell echo 10*1000|bc),$(shell echo  320*1000|bc),1))
+# $(eval $(call generate-dijkstra-for-input,bellman_ford-partial,uniform,$(shell echo 10*1000|bc),$(shell echo  320*1000|bc),1))
 
-.PHONY: graph500-stats
+#$(eval $(call generate-dijkstra-for-input,dijkstra,uniform,$(shell echo 20*1000|bc),$(shell echo  500*1000|bc),4))
+$(eval $(call generate-dijkstra-for-input,dijkstra,uniform,$(shell echo 20*1000|bc),$(shell echo  500*1000|bc),3))
+$(eval $(call generate-dijkstra-for-input,dijkstra,uniform,$(shell echo 20*1000|bc),$(shell echo  500*1000|bc),2))
+$(eval $(call generate-dijkstra-for-input,dijkstra,uniform,$(shell echo 20*1000|bc),$(shell echo  500*1000|bc),1))
+#$(eval $(call generate-dijkstra-for-input,bellman_ford,uniform,$(shell echo 20*1000|bc),$(shell echo  500*1000|bc),1))
+#$(eval $(call generate-dijkstra-for-input,bellman_ford-warmedup,uniform,$(shell echo 20*1000|bc),$(shell echo  500*1000|bc),1))
+$(eval $(call generate-dijkstra-for-input,bellman_ford-partial,uniform,$(shell echo 20*1000|bc),$(shell echo  500*1000|bc),1))
+$(eval $(call generate-dijkstra-for-input,dijkstra-set,uniform,$(shell echo 1*100|bc),$(shell echo  2*100|bc),1))
+$(eval $(call generate-dijkstra-for-input,dijkstra-set,uniform,$(shell echo 20*1000|bc),$(shell echo  500*1000|bc),1))
+$(eval $(call generate-dijkstra-for-input,dijkstra-set,uniform,$(shell echo 20*1000|bc),$(shell echo  500*1000|bc),2))
 
-graph500-stats: generate
-graph500-stats: $(foreach v,$(VERSIONS-graph500),kernel/$v/stats)
+# # tiny tree graph
+# $(eval $(call generate-dijkstra-for-input,dijkstra,tree,7,128))
+# $(eval $(call generate-dijkstra-for-input,small_dijkstra,tree,7,128))
+# $(eval $(call generate-dijkstra-for-input,tree_dijkstra,tree,7,128))
+# $(eval $(call generate-dijkstra-for-input,small_tree_dijkstra,tree,7,128))
+# # tiny list graph
+# $(eval $(call generate-dijkstra-for-input,dijkstra,list,7,128))
+# $(eval $(call generate-dijkstra-for-input,small_dijkstra,list,7,128))
+# $(eval $(call generate-dijkstra-for-input,list_dijkstra,list,7,128))
+# $(eval $(call generate-dijkstra-for-input,small_list_dijkstra,list,7,128))
+# # tiny graph
+# $(eval $(call generate-dijkstra-for-input,dijkstra,graph500,7,128))
+# $(eval $(call generate-dijkstra-for-input,small_dijkstra,graph500,7,128))
+# # small graph
+# $(eval $(call generate-dijkstra-for-input,dijkstra,graph500,10,$(shell echo 4*1024|bc)))
+# $(eval $(call generate-dijkstra-for-input,dijkstra-v1,graph500,10,$(shell echo 4*1024|bc)))
+# $(eval $(call generate-dijkstra-for-input,dijkstra,graph500,10,512))
+# $(eval $(call generate-dijkstra-for-input,tree_dijkstra,tree,10,512))
+# $(eval $(call generate-dijkstra-for-input,list_dijkstra,list,10,512))
+# # medium graph
+# $(eval $(call generate-dijkstra-for-input,dijkstra,graph500,16,$(shell echo  64*1024|bc)))
+# $(eval $(call generate-dijkstra-for-input,dijkstra,graph500,16,$(shell echo  32*1024|bc)))
+# $(eval $(call generate-dijkstra-for-input,tree_dijkstra,tree,16,$(shell echo 32*1024|bc)))
+# $(eval $(call generate-dijkstra-for-input,list_dijkstra,list,16,$(shell echo 32*1024|bc)))
+# # medium-large graph
+# $(eval $(call generate-dijkstra-for-input,dijkstra,graph500,20,$(shell  echo 16*1024*1024|bc)))
+# $(eval $(call generate-dijkstra-for-input,dijkstra,graph500,20,$(shell  echo 512*1024|bc)))
+# $(eval $(call generate-dijkstra-for-input,list_dijkstra,list,20,$(shell echo 512*1024|bc)))
+# $(eval $(call generate-dijkstra-for-input,tree_dijkstra,tree,20,$(shell echo 512*1024|bc)))
+# # large graph
+# $(eval $(call generate-dijkstra-for-input,dijkstra,graph500,24,$(shell  echo 256*1024*1024|bc)))
+# $(eval $(call generate-dijkstra-for-input,dijkstra,graph500,24,$(shell  echo 8*1024*1024|bc)))
+# $(eval $(call generate-dijkstra-for-input,list_dijkstra,list,24,$(shell echo 8*1024*1024|bc)))
+# $(eval $(call generate-dijkstra-for-input,tree_dijkstra,tree,24,$(shell echo 8*1024*1024|bc)))
 
-small_dijkstra-stats: generate
-small_dijkstra-stats: $(foreach v,$(VERSIONS-small_dijkstra),kernel/$v/stats)
+# $1 = kernel|graph_type
+define stats-rules
+.PHONY: $(1)-stats $(1)-generate $(1)-purge
+$(1)-generate: $(GENERATED-$(1))
+$(1)-purge:
+	rm -rf $(GENERATED-$(1))
 
-list-stats: generate
-list-stats: $(foreach v,$(VERSIONS-list),kernel/$v/stats)
+$(1)-stats: $(GENERATED-$(1))
+$(1)-stats: $(foreach v,$(GENERATED-$(1)),$v/stats)
+endef
 
-all-stats: generate
-all-stats: $(foreach v,$(VERSIONS-generated),kernel/$v/stats)
-
-dijkstra-v1-stats: generate
-dijkstra-v1-stats: $(foreach v,$(VERSIONS-dijkstra-v1),kernel/$v/stats)
-
-.PHONY: generate purge-generated
-
-generate: $(GENERATED)
-purge-generated:
-	rm -rf $(GENERATED)
+$(eval $(call stats-rules,dijkstra))
+$(eval $(call stats-rules,bellman_ford))
+$(eval $(call stats-rules,bellman_ford-warmedup))
+$(eval $(call stats-rules,bellman_ford-partial))
+$(eval $(call stats-rules,dijkstra-set))
 
 
 ################################################################################

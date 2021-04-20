@@ -13,24 +13,28 @@
 #include <bsg_manycore.h>
 #include <bsg_tile_group_barrier.h>
 #include <graph.hpp>
-#include <heap.hpp>
+#include <set.hpp>
 #include <cmath>
 
 //#define DEBUG_DIJKSTRA_TRACE
 //#define DEBUG_DIJKSTRA
 //#define DEBUG_DIJKSTRA_ROOT_GOAL
 
+#define array_size(array)                       \
+    (sizeof(array)/sizeof(array[0]))
+
 extern "C" int dijkstra(struct graph *g_mem,
                         int root,
                         int goal,
                         bsg_attr_remote float *distance,
                         bsg_attr_remote int   *path,
-                        int *queue_mem)
+                        int *unvisited)
 {
     struct graph g = *g_mem;    
     distance[root] = 0.0;
     path[root] = root;
 
+    DenseSet<int>(unvisited, g.V);
 #ifdef DEBUG_DIJKSTRA
     bsg_printf("g_mem=0x%08x, root=%4d, goal=%4d\n",
            reinterpret_cast<unsigned>(g_mem), root, goal);
@@ -38,18 +42,27 @@ extern "C" int dijkstra(struct graph *g_mem,
 #ifdef DEBUG_DIJKSTRA_ROOT_GOAL
     bsg_print_int(root);
     bsg_print_int(goal);
-#endif
-    auto cmp = [distance](int lhs, int rhs) {
-        return distance[lhs] > distance[rhs];
-    };
-
+#endif    
     bsg_cuda_print_stat_kernel_start();
 
-    DynHeap<int, decltype(cmp)> queue(queue_mem, g.V, cmp);
-    queue.push(root);
+    while (!unvisited.empty()) {
+        int best = -1;
+        float dbest = INFINITY;
 
-    while (!queue.empty()) {
-        int best = queue.pop();
+        float distance_lcl[32];
+        for (int v0 = 0; v0 < g.V; v0 += array_size(distance_lcl)) {
+            memcpy(distance_lcl, &distance[v0], sizeof(distance_lcl));
+            for (int vi = 0; vi < array_size(distance_lcl); vi++) {
+                int v = v0+vi;
+                if (unvisited.in(v)) {
+                    if (distance_lcl[vi] < dbest) {
+                        best = v;
+                        dbest = distance_lcl[vi];
+                    }
+                }
+            }
+        }
+
 #ifdef DEBUG_DIJKSTRA_TRACE
         bsg_print_int(-best);
 #endif        
@@ -70,10 +83,11 @@ extern "C" int dijkstra(struct graph *g_mem,
             if (d_best+w < distance[dst]) {
                 distance[dst] = d_best+w;
                 path[dst] = best;
-                queue.push(dst);                
             }
         }
+        unvisited.remove(best);
     }
+
     bsg_cuda_print_stat_kernel_end();
 
     return 0;

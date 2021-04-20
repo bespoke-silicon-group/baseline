@@ -6,6 +6,7 @@
 #include <DijkstraGraph.hpp>
 #include <Dijkstra.hpp>
 #include <FastDijkstra.hpp>
+#include <cmath>
 #include "../common.h"
 
 using namespace hammerblade::host;
@@ -18,30 +19,35 @@ int dijkstra_main (int argc, char **argv) {
         char *bin_path, *test_name;
         std::string graph_type;
         std::string bin_path_string;        
-        int graph_scale, graph_edges;
+        int graph_nodes, graph_edges;
+        int graph_max_hops;
         
         bin_path = argv[1];
         test_name = argv[2];
         bin_path_string = std::string(bin_path);
         graph_type = std::string(argv[3]);
-        graph_scale = atoi(argv[4]);
+        graph_nodes = atoi(argv[4]);
         graph_edges = atoi(argv[5]);
-
+        graph_max_hops = atoi(argv[6]);
+        
         printf("graph_type=%s\n", graph_type.c_str());
-        printf("graph_scale=%d\n", graph_scale);
+        printf("graph_nodes=%d\n", graph_nodes);
         printf("graph_edges=%d\n", graph_edges);
 
         int root, goal;
         WGraph wg;
 
         if (graph_type == "list") {
-            wg = WGraph::List(1 << graph_scale, graph_edges);
+            wg = WGraph::List(graph_nodes, graph_edges);
             root = 0;
         } else if (graph_type == "graph500") {
-            wg = WGraph::Generate(graph_scale, graph_edges);
+            wg = WGraph::Generate(graph_nodes == 0 ? 0 : ceil(log2(graph_nodes)), graph_edges);
             root = wg.node_with_max_degree();
         } else if (graph_type == "tree") {
-            wg = WGraph::BalancedTree(graph_scale, graph_edges);
+            wg = WGraph::BalancedTree(ceil(log2(graph_nodes)), graph_edges);
+            root = 0;
+        } else if (graph_type == "uniform") {
+            wg = WGraph::Uniform(graph_nodes, graph_edges);
             root = 0;
         } else {
             printf("[ERROR]: bad graph_type=%s\n", graph_type.c_str());
@@ -52,7 +58,7 @@ int dijkstra_main (int argc, char **argv) {
         dijkstra.run();
         dijkstra.stats("dijkstra_stats.txt");
 
-        FastDijkstra fdijkstra(wg, root, dijkstra.goal());
+        FastDijkstra fdijkstra(wg, root, dijkstra.goal(graph_max_hops));
         fdijkstra.run();
         fdijkstra.stats("fast_dijkstra_stats.txt");
 
@@ -73,6 +79,11 @@ int dijkstra_main (int argc, char **argv) {
         hb_mc_eva_t distance = hb->alloc(sizeof(float) * g.V());
         hb_mc_eva_t path   = hb->alloc(sizeof(int) * g.V());
         hb_mc_eva_t queue = hb->alloc(sizeof(int) * g.V());
+        std::vector<int> queue_host;
+        if (bin_path_string.find("dijkstra-set") != std::string::npos) {
+            queue_host.resize(g.V(), 0xffffffff);
+            hb->push_write(queue, &queue_host[0], sizeof(int)*g.V());
+        }
 
         std::vector<float> distance_init(g.V(), INFINITY);
         std::vector<int>   path_init(g.V(), -1);
