@@ -63,6 +63,10 @@ greedy_walk_v2-grp-y := 1
 VERSIONS += greedy_walk_v3
 greedy_walk_v3-grp-x := 1
 greedy_walk_v3-grp-y := 1
+#  inner product v4-serial
+VERSIONS += greedy_walk_v3-ipv4serial
+greedy_walk_v3-ipv4serial-grp-x := 1
+greedy_walk_v3-ipv4serial-grp-y := 1
 #  greedy_walk_v3 + ParallelInnerProduct_v1
 VERSIONS += greedy_walk_v4
 greedy_walk_v4-grp-x := 2
@@ -92,6 +96,10 @@ beam_search_v4-grp-y := 1
 VERSIONS += beam_search_v5
 beam_search_v5-grp-x := 1
 beam_search_v5-grp-y := 1
+#  + Bit vector for dense set + inner product v4 seria;
+VERSIONS += beam_search_v5-ipv4serial
+beam_search_v5-ipv4serial-grp-x := 1
+beam_search_v5-ipv4serial-grp-y := 1
 #  beam_search_v5 + inner_product_parallel_v3
 VERSIONS += beam_search_v6
 beam_search_v6-grp-x := 2
@@ -181,7 +189,7 @@ KERNEL_INCLUDES     += -I$(CURRENT_PATH)/kernel/include
 
 # Define the default kernel.cpp file. If KERNEL_DEFAULT is not defined it will
 # be set to kernel.cpp in the same directory as this Makefile.
-DEFAULT_VERSION     := greedy_walk_v3
+DEFAULT_VERSION     := greedy_walk_v3-ipv4serial
 KERNEL_DEFAULT      := kernel/$(DEFAULT_VERSION)/kernel.cpp
 #KERNEL_DEFAULT      := kernel/$(DEFAULT_VERSION)/kernel.c
 
@@ -205,6 +213,7 @@ KERNEL_DEFAULT      := kernel/$(DEFAULT_VERSION)/kernel.cpp
 ################################################################################
 
 HOST_TARGET         := ipnsw
+HOST_TARGET_EXE     := $(HOST_TARGET).profile
 HOST_CSOURCES       :=
 HOST_CXXSOURCES     += ipnsw.cpp
 HOST_CXXSOURCES     += GreedyWalkResults.cpp
@@ -233,7 +242,7 @@ $(foreach v,$(VERSIONS),$(eval $(call VERSION-SET-ARGS,$v)))
 # Inner Product U-Benchmarking #
 ################################
 # number iproducts
-N-IPRODUCTS := 150 500 1000 1500 2000 3000
+N-IPRODUCTS := 100 150 500 1000 1500 2000 3000
 IPRODUCT-BASENAME := iproduct_ubmk_v4
 
 define IPRODUCT-UBMK-RULE
@@ -322,7 +331,7 @@ VERSIONS += $(IPRODUCT-UBMK-PARALLEL-VERSIONS)
 # Greedy Walk Runs #
 ####################
 GREEDY-WALK-QUERIES := 4 16 229 276 461 470 490
-GREEDY-WALK-BASENAME := greedy_walk_v4
+GREEDY-WALK-BASENAME := greedy_walk_v3-ipv4serial
 define GREEDY-WALK-RULE
 # creates run directory from template
 kernel/greedy_walk-query$(1)/kernel.cpp: kernel/$(GREEDY-WALK-BASENAME)/kernel.cpp
@@ -356,6 +365,11 @@ purge-greedy-walk:
 greedy-walk-stats: create-greedy-walk
 greedy-walk-stats: $(foreach v,$(GREEDY-WALK-VERSIONS),kernel/$v/stats)
 
+.PHONY: greedy-walk-saifgz
+greedy-walk-saifgz: $(foreach v,$(GREEDY-WALK-VERSIONS),kernel/$v/run.saif.tar.gz)
+
+
+
 # Add to versions
 VERSIONS += $(GREEDY-WALK-VERSIONS)
 
@@ -367,7 +381,7 @@ BEAM-SEARCH-QUERIES += 25  74  112 140 148 178
 BEAM-SEARCH-QUERIES += 214 244 278 302 331
 BEAM-SEARCH-QUERIES += 396 420 452 489 511
 
-BEAM-SEARCH-BASENAME := beam_search_v10
+BEAM-SEARCH-BASENAME := beam_search_v5-ipv4serial
 
 define BEAM-SEARCH-RULE
 # creates run directory from template
@@ -403,6 +417,19 @@ purge-beam-search:
 beam-search-stats: create-beam-search
 beam-search-stats: $(foreach v,$(BEAM-SEARCH-VERSIONS),kernel/$v/stats)
 
+.PHONY: beam-search-saifgz
+beam-search-saifgz: $(foreach v,$(BEAM-SEARCH-VERSIONS),kernel/$v/run.saif.tar.gz)
+
+kernel/%/run.saif.tar.gz: kernel/%/run.saif
+	tar -czf $@ $<
+
+run.saif.tar.gz: run.saif
+	tar -czf $@ $<
+
+.PHONY: purge-saifs
+purge-saifs:
+	rm kernel/*/run.saif
+
 # Add to versions
 VERSIONS += $(BEAM-SEARCH-VERSIONS)
 
@@ -427,10 +454,14 @@ LDFLAGS  += $(libhammerblade-helpers-host-interface-ldflags)
 LDFLAGS  += $(libgraphtools-interface-ldflags)
 VSOURCES += GreedyWalkResults.cpp
 
-$(HOST_TARGET).profile $(HOST_TARGET).debug: $(libhammerblade-helpers-host-interface-headers)
-$(HOST_TARGET).profile $(HOST_TARGET).debug: $(libgraphtools-interface-headers)
-$(HOST_TARGET).profile $(HOST_TARGET).debug: $(libgraphtools-interface-libraries)
-$(HOST_TARGET).profile $(HOST_TARGET).debug: GreedyWalkResults.o
+HOST_TARGET_EXES := $(HOST_TARGET).profile
+HOST_TARGET_EXES += $(HOST_TARGET).debug
+HOST_TARGET_EXES += $(HOST_TARGET).saifgen
+
+$(HOST_TARGET_EXES): $(libhammerblade-helpers-host-interface-headers)
+$(HOST_TARGET_EXES): $(libgraphtools-interface-headers)
+$(HOST_TARGET_EXES): $(libgraphtools-interface-libraries)
+$(HOST_TARGET_EXES): GreedyWalkResults.o
 
 GreedyWalkResults.o: GreedyWalkResults.cpp
 GreedyWalkResults.o: GreedyWalkResults.hpp
