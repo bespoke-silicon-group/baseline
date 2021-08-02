@@ -123,7 +123,7 @@ clean: cosim.clean analysis.clean cudalite.clean custom.clean
 _HELP_STRING := "Makefile Rules\n"
 
 _HELP_STRING += "    default: \n"
-_HELP_STRING += "        - Run the default kernel ($KERNEL_DEFAULT) and generate all of the\n"
+_HELP_STRING += "        - Run the default kernel ($(KERNEL_DEFAULT)) and generate all of the\n"
 _HELP_STRING += "          analysis products\n"
 default: pc_stats graphs stats
 
